@@ -195,7 +195,15 @@ details .fields{margin-top:8px}
 .receipt.warn{background:color-mix(in srgb,var(--mid) 26%,var(--surface))}
 /* disaster */
 .dctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
-.dctl select{width:auto;flex:1 1 170px;min-width:0;max-width:100%}
+/* Disaster menu: our own list instead of a native <select>, whose popup is too tall for the screen and covers the control. */
+.dmenu{position:relative;flex:1 1 170px;min-width:0;max-width:100%}
+.dmenu summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);font-size:.95rem}
+.dmenu summary::-webkit-details-marker{display:none}
+.dmenu summary::after{content:"▾";color:var(--muted)}
+.dlist{position:absolute;z-index:5;left:0;right:0;top:calc(100% + 4px);max-height:min(320px,50vh);overflow:auto;display:grid;gap:2px;padding:6px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgb(0 0 0/.18)}
+.dlist h4{margin:6px 8px 2px;font-family:var(--body);font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.dlist button{text-align:left;border:0;background:none;padding:7px 8px;border-radius:8px;cursor:pointer;font-size:.92rem}
+.dlist button:hover,.dlist button.on{background:var(--soft)}
 .dhead{display:flex;gap:10px;align-items:center;margin-top:16px;font-size:1.1rem}
 .dhead .emo{font-size:1.8rem;line-height:1}
 .dcmp{display:grid;gap:10px;margin-top:10px}
@@ -330,7 +338,7 @@ const THEFT=[
   {id:'t_rel',label:'Someone snoops at your relative’s place',w:.04,places:['relative']},
   {id:'t_friend',label:'Someone snoops at your friend’s place',w:.04,places:['friend']},
   {id:'t_bank',label:'Bank box opened without you',w:.005,places:['bank']},
-  {id:'t_carry',label:'Bag or phone stolen while out',w:.08,places:['carry']},
+  {id:'t_carry',label:'Bag or phone stolen while out',w:.08,places:['carry'],takes:true},
   {id:'t_hot',label:'Malware on your phone or computer',w:.10,hot:true},
   {id:'t_cloud',label:'Cloud account hacked',w:.08,cloud:true},
   {id:'t_duress',label:'Forced to hand over keys at home',w:.005,places:['home','carry'],duress:true},
@@ -355,7 +363,9 @@ const LOSS=[
   {id:'l_rel',label:'Relative moves or loses your things',w:.10,places:['relative']},
   {id:'l_friend',label:'Friend moves or loses your things',w:.10,places:['friend']},
   {id:'l_bank',label:'Bank box closed or out of reach',w:.02,places:['bank']},
-  {id:'l_carry',label:'Phone or bag lost, stolen or confiscated',w:.25,places:['carry']},
+  {id:'l_carry',label:'Phone or bag lost while out',w:.17,places:['carry']},
+  // Scoring only: the loss side of the theft disaster t_carry. A stolen device is also gone for you. Never thrown as its own disaster.
+  {id:'l_stolen',label:'Bag or phone stolen: you must recover without it',w:.08,places:['carry'],twin:true},
   {id:'l_cloud',label:'Locked out of your cloud account',w:.05,cloud:true},
   {id:'l_prov',label:'The provider shuts down or locks you out',w:.10,prov:'prov'},
   {id:'l_prov2',label:'The second provider shuts down or locks you out',w:.10,prov:'prov2'},
@@ -439,11 +449,13 @@ function keyAvail(k,e,tested){
   let dev=DEV_LIFE[k.device]*(k.pin==='strong'?.85:k.pin==='none'?1:.93);
   if(k.device!=='none'&&gone(k.dloc))dev=0;
   if(e.dead===k)dev=0;
+  if(e.now&&dev>0)dev=1;
   if(e.pbrands&&k.device==='hw'&&e.pbrands.includes(k.brand))dev*=.6;
   const bak=e.bugloss&&!tested&&k.device==='hw'&&k.brand===e.brand?0:backupLeft(k,e,tested);
   let pass=1;
   if(k.pass==='memory')pass=k.pstr==='strong'?.65:.8;
   if(k.pass==='written')pass=gone(k.ploc)?0:.9;
+  if(e.now&&k.pass==='memory')return dev+(1-dev)*bak*pass;
   return(1-(1-dev)*(1-bak))*pass;
 }
 function configAvail(s,e){
@@ -544,11 +556,11 @@ function touches(s,e){
   return e.places.some(p=>used.has(p))||(!!e.border&&K.some(k=>k.backup==='cloud'));
 }
 function disasterList(setups){
-  return[...THEFT.map(e=>['t',e]),...brandEvents(setups).map(e=>['t',e]),...LOSS.map(e=>['l',e]),...brandLossEvents(setups).map(e=>['l',e]),['l',TIME]].filter(x=>(x[1].cust&&!x[1].acct)||setups.some(s=>touches(s,x[1])));
+  return[...THEFT.map(e=>['t',e]),...brandEvents(setups).map(e=>['t',e]),...LOSS.map(e=>['l',e]),...brandLossEvents(setups).map(e=>['l',e]),['l',TIME]].filter(x=>!x[1].twin&&((x[1].cust&&!x[1].acct)||setups.some(s=>touches(s,x[1]))));
 }
 const untouched=e=>e.prov?'You don’t use that provider, so this can’t touch you.':e.brand?'You have no hardware wallet of that brand.':e.hot||e.app?'You have no key on an online phone or laptop.':e.cloud?'You keep nothing in the cloud.':e.guess?'Your seeds weren’t picked by hand.':e.border?'You aren’t carrying any keys or backups.':e.lapse?'You have no timelock to update.':e.phish?'You have no seed written down or memorized to give away.':e.gov?'You don’t rely on a provider.':e.dev?'You hold no device of your own.':'Nothing of yours is there.';
 function outcome(s,kind,e,r){
-  const ks=n=>n===1?'key':'keys';let hit=[],bad=false,text,rhit=null;
+  const ks=n=>n===1?'key':'keys';let hit=[],bad=false,text,rhit=null,gone=false,why=null,tip='';
   const roll=(k,i)=>k.device==='prov'?r.p:k.device==='prov2'?r.p2:r.k[i];
   const E=withProv(s,e);
   if(custodial(s)){
@@ -566,13 +578,33 @@ function outcome(s,kind,e,r){
   }else if(kind==='t'){
     hit=s.keys.map((k,i)=>(e.prov&&!s.keys.some(x=>x.device===e.prov))?false:roll(k,i)<keyStolen(k,E));const c=hit.filter(Boolean).length;bad=c>=s.m;
     text=bad?(s.n===1?'The thief got your only key.':`The thief got ${c} ${ks(c)}, enough to spend.`):c?`The thief got ${c} ${ks(c)} but needs ${s.m}.`:'Nothing useful was taken.';
+    if(!c&&e.places){
+      const at=p=>e.places.includes(p),own=s.keys.filter(k=>!isProv(k)),one=own.length===1;
+      const dT=own.filter(k=>real(k)&&at(k.dloc)).length,bT=own.filter(k=>(k.backup==='paper'||k.backup==='metal')&&at(k.bloc)).length;
+      const what=(n,w)=>one?'your '+w:n===1?'a '+w:w+'s';
+      if(dT&&bT)text=`The thief took ${what(dT,'device')} and ${what(bT,'backup')} but couldn’t get a key out of them.`;
+      else if(dT)text=`The thief took ${what(dT,'device')} but couldn’t break into ${dT===1?'it':'them'}.`;
+      else if(bT)text=`The thief took ${what(bT,'backup')} but doesn’t have the passphrase.`;
+    }
+    // One key, taken from a place: say how the thief got it.
+    if(bad&&s.n===1&&e.places&&!e.duress&&!e.border&&s.keys[0].pass==='none'){
+      const k=s.keys[0],at=p=>e.places.includes(p);
+      if((k.backup==='paper'||k.backup==='metal')&&at(k.bloc))text=`The thief found your ${k.backup} backup, and with it your wallet key.`;
+      else if(real(k)&&at(k.dloc))text=k.pin==='none'?'Your device had no PIN, so the thief got your wallet key.':'The thief managed to guess your PIN, and then got your wallet key.';
+    }
     if(TL(s)){
       if(e.lapse){rhit=r.c<lapseReach(s.rkey);bad=rhit;text=rhit?'The timer ran out, and someone who could reach the recovery key used it.':'The timer ran out, but nobody used the recovery key before you reset it.'}
       else{rhit=r.kr<rkStolen(s,E);if(!bad&&rhit){bad=r.l<LAPSE;text=bad?'The thief got the recovery key, and the timelock had run out.':'The thief got the recovery key, but the timelock stops it spending on its own.'}}
     }
+    if(e.takes&&!bad&&allKeys(s).some(k=>real(k)&&e.places.includes(k.dloc))){
+      const L=outcome(s,'l',{id:'l_stolen',places:e.places},Object.assign({},r,{k:r.b,kr:r.bk,c:r.bc}));
+      if(L.bad){bad=gone=true;text+=L.why?` But ${L.why}, so the coins are lost.${L.tip}`:' But you had no working way to recover, so the coins are lost.'}
+      else text+=s.n===1&&!TL(s)?' Your backup brings the key back.':' You can still recover your coins.';
+    }
     if(!bad&&!rhit&&!touches(s,e))text=untouched(e);
   }else{
     const ev=Object.assign({places:[]},E);
+    if(e.id!=='l_time')ev.now=true;
     if(e.dev){const cs=s.keys.filter(real);if(cs.length)ev.dead=cs[Math.floor(r.d*cs.length)]}
     hit=s.keys.map((k,i)=>roll(k,i)>=keyAvail(k,ev,s.tested));const lost=hit.filter(Boolean).length,left=s.n-lost;
     const cfg=r.c<configAvail(s,ev);
@@ -583,18 +615,38 @@ function outcome(s,kind,e,r){
       bad=left<s.m||(left<s.n&&!cfg);
       text=left<s.m?(s.n===1?'Your only key is gone.':lost===s.n?'Every key is gone.':`${lost} of ${s.n} keys are gone, and you need ${s.m}.`):bad?'Enough keys survived, but the wallet file is gone.':lost?`You lost ${lost} ${ks(lost)} but can still recover.`:'Everything survived.';
     }
+    if(!bad&&!lost&&!rhit){
+      const gone=p=>ev.places.includes(p),own=allKeys(s).filter(k=>!isProv(k));
+      const dG=own.filter(k=>real(k)&&gone(k.dloc)).length;
+      const bG=own.filter(k=>(k.backup==='paper'&&gone(k.bloc))||(k.backup==='metal'&&gone(k.bloc)&&!ev.fire)||(k.backup==='cloud'&&ev.cloud)).length;
+      const one=own.length===1,cnt=(n,w)=>n===1?(one?'your ':'a ')+w:`${n} ${w}s`;
+      if(dG&&bG)text=`You lost ${cnt(dG,'device')} and ${cnt(bG,'backup')}, but every key can still be recovered. Replace what was lost soon.`;
+      else if(bG)text=`You lost ${cnt(bG,'backup')}, but ${one?'the key is still on your device':'the keys are still on your devices'}. Make a new backup soon.`;
+      else if(dG)text=`You lost ${cnt(dG,'device')}, but ${dG===1?'its backup brings the key back':'the backups bring the keys back'}.`;
+    }
     if(e.dev&&ev.dead&&!TL(s)){const i=s.keys.indexOf(ev.dead),nm=s.n>1?`Key ${LETTERS[i]}’s device`:'Your device';
       text=bad?(s.n===1?'Your device died, and there was no working backup.':left<s.m?`${nm} died with no working backup, and that left too few keys.`:`${nm} died with no working backup, and without the wallet file you can’t use the keys that are left.`):hit[i]?`${nm} died with no working backup, but you can still spend with the other keys.`:`${nm} died, but its backup brought the key back.`}
+    // One key, device gone, backup not touched by the disaster: say why the backup didn't save you.
+    if(bad&&s.n===1&&!TL(s)&&e.id!=='l_time'&&!e.bugloss){
+      const k=s.keys[0],g=p=>ev.places.includes(p);
+      const devGone=real(k)&&(g(k.dloc)||ev.dead===k);
+      const bakGone=((k.backup==='paper'||k.backup==='metal')&&g(k.bloc))||(k.backup==='cloud'&&ev.cloud);
+      if(devGone&&!bakGone){
+        why=k.backup==='none'?'you had no backup':k.backup==='memory'?'you couldn’t recall the seed from memory':k.pass!=='none'?`your ${k.backup} backup or its passphrase failed you`:`your ${k.backup} backup turned out to be unreadable`;
+        if(['paper','metal','cloud'].includes(k.backup)&&!s.tested)tip=' A practice recovery might have caught that.';
+        text=`Your device ${ev.dead?'died':'is gone'}, and ${why}.${tip}`;
+      }
+    }
     if(!bad&&!touches(s,e))text=untouched(e);
     else if(e.bugloss&&!bad)text=s.tested?'Your practice recovery already proved the backups restore.':'The devices still work, so you can move the coins before one fails.';
   }
   if(e.border)text=text.replace('The thief','They').replace('but needs','but need').replace('Nothing useful was taken.','They found nothing they could use.');
-  return{kind,hit,rhit,bad,text,verdict:bad?(e.border?'Coins exposed':custodial(s)&&e.verdict?e.verdict:kind==='t'?'Coins stolen':'Coins lost'):'Coins safe'};
+  return{kind,hit,rhit,bad,text,why,tip,verdict:bad?(gone?'Coins lost':e.border?'Coins exposed':custodial(s)&&e.verdict?e.verdict:kind==='t'?'Coins stolen':'Coins lost'):'Coins safe'};
 }
 function runDisaster(setups,id,lastId){
   const list=disasterList(setups);let pick=list.find(x=>x[1].id===id);
   if(!pick)do{pick=list[Math.floor(Math.random()*list.length)]}while(list.length>1&&pick[1].id===lastId);
-  const kind=pick[0],e=pick[1],r={k:[0,0,0,0,0].map(()=>Math.random()),c:Math.random(),p:Math.random(),p2:Math.random(),kr:Math.random(),l:Math.random(),d:Math.random()};
+  const kind=pick[0],e=pick[1],r={k:[0,0,0,0,0].map(()=>Math.random()),c:Math.random(),p:Math.random(),p2:Math.random(),kr:Math.random(),l:Math.random(),d:Math.random(),b:[0,0,0,0,0].map(()=>Math.random()),bk:Math.random(),bc:Math.random()};
   return{id:e.id,icon:e.supply?'🚚':e.brand?'🐞':ICON[e.id],label:elabel(e,setups),kind,res:setups.map(s=>outcome(s,kind,e,r))};
 }
 function scoreOf(s){return risk(s,brandEvents([s]))}
@@ -728,6 +780,7 @@ const SAY={
   l_friend:['If your friend loses what you left there, you can still recover.','If your friend loses what you left there, you might be locked out.','If your friend loses what you left there, the coins are gone.'],
   l_bank:['Losing access to the bank box doesn’t lock you out.','Losing access to the bank box might lock you out.','Losing access to the bank box locks you out.'],
   l_carry:['Losing your phone or bag doesn’t lose the coins.','Losing your phone or bag might lose the coins.','Losing your phone or bag loses the coins.'],
+  l_stolen:['If your phone or bag is stolen, you can still recover the coins.','If your phone or bag is stolen, you might not be able to recover the coins.','If your phone or bag is stolen, the coins are gone even if the thief can’t unlock it.'],
   l_cloud:['Being locked out of your cloud account doesn’t cost you the coins.','Being locked out of your cloud account might cost you the coins.','Being locked out of your cloud account costs you the coins.'],
   l_prov:['If the provider shuts down, you can still recover on your own.','If the provider shuts down, you might be stuck.','If the provider shuts down, you are likely stuck.'],
   l_prov2:['If the second provider shuts down, you can still recover.','If the second provider shuts down, you might be stuck.','If the second provider shuts down, you are likely stuck.'],
@@ -974,7 +1027,7 @@ function screenStart(){
 }
 function disasterCard(which,setups,d,title,hint){
   const list=disasterList(setups),names=setups.length>1?['Before','Now']:[''];
-  const opts=k=>list.filter(x=>x[0]===k).map(x=>`<option value="${x[1].id}"${d&&d.id===x[1].id?' selected':''}>${elabel(x[1],setups)}</option>`).join('');
+  const opts=k=>list.filter(x=>x[0]===k).map(x=>`<button type="button" data-act="disaster" data-w="${which}" data-id="${x[1].id}"${d&&d.id===x[1].id?' class="on" aria-current="true"':''}>${elabel(x[1],setups)}</button>`).join('');
   const one=(s,o,name)=>{const word=o.kind==='t'?['taken','safe']:['gone','still there'];
     return `<div class="dres ${o.bad?'bad':'ok'}"><div class="body">${name?`<b>${name}</b>`:''}
       <div class="dkeys"${(s.n===1&&!TL(s))||custodial(s)?' hidden':''}>${s.keys.map((k,i)=>`<span class="dk${o.hit[i]?' hit':''}"><span class="tok" style="--kc:var(--k${i})">${LETTERS[i]}</span>${word[o.hit[i]?0:1]}</span>`).join('')}${o.rhit==null?'':`<span class="dk${o.rhit?' hit':''}"><span class="tok" style="--kc:var(--base-bar)">R</span>${word[o.rhit?0:1]}</span>`}</div>
@@ -982,7 +1035,7 @@ function disasterCard(which,setups,d,title,hint){
   const t=S.tally;
   return `<div class="card"><h3>${title}</h3><p class="hint">${hint}</p>
     <div class="dctl"><button class="btn small${which==='today'?' outline':''}" id="dis-${which}" data-act="disaster" data-w="${which}">${d?'Another random one':'Random disaster'}</button><span class="hint">or</span>
-      <select id="pick-${which}" data-pick="${which}" aria-label="Pick a disaster"><option value="">Pick one</option><optgroup label="Theft">${opts('t')}</optgroup><optgroup label="Loss">${opts('l')}</optgroup></select></div>
+      <details class="dmenu" id="pick-${which}"><summary aria-label="Pick a disaster">Pick one</summary><div class="dlist"><h4>Theft</h4>${opts('t')}<h4>Loss</h4>${opts('l')}</div></details></div>
     ${d?`<div role="status"><div class="dhead"><span class="emo" aria-hidden="true">${d.icon}</span><b>${d.label}</b></div>
       <div class="dcmp${setups.length>1?' two':''}">${setups.map((s,i)=>one(s,d.res[i],names[i])).join('')}</div>
       ${setups.length>1&&t.n>1?`<p class="hint" style="margin-top:10px">${t.n} disasters so far. Before survived ${t.a}, now survived ${t.b}.</p>`:''}</div>`:''}
@@ -1295,7 +1348,7 @@ document.addEventListener('click',ev=>{
   if(a==='cancelTx')w.tx=null;
   if(a==='sig'&&w.tx){const i=+b.dataset.i,at=w.tx.sigs.indexOf(i);if(at>=0)w.tx.sigs.splice(at,1);else w.tx.sigs.push(i);if(w.tx.sigs.length>=S.mine.m)finishTx()}
   if(a==='rehearse')rehearse();
-  if(a==='disaster')disaster(b.dataset.w,null);
+  if(a==='disaster')disaster(b.dataset.w,b.dataset.id||null);
   if(a==='preset')changed(b.dataset.w||'mine');
   if(b.dataset.s)changed(b.dataset.s);
   if(a==='copy'){if(!S.note.trim()){$('copied').textContent='Write a note first';return}const t=feedbackText();const done=()=>{$('copied').textContent='Copied'};
@@ -1309,7 +1362,7 @@ function disaster(w,id){
   else{S.dis2=runDisaster([S.base,S.mine],id,S.dis2&&S.dis2.id);const t=S.tally;t.n++;if(!S.dis2.res[0].bad)t.a++;if(!S.dis2.res[1].bad)t.b++}
 }
 document.addEventListener('change',ev=>{
-  const el=ev.target;if(el.dataset&&el.dataset.pick){if(el.value){disaster(el.dataset.pick,el.value);render()}return}
+  const el=ev.target;
   if(!el.dataset||!el.dataset.f)return;
   const st=S[el.dataset.s],k=+el.dataset.k,f=el.dataset.f;
   changed(el.dataset.s);
@@ -1319,7 +1372,11 @@ document.addEventListener('change',ev=>{
   render();
 });
 $('how').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.currentTarget.close()});
-document.addEventListener('toggle',ev=>{const d=ev.target;if(d.dataset&&d.dataset.d)S.open[d.dataset.d]=d.open},true);
+document.addEventListener('toggle',ev=>{const d=ev.target;if(d.dataset&&d.dataset.d)S.open[d.dataset.d]=d.open;
+  if(d.classList&&d.classList.contains('dmenu')&&d.open)d.querySelector('.dlist').scrollIntoView({block:'nearest'})},true);
+// The disaster menu closes on a click outside it or on Escape.
+document.addEventListener('click',ev=>{document.querySelectorAll('.dmenu[open]').forEach(d=>{if(!d.contains(ev.target))d.open=false})});
+document.addEventListener('keydown',ev=>{if(ev.key!=='Escape')return;const d=document.querySelector('.dmenu[open]');if(d){d.open=false;d.querySelector('summary').focus()}});
 document.addEventListener('input',ev=>{if(ev.target.id==='note'){S.note=ev.target.value}});
 render();
 </script>

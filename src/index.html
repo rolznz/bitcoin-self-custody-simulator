@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bitcoin self-custody simulator</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><i><b style="background:var(--k0)"></b><b style="background:var(--k1)"></b><b style="background:var(--k2)"></b></i>Self-custody simulator</div>
+    <ol class="steps" id="steps"></ol>
+  </div>
+  <div class="grid">
+    <main class="stage" id="stage"></main>
+    <aside class="score" id="score" aria-live="polite"></aside>
+  </div>
+  <footer>
+    <span>Pretend coins only. Scores are rough estimates, not advice. <button data-act="perfect">There is no perfect setup</button>.</span>
+    <button data-act="reset" id="reset" hidden>Start over</button>
+    <span style="flex-basis:100%">Never enter your seed or passphrase into any website. This simulator will never ask for them.</span>
+  </footer>
+</div>
+<dialog id="how" aria-labelledby="howtitle"></dialog>
+<script src="model.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

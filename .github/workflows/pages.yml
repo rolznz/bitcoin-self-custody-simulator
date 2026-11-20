@@ -22,6 +22,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
+      - name: Check index.html matches src
+        run: node build.js --check
       - name: Collect the site
         run: mkdir _site && cp index.html _site/
       - uses: actions/configure-pages@v6

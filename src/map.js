@@ -231,13 +231,31 @@ const SetupMap=(()=>{
   const WORDS=['never','gonna','give','you','up','never','gonna','let','you','down','never','gonna'];
   const kb=k=>k==null?'':`<b class="mapkb" style="background:${keyColor(k)}" title="Key ${keyName(k)}">${keyName(k)}</b>`;
   function card(o){
-    if(o.head)return `<h3>Memorized</h3>`+o.head.map(l=>`<div class="maprow"><span>${kb(l.k)}${l.label}</span><span${l.secret?` data-secret="${l.secret}"`:''}>${l.value}</span></div>`).join('')+(o.head.some(l=>l.secret)?'<button class="btn small ghost" data-mapshow>Show it</button>':'');
+    const joke=text=>text?`<p class="mapjoke">${text}</p>`:'';
+    if(o.head)return `<h3>Memorized</h3>`+o.head.map(l=>`<div class="maprow"><span>${kb(l.k)}${l.label}</span><span${l.secret?` data-secret="${l.secret}"`:''}>${l.value}</span></div>`).join('')+(o.head.some(l=>l.secret)?'<button class="btn small ghost" data-mapshow>Show it</button>':'')+joke('Also currently thinking about: '+any(THOUGHTS));
     const head=`<h3>${NAMES[o.t]} ${kb(o.k)}</h3>${o.place?`<p>${o.place}</p>`:''}`;
     const list=(cls,num)=>`<div class="${cls}">${WORDS.map((w,i)=>`<div>${num?`<small>${i+1}. </small>`:''}${w}</div>`).join('')}</div>`;
-    if(o.t==='paper')return head+`<div class="mapseed">${list('mapsheet',1)}<i class="maprick" role="img" aria-label="A photo of Rick Astley, taped to the paper"></i></div>`;
-    if(o.t==='steel')return head+list('mapplate',0);
-    return head;
+    const jokes=joke(JOKES[o.t]&&any(JOKES[o.t]))+joke(PLACE_JOKES[o.loc]);
+    if(o.t==='paper')return head+`<div class="mapseed">${list('mapsheet',1)}<i class="maprick" role="img" aria-label="A photo of Rick Astley, taped to the paper"></i></div>`+jokes;
+    if(o.t==='steel')return head+list('mapplate',0)+jokes;
+    return head+jokes;
   }
+  /* Hidden jokes: one line about the thing, one about where it is kept. They only show when a card is opened, and they
+     never say what could go wrong with the thing. Several lines for one thing means a different one each time. */
+  const any=a=>a[Math.floor(Math.random()*a.length)];
+  const THOUGHTS=['their cat.','whether the oven is off.','that one embarrassing thing from 2009.','what’s for dinner.','a song they heard once in 2007.'];
+  const JOKES={
+    phone:['Currently open: 47 browser tabs.','Battery: 3%. As always.','Screen time this week: you don’t want to know.'],
+    laptop:['Currently open: 47 browser tabs.','Fan status: preparing for take-off.'],
+    signer:['Firmware update available. It has been for two years.'],
+    steel:['Will outlive you, your house, and probably the sun.'],
+    file:['File name: final_v2_REAL_final.json'],
+    note:['Filed under “definitely not passwords”.'],
+    coins:['Funds are safu.'],
+    login:['Two-factor code sent to a phone number you had in 2016.'],
+    key:['They promise they haven’t looked.'],
+  };
+  const PLACE_JOKES={bank:'Opening hours: never when you need it.',relative:'They think it’s a recipe.',friend:'They promised not to peek.',office:'In the drawer under the stapler.',cloud:'The cloud: just someone else’s computer.'};
   document.addEventListener('click',ev=>{
     // The card is a real dialog, so the dimmed backdrop covers the whole page. Esc, the button or a click outside closes it.
     const dl=document.getElementById('mapitem'),tap=ev.target.closest('.maptap'),show=ev.target.closest('[data-mapshow]');

@@ -54,10 +54,49 @@ const SetupMap=(()=>{
     tick:`<g transform="translate(-17 -46)"><circle r="9" fill="#17A865" stroke="#fff" stroke-width="2"/><path d="M-4 0l3 3l5 -6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g>`,
   };
   let REG=[]; // what each clickable thing is, by index; rebuilt on every draw
+  /* A disaster playing on the map. FX is what the model threw: the event, whether it is a theft or a loss, and which
+     keys it says were hit. From that, each thing on the map gets a fate:
+       "gone"   destroyed, lost or out of reach        "taken"  carried off
+       "hacked" still there, but someone else has it    "safe"   it was in the line of fire and came through
+     or none, if the disaster never came near it. The rules follow the model's own event flags, so a new event of an
+     existing kind needs nothing here. */
+  let FX=null;
+  function fate(t){
+    if(!FX)return '';
+    const e=FX.ev,theft=FX.kind==='t',k=t.key,hit=t.k==='R'?!!FX.rhit:t.k!=null&&!!FX.hit[t.k];
+    const hacked=hit?'hacked':'safe',lost=hit?'gone':'safe';
+    if(e.duress||e.border)return e.places.includes(t.loc)&&t.k!=null?(hit?(e.border?'hacked':'taken'):'safe'):''; // forced: what you have on you or at home
+    if(e.places&&e.places.length){                                      // strikes a place, or you while out
+      if(!e.places.includes(t.loc))return '';
+      if(!theft)return t.t==='steel'&&e.fire?'safe':'gone';
+      return e.takes||hit?'taken':'safe';
+    }
+    if(e.cloud)return t.loc==='cloud'?(theft?hacked:'gone'):'';
+    if(e.cust){                                                         // the company holding the coins: hacked or seized (taken), frozen or bust (gone)
+      const stolen=e.login||e.id==='c_hack'||e.id==='c_rules';
+      return t.role==='coins'?(FX.bad?(stolen?'taken':'gone'):'safe'):t.role==='login'&&e.login?(FX.bad?'hacked':'safe'):'';
+    }
+    if(e.prov||e.gov){                                                  // a provider is hacked, shuts down or is taken over
+      if(t.role==='provkey'&&(e.gov||k.device===e.prov))return theft?hacked:'gone';
+      return e.push&&t.role==='device'&&hit?'hacked':'';
+    }
+    if(e.dev)return t.role==='device'&&t.k===FX.dead?'gone':'';          // one device dies
+    if(e.hot)return t.role!=='device'?'':hot(k)?hacked:hit?'hacked':'';  // malware: online phones and laptops are in the line of fire; it rarely reaches anything else
+    if(e.app)return t.role==='device'&&soft(k)?hacked:'';
+    if(e.brand)return k&&k.device==='hw'&&k.brand===e.brand&&t.role===(e.bugloss?'backup':'device')?(e.bugloss?lost:hacked):'';
+    if(e.guess)return (t.role==='device'||t.role==='backup')&&k.ent==='words'?hacked:'';
+    if(e.phish)return t.role==='backup'&&hit?'hacked':'';
+    if(e.lapse)return t.k==='R'?hacked:'';
+    if(e.id==='l_time')return t.k!=null&&hit?'gone':'';                  // ten quiet years: whatever belonged to a key that didn't last
+    return '';
+  }
+  const FXMARK={gone:['#EF5350','<path d="M-5 -5L5 5M5 -5L-5 5" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>'],hacked:['#EF5350','<path d="M0 -7v7" stroke="#fff" stroke-width="3.8" stroke-linecap="round"/><circle cy="6" r="2.2" fill="#fff"/>'],safe:['#17A865','<path d="M-6 0l4 4l7 -8" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>']};
   function token(x,y,t,s=1){
     REG.push(t);
+    const f=fate(t);t.fate=f;t.x=x;t.y=y;
+    const mark=FXMARK[f]?`<g class="fxmark" transform="translate(0 -24)"><circle r="13" fill="${FXMARK[f][0]}" stroke="#fff" stroke-width="2.5"/>${FXMARK[f][1]}</g>`:'';
     const badge=t.k==null?'':`<circle cx="17" cy="-46" r="10" fill="${keyColor(t.k)}" stroke="#fff" stroke-width="2"/><text x="17" y="-42" text-anchor="middle" font-size="11" font-weight="800">${keyName(t.k)}</text>`;
-    return `<g class="maptap" data-i="${REG.length-1}" transform="translate(${x.toFixed(1)} ${y}) scale(${s})"><title>${NAMES[t.t]}</title><g class="mapstep" data-step="t${REG.length-1}"><ellipse rx="20" ry="6" fill="#000" opacity=".16"/><g class="mappulse" style="--t:${-(REG.length%6)*.4}s">${TOK[t.t]}${badge}${MARK[t.mark]||''}</g></g></g>`;
+    return `<g class="maptap" data-i="${REG.length-1}" transform="translate(${x.toFixed(1)} ${y}) scale(${s})"><title>${NAMES[t.t]}</title><g class="mapstep" data-step="t${REG.length-1}"><ellipse rx="20" ry="6" fill="#000" opacity=".16"/><g class="mapfate ${f?'fate-'+f:''}"><g class="mappulse" style="--t:${-(REG.length%6)*.4}s">${TOK[t.t]}${badge}${MARK[t.mark]||''}</g></g>${mark}</g></g>`;
   }
   const label=(x,y,text,dim)=>{const w=text.length*7.2+18;return `<g opacity="${dim?.6:1}"><rect x="${x-w/2}" y="${y-13}" width="${w}" height="20" rx="10" fill="#fff" opacity=".9"/><text x="${x}" y="${y+1.5}" text-anchor="middle" font-size="13" font-weight="700">${text}</text></g>`};
   // a row of tokens centred on x; they close up when there are many
@@ -66,39 +105,74 @@ const SetupMap=(()=>{
   /* what is where, read from the app's setup */
   function describe(s){
     const d={places:{home:[],office:[],relative:[],friend:[],bank:[]},you:[],head:[],cloud:[],company:null};
-    const put=(loc,t)=>(loc==='carry'?d.you:d.places[loc]).push(t);
+    const put=(loc,t)=>{t.loc=loc;(loc==='carry'?d.you:d.places[loc]).push(t)};
     if(custodial(s)){
       const name={exchange:'Exchange',fintech:'Payment app',bank:'Bank or broker',etf:'ETF fund'}[s.type];
-      d.company={name,items:[{t:'coins'}]};
-      d.you.push({t:'login',mark:s.login==='app'?'lock':null});
+      d.company={name,items:[{t:'coins',role:'coins',loc:'company'}]};
+      d.you.push({t:'login',role:'login',loc:'carry',mark:s.login==='app'?'lock':null});
       d.head.push({label:name+' password',value:'*******',secret:'hunter2'});
       return d;
     }
     const keys=allKeys(s),several=s.m<s.n||TL(s);
     keys.forEach((k,i)=>{
       const kk=TL(s)&&i===keys.length-1?'R':i;
-      if(isProv(k)){d.company=d.company||{name:'Provider',items:[]};d.company.items.push({t:'key',k:kk});return}
+      if(isProv(k)){d.company=d.company||{name:'Provider',items:[]};d.company.items.push({t:'key',k:kk,role:'provkey',key:k,loc:'company'});return}
       if(k.device!=='none'){
-        put(k.dloc,{t:{hw:'signer',phone:'phone',laptop:'laptop'}[k.device],k:kk,mark:k.pin==='strong'?'lock':null});
+        put(k.dloc,{t:{hw:'signer',phone:'phone',laptop:'laptop'}[k.device],k:kk,role:'device',key:k,mark:k.pin==='strong'?'lock':null});
         if(k.pin!=='none')d.head.push({label:{hw:'Signer',phone:'Phone',laptop:'Laptop'}[k.device]+' unlock PIN',value:k.pin==='simple'?'1234':'8 digits',k:kk});
       }
       if(k.backup==='paper'||k.backup==='metal'){
-        put(k.bloc,{t:k.backup==='paper'?'paper':'steel',k:kk,mark:s.tested?'tick':null});
-        if(several&&s.config==='all')put(k.bloc,{t:'file'});
+        put(k.bloc,{t:k.backup==='paper'?'paper':'steel',k:kk,role:'backup',key:k,mark:s.tested?'tick':null});
+        if(several&&s.config==='all')put(k.bloc,{t:'file',role:'file'});
       }else if(k.backup==='memory')d.head.push({label:'Seed phrase',value:'never gonna give you… um',k:kk});
-      else if(k.backup==='cloud')d.cloud.push({t:'paper',k:kk});
+      else if(k.backup==='cloud')d.cloud.push({t:'paper',k:kk,role:'backup',key:k,loc:'cloud'});
       if(k.pass==='memory')d.head.push({label:'Wallet passphrase',value:'*******',secret:'hunter2',k:kk});
-      else if(k.pass==='written')put(k.ploc,{t:'note',k:kk});
+      else if(k.pass==='written')put(k.ploc,{t:'note',k:kk,role:'pass',key:k});
     });
-    if(several&&s.config==='one')put(s.cloc,{t:'file'});
+    if(several&&s.config==='one')put(s.cloc,{t:'file',role:'file'});
     return d;
   }
 
-  function svg(setup){
-    const S=describe(setup),B=[],T=[];REG=[]; // buildings sorted back to front; tokens and labels on top so nothing hides them
-    let paths='';
+  // Every disaster is a target plus one of six effects. The target is where it strikes: a place, you, the cloud, the
+  // company across the water, the things it reaches, or (for time passing) the whole island.
+  function effectKind(){
+    const e=FX.ev,theft=FX.kind==='t';
+    if(e.id==='l_time'||e.lapse)return 'time';
+    if(e.places&&e.places.length)return theft?'thief':e.fire?'fire':e.places[0]==='bank'?'lock':'poof'; // stolen, burned, shut away, mislaid
+    if(theft)return e.cust&&!e.login&&e.id!=='c_hack'?'lock':'bolt';                                  // freezes and seizures lock; hacks strike
+    return e.cloud||e.prov||e.gov?'lock':'poof';                                                      // locked out; or it just stops existing
+  }
+  function target(spots){
+    const e=FX.ev,you={x:YOU.x,top:YOU.y-84,front:YOU.y-18,you:1};
+    if(e.places&&e.places.length){const p=e.places.find(p=>p!=='carry'&&!e.duress);return p?spots[p]:you}
+    if(e.cloud)return {x:124,top:20,front:104};
+    if(e.prov||e.gov||(e.cust&&!e.login))return spots.company;
+    if(e.login||e.phish)return you;
+    if(e.id==='l_time')return {x:350,top:210,front:300};
+    const t=REG.find(t=>t.fate&&t.fate!=='safe')||REG.find(t=>t.fate); // strikes things directly: aim at the first one it reaches
+    return t?{x:t.x,top:t.y-112,front:t.y}:you;
+  }
+  // What happens there: the disaster's icon drops in, then the effect. Timing is in the CSS (.fx…): drop, effect, then the things react.
+  function effects(h){
+    const flame=(x,y,s,d)=>`<g transform="translate(${h.x+x} ${y}) scale(${s})"><g class="fxflame" style="--t:${d}s"><path d="M0 0C-17 -9 -15 -30 -5 -44C-4 -34 3 -32 4 -24C10 -30 9 -40 6 -50C20 -38 22 -14 0 0Z" fill="#FF7A1A"/><path d="M0 -2C-9 -7 -8 -19 -2 -27C-1 -21 3 -20 4 -15C10 -20 11 -8 0 -2Z" fill="#FFD84D"/></g></g>`;
+    const smoke=(x,y,d)=>`<circle class="fxsmoke" style="--t:${d}s" cx="${h.x+x}" cy="${y}" r="13" fill="#5A5688"/>`;
+    let s=`<text class="fxdrop" x="${h.x}" y="${h.top+8}" text-anchor="middle" font-size="46">${FX.icon}</text>`;
+    const kind=effectKind();
+    if(kind==='bolt')s+=`<g class="fxbolt" transform="translate(${h.x} ${h.top})"><path d="M8 -150L-22 -52H-2L-18 18L30 -72H8L26 -150Z" fill="#FFD84D" stroke="#fff" stroke-width="4" stroke-linejoin="round"/></g>`;
+    if(kind==='lock')s+=`<g transform="translate(${h.x} ${h.top+34})"><g class="fxlock"><path d="M-15 -4v-14q15 -24 30 0v14" fill="none" stroke="#5A5688" stroke-width="8" stroke-linecap="round"/><rect x="-25" y="-6" width="50" height="40" rx="9" fill="#FFB81F" stroke="#fff" stroke-width="3"/><circle cy="10" r="6" fill="#1B1840"/><rect x="-2.5" y="12" width="5" height="12" rx="2.5" fill="#1B1840"/></g></g>`;
+    if(kind==='poof')s+=`<g class="fxpoof" fill="#fff">${[[-26,10,20,0],[18,2,24,.25],[2,-22,18,.5],[-8,24,16,.75]].map(c=>`<circle class="fxpuff" style="--t:${c[3]}s" cx="${h.x+c[0]}" cy="${h.top+40+c[1]}" r="${c[2]}"/>`).join('')}</g>`;
+    if(kind==='time')s+=`<g transform="translate(${h.x} ${h.top+20})" class="fxtime"><circle r="34" fill="#fff" stroke="#1B1840" stroke-width="6"/><path class="fxhand" d="M0 0V-22" stroke="#1B1840" stroke-width="5" stroke-linecap="round"/><path class="fxhand slow" d="M0 0V-14" stroke="#EF5350" stroke-width="5" stroke-linecap="round"/><circle r="4" fill="#1B1840"/></g>`;
+    if(kind==='fire')s+=`<g class="fxfire">${smoke(-10,h.top-6,0)}${smoke(18,h.top-2,.5)}${smoke(-28,h.top+6,.9)}${flame(-34,h.top+34,.9,0)}${flame(-6,h.top+22,1.25,.15)}${flame(24,h.top+30,1,.3)}${flame(44,h.front-14,.8,.1)}${flame(-48,h.front-18,.75,.25)}</g>`;
+    if(kind==='thief'){const x=h.you?h.x-64:h.x+74,y=h.you?h.front+18:h.front+30;
+      s+=`<g class="fxthief" style="--from:${h.you?-260:260}px"><g transform="translate(${x} ${y})"><ellipse cy="2" rx="22" ry="7" fill="#000" opacity=".2"/><path d="M-19 0Q-20 -31 -8 -47H8Q20 -31 19 0Z" fill="#2B2756"/><circle cy="-56" r="15" fill="#2B2756"/><rect x="-15" y="-62" width="30" height="10" rx="5" fill="#fff"/><circle cx="-6" cy="-57" r="2.6" fill="#1B1840"/><circle cx="6" cy="-57" r="2.6" fill="#1B1840"/><path d="M14 -30q16 -8 22 6q4 16 -10 20q-14 2 -16 -10z" fill="#C9A26B"/></g></g>`}
+    return s;
+  }
+  function svg(setup,fx){
+    const S=describe(setup),B=[],T=[];REG=[];FX=fx||null; // buildings sorted back to front; tokens and labels on top so nothing hides them
+    let paths='';const spots={}; // where each building stands, for aiming a disaster at it
     for(const [id,p] of Object.entries(SPOTS)){
       const items=S.places[id],b=building(p.x,p.y,p.b),y=b.front+38;
+      spots[id]={x:p.x,top:b.top,front:b.front};
       if(items.length)paths+=`<path d="M${YOU.x} ${YOU.y-6}Q${(YOU.x+p.x)/2} ${Math.max(YOU.y,p.y)-10} ${p.x} ${p.y+34}" fill="none" stroke="#EAD9A8" stroke-width="9" stroke-linecap="round" opacity=".9"/>`;
       B.push([p.y,`<g opacity="${items.length?1:.5}">${b.svg}</g>`]);
       T.push(row(p.x,y,items,p.name)+label(p.x,y+(items.length?18:-22),p.name,!items.length));
@@ -113,7 +187,7 @@ const SetupMap=(()=>{
         <g class="mappulse"><rect x="${YOU.x-34}" y="${YOU.y-146}" width="68" height="38" rx="19" fill="#fff"/><g fill="#8E8AB8"><circle cx="${YOU.x-14}" cy="${YOU.y-127}" r="4.5"/><circle cx="${YOU.x}" cy="${YOU.y-127}" r="4.5"/><circle cx="${YOU.x+14}" cy="${YOU.y-127}" r="4.5"/></g></g></g>`;
     }
     // the company across the water, and the cloud: always drawn, faded when unused, like every other place
-    const c=COMPANY,cb=building(c.x,c.y,c.b),co=S.company;
+    const c=COMPANY,cb=building(c.x,c.y,c.b),co=S.company;spots.company={x:c.x,top:cb.top,front:cb.front};
     const far=`<g opacity="${co?1:.5}"><ellipse cx="${c.x}" cy="${c.y+16}" rx="96" ry="48" fill="#1B8E77"/><ellipse cx="${c.x}" cy="${c.y+8}" rx="96" ry="48" fill="#E9DDB0"/><ellipse cx="${c.x}" cy="${c.y+6}" rx="88" ry="42" fill="#7ED6A0"/>${cb.svg}</g>`+
       (co?row(c.x-58,c.y+52,co.items,co.name)+`<path d="M${YOU.x+70} ${YOU.y-50}Q520 60 ${c.x-96} ${c.y+30}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="3 9" stroke-linecap="round" opacity=".9"/>`:'')+
       label(c.x+4,c.y+62,co?co.name:'Exchange',!co);
@@ -123,7 +197,7 @@ const SetupMap=(()=>{
       <defs><linearGradient id="map-grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C6F06A"/><stop offset="1" stop-color="#5FCF8A"/></linearGradient></defs>
       <path d="M40 60h30M720 300h36M700 480h44M30 470h28M610 30h24M22 250h20M560 520h30M330 36h30" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".55"/>
       <ellipse cx="350" cy="320" rx="322" ry="204" fill="#1B8E77"/><ellipse cx="350" cy="306" rx="322" ry="204" fill="#E9DDB0"/><ellipse cx="350" cy="302" rx="308" ry="192" fill="url(#map-grass)"/>
-      ${far}<g class="mapstep" data-step="end">${paths}</g>${B.map(b=>b[1]).join('')}${T.join('')}${you}${cloud}
+      ${far}<g class="mapstep" data-step="end">${paths}</g>${B.map(b=>b[1]).join('')}${T.join('')}${you}${cloud}${FX?effects(target(spots)):''}
     </svg>`;
   }
 

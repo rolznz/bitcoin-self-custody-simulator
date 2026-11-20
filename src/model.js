@@ -268,7 +268,7 @@ function disasterList(setups){
 }
 const untouched=e=>e.prov?'You don’t use that provider, so this can’t touch you.':e.brand?'You have no hardware wallet of that brand.':e.hot||e.app?'You have no key on an online phone or laptop.':e.cloud?'You keep nothing in the cloud.':e.guess?'Your seeds weren’t picked by hand.':e.border?'You aren’t carrying any keys or backups.':e.lapse?'You have no timelock to update.':e.phish?'You have no seed written down or memorized to give away.':e.gov?'You don’t rely on a provider.':e.dev?'You hold no device of your own.':'Nothing of yours is there.';
 function outcome(s,kind,e,r){
-  const ks=n=>n===1?'key':'keys';let hit=[],bad=false,text,rhit=null,gone=false,why=null,tip='';
+  const ks=n=>n===1?'key':'keys';let hit=[],bad=false,text,rhit=null,gone=false,why=null,tip='',dead=-1; // dead: which key's device died, for "a device dies"
   const roll=(k,i)=>k.device==='prov'?r.p:k.device==='prov2'?r.p2:r.k[i];
   const E=withProv(s,e);
   if(custodial(s)){
@@ -307,13 +307,13 @@ function outcome(s,kind,e,r){
     if(e.takes&&!bad&&allKeys(s).some(k=>real(k)&&e.places.includes(k.dloc))){
       const L=outcome(s,'l',{id:'l_stolen',places:e.places},Object.assign({},r,{k:r.b,kr:r.bk,c:r.bc}));
       if(L.bad){bad=gone=true;text+=L.why?` But ${L.why}, so the coins are lost.${L.tip}`:' But you had no working way to recover, so the coins are lost.'}
-      else text+=s.n===1&&!TL(s)?' Your backup brings the key back.':' You can still recover your coins.';
+      else text+=s.n===1&&!TL(s)?` ${backupName(s.keys[0],true)} brings the key back.`:' You can still recover your coins.';
     }
     if(!bad&&!rhit&&!touches(s,e))text=untouched(e);
   }else{
     const ev=Object.assign({places:[]},E);
     if(e.id!=='l_time')ev.now=true;
-    if(e.dev){const cs=s.keys.filter(real);if(cs.length)ev.dead=cs[Math.floor(r.d*cs.length)]}
+    if(e.dev){const cs=s.keys.filter(real);if(cs.length){ev.dead=cs[Math.floor(r.d*cs.length)];dead=s.keys.indexOf(ev.dead)}}
     hit=s.keys.map((k,i)=>roll(k,i)>=keyAvail(k,ev,s.tested));const lost=hit.filter(Boolean).length,left=s.n-lost;
     const cfg=r.c<configAvail(s,ev);
     if(TL(s)){
@@ -330,7 +330,7 @@ function outcome(s,kind,e,r){
       const one=own.length===1,cnt=(n,w)=>n===1?(one?'your ':'a ')+w:`${n} ${w}s`;
       if(dG&&bG)text=`You lost ${cnt(dG,'device')} and ${cnt(bG,'backup')}, but every key can still be recovered. Replace what was lost soon.`;
       else if(bG)text=`You lost ${cnt(bG,'backup')}, but ${one?'the key is still on your device':'the keys are still on your devices'}. Make a new backup soon.`;
-      else if(dG)text=`You lost ${cnt(dG,'device')}, but ${dG===1?'its backup brings the key back':'the backups bring the keys back'}.`;
+      else if(dG)text=`You lost ${cnt(dG,'device')}, but ${dG===1?backupName(own.find(k=>real(k)&&gone(k.dloc)))+' brings the key back':'the backups bring the keys back'}.`;
     }
     if(e.dev&&ev.dead&&!TL(s)){const i=s.keys.indexOf(ev.dead),nm=s.n>1?`Key ${LETTERS[i]}’s device`:'Your device';
       text=bad?(s.n===1?'Your device died, and there was no working backup.':left<s.m?`${nm} died with no working backup, and that left too few keys.`:`${nm} died with no working backup, and without the wallet file you can’t use the keys that are left.`):hit[i]?`${nm} died with no working backup, but you can still spend with the other keys.`:`${nm} died, but its backup brought the key back.`}
@@ -349,13 +349,19 @@ function outcome(s,kind,e,r){
     else if(e.bugloss&&!bad)text=s.tested?'Your practice recovery already proved the backups restore.':'The devices still work, so you can move the coins before one fails.';
   }
   if(e.border)text=text.replace('The thief','They').replace('but needs','but need').replace('Nothing useful was taken.','They found nothing they could use.');
-  return{kind,hit,rhit,bad,text,why,tip,verdict:bad?(gone?'Coins lost':e.border?'Coins exposed':custodial(s)&&e.verdict?e.verdict:kind==='t'?'Coins stolen':'Coins lost'):'Coins safe'};
+  return{kind,hit,rhit,bad,dead,text,why,tip,verdict:bad?(gone?'Coins lost':e.border?'Coins exposed':custodial(s)&&e.verdict?e.verdict:kind==='t'?'Coins stolen':'Coins lost'):'Coins safe'};
+}
+// Names a key's backup exactly, so a result can say which thing saved you: "your paper recovery phrase backup at home".
+function backupName(k,capital){
+  const at=p=>p==='bank'?' in the bank box':p==='carry'?' in your pocket':' at '+PLAIN[p];
+  const n={paper:'your paper recovery phrase backup'+at(k.bloc),metal:'your steel recovery phrase backup'+at(k.bloc),memory:'the recovery phrase you memorized',cloud:'your recovery phrase backup in the cloud'}[k.backup]||'your backup';
+  return capital?n[0].toUpperCase()+n.slice(1):n;
 }
 function runDisaster(setups,id,lastId){
   const list=disasterList(setups);let pick=list.find(x=>x[1].id===id);
   if(!pick)do{pick=list[Math.floor(Math.random()*list.length)]}while(list.length>1&&pick[1].id===lastId);
   const kind=pick[0],e=pick[1],r={k:[0,0,0,0,0].map(()=>Math.random()),c:Math.random(),p:Math.random(),p2:Math.random(),kr:Math.random(),l:Math.random(),d:Math.random(),b:[0,0,0,0,0].map(()=>Math.random()),bk:Math.random(),bc:Math.random()};
-  return{id:e.id,icon:e.supply?'🚚':e.brand?'🐞':ICON[e.id],label:elabel(e,setups),kind,res:setups.map(s=>outcome(s,kind,e,r))};
+  return{id:e.id,ev:e,icon:e.supply?'🚚':e.brand?'🐞':ICON[e.id],label:elabel(e,setups),kind,res:setups.map(s=>outcome(s,kind,e,r))};
 }
 function scoreOf(s){return risk(s,brandEvents([s]))}
 function drivers(s){

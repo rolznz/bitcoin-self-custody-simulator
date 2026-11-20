@@ -7,6 +7,12 @@ reset();
 const $=id=>document.getElementById(id);
 const STEPS=['Start','Today','Build','Use it','Stress test'];
 const SHARE_URL='https://rolznz.github.io/bitcoin-self-custody-simulator/';
+// A random disaster for the map: one that can actually reach the current setup (the rest can still be picked from the
+// list), and never the same one twice running.
+function onMapPick(){
+  const all=disasterList([S.base]).map(x=>x[1]),can=all.filter(e=>touches(S.base,e)),from=(can.length?can:all).filter(e=>!S.dis||e.id!==S.dis.id);
+  return (from.length?from:all)[Math.floor(Math.random()*(from.length||all.length))].id;
+}
 const btc=s=>(s/SATS).toFixed(4).replace(/\.?0+$/,'')+' BTC';
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -127,7 +133,7 @@ function disasterCard(which,setups,d,title,hint){
       <span>${o.text}</span><span class="st lv-${o.bad?'high':'low'}">${o.verdict}</span></div></div>`};
   const t=S.tally;
   if(which==='today'){ // in the dialog on the Today screen: a grid of tiles to pick from, then the result
-    const head=(icon,text)=>`<div class="simhead"><span class="emo" aria-hidden="true">${icon}</span><h3>${text}</h3><button class="simx" data-act="simBase" aria-label="Close">×</button></div>`;
+    const head=(icon,text)=>`<div class="simhead"><span class="emo" aria-hidden="true">${icon}</span><h3>${text}</h3><button class="simx" data-act="simClose" aria-label="Close">×</button></div>`;
     if(d&&!S.simList)return head(d.icon,d.label)+`<div role="status" class="dcmp">${one(setups[0],d.res[0],'')}</div>
       <div class="rowb"><button class="btn small" id="dis-today" data-act="disaster" data-w="today">🎲 Throw another</button><button class="btn small ghost" data-act="simList">Back to the list</button></div>`;
     const icon=e=>e.supply?'🚚':e.brand?'🐞':ICON[e.id]||'⚠️';
@@ -173,10 +179,15 @@ function screenToday(){
   const tool=(attrs,on,icon,name,short)=>`<button class="maptool" ${attrs}${on==null?'':` aria-pressed="${on}"`} aria-label="${name}" title="${name}"><span aria-hidden="true">${icon}</span>${short}</button>`;
   const intro=S.mapIntro==='run',sc=scoreOf(S.base),word={low:'Low',mid:'Medium',high:'High'};
   const risk=(name,v)=>`<span><i style="background:${riskColor(v)}"></i>${name} <b>${word[level(v)]}</b></span>`;
+  // A disaster that can be shown on the map plays there, and its result is a bar over the map instead of a dialog.
+  const d=S.mapDis,o=d&&d.res[0];
+  const fx=d?{ev:d.ev,kind:d.kind,hit:o.hit,rhit:o.rhit,bad:o.bad,dead:o.dead,icon:d.icon}:null;
+  const result=fx?`<div class="mapresult ${o.bad?'bad':'ok'}" role="status"><b>${d.icon} ${d.label}</b><span>${o.text}</span><span class="st lv-${o.bad?'high':'low'}">${o.verdict}</span>
+      <div class="rowb"><button class="btn small" data-act="mapAnother">🎲 Another</button><button class="btn small ghost" data-act="simPick">Pick one</button><button class="btn small ghost" data-act="mapDisDone">Done</button></div></div>`:'';
   return `<h2 class="sr">Your setup today</h2>
-  <div class="mapcard${intro?' mapintro':''}">${SetupMap.svg(S.base)}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
+  <div class="mapcard${intro?' mapintro':''}">${SetupMap.svg(S.base,fx)}${result}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
     <button class="mapscore" data-act="scores" aria-label="Theft risk ${word[level(sc.theft)]}, loss risk ${word[level(sc.loss)]}. Open the scoreboard">${risk('Theft risk',sc.theft)}${risk('Loss risk',sc.loss)}</button>
-    <div class="maptools">${tool('data-act="help"',S.helpOpen,'❓','Help','Help')}${tool('data-act="simBase"',S.simBase,'🔥','Simulate a disaster','Try a disaster')}${tool('data-act="editBase"',S.editBase,'✏️','Edit current setup','Edit current setup')}<button class="maptool next" data-act="go" data-to="2"><span aria-hidden="true">🚀</span>Improve it →</button></div></div>`;
+    <div class="maptools">${tool('data-act="help"',S.helpOpen,'❓','Help','Help')}${tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster')}${tool('data-act="editBase"',S.editBase,'✏️','Edit current setup','Edit current setup')}<button class="maptool next" data-act="go" data-to="2"><span aria-hidden="true">🚀</span>Improve it →</button></div></div>`;
 }
 function screenBuild(){
   return `<h2>Build your new setup</h2>
@@ -391,7 +402,7 @@ function go(to){
   if(firstMap){mapIntroSeen=true;S.mapIntro='run';mapBeat=-1}
   if(to===0&&S.step!==0)startIntro(); // coming back to the first screen replays the car's entrance
   if(to!==1&&S.mapIntro==='run')S.mapIntro='done'; // leaving the map (by "Improve it", say) ends its introduction
-  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.helpOpen=false;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
+  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.helpOpen=false;S.mapDis=null;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
   if(firstMap)runMapIntro();
 }
 /* ---------- map introduction ---------- */
@@ -432,7 +443,7 @@ function paintMapIntro(arriving){
   // The arrow on the left of the caption goes back one step.
   if(!card.dataset.intro){card.dataset.intro=1;card.addEventListener('click',ev=>{
     if(ev.target.closest('.mapback'))return prevMapBeat();
-    if(!ev.target.closest('.maptap,.maptool'))nextMapBeat();
+    if(!ev.target.closest('.maptap,.maptool,.mapresult'))nextMapBeat();
   })}
 }
 function prevMapBeat(){
@@ -516,9 +527,13 @@ document.addEventListener('click',ev=>{
       else{const mn=v.split('-').map(Number);setShape(st,mn[0],mn[1])}
       st.tested=false;if(s==='mine')S.w.report=null}}
   if(a==='go'){if(b.classList.contains('cta')&&driveOff(()=>go(+b.dataset.to)))return;return go(+b.dataset.to)}
-  if(a==='reset'){reset();return go(0)}
+  if(a==='reset'){reset();startIntro();return go(0)} // "Start over" replays the car's entrance as well
   if(a==='editBase')S.editBase=!S.editBase;
-  if(a==='simBase'){S.simBase=!S.simBase;S.simList=true} // the dialog always opens on the list of disasters
+  // "Try a disaster" always throws a random one onto the map. Choosing a particular one comes afterwards, from the result.
+  if(a==='simBase'||a==='mapAnother')disaster('today',onMapPick());
+  if(a==='simPick'){S.simBase=true;S.simList=true}
+  if(a==='simClose')S.simBase=false;
+  if(a==='mapDisDone'){S.mapDis=null;render();if(S.mapIntro==='run')nextMapBeat();return} // during the onboarding, Done also moves on
   if(a==='help'){S.helpOpen=!S.helpOpen;S.helpMore=false}
   if(a==='helpMore')S.helpMore=!S.helpMore;
   if(a==='scores'){S.scoresOpen=!S.scoresOpen;S.scoresMore=false}
@@ -563,7 +578,10 @@ document.addEventListener('click',ev=>{
 });
 function changed(which){S.dis2=null;S.tally={n:0,a:0,b:0};if(which==='base')S.dis=null}
 function disaster(w,id){
-  if(w==='today'){S.dis=runDisaster([S.base],id,S.dis&&S.dis.id);S.simList=false}
+  if(w==='today'){
+    // Every disaster plays on the map, so the dialog (which is only the list to pick from) closes.
+    S.dis=S.mapDis=runDisaster([S.base],id,S.dis&&S.dis.id);S.simBase=false;
+  }
   else{S.dis2=runDisaster([S.base,S.mine],id,S.dis2&&S.dis2.id);const t=S.tally;t.n++;if(!S.dis2.res[0].bad)t.a++;if(!S.dis2.res[1].bad)t.b++}
 }
 document.addEventListener('change',ev=>{

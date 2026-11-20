@@ -2,6 +2,10 @@
 
 How the first screen works, and the plan it was built from.
 
+![The sketch the screen was based on](landing-reference.png)
+
+This is the sketch the screen was based on, not a picture of the result. The real screen is simpler and flatter, and the car is 3D.
+
 ## The idea
 
 The headline says "Take self-custody for a test drive", so the screen shows one. A car that is a hardware wallet on wheels, driven by a bitcoin coin with a face, drives in from behind the hills and pulls up in front of the player.

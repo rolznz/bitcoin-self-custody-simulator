@@ -119,7 +119,7 @@ const SetupMap=(()=>{
       const name={exchange:'Exchange',fintech:'Payment app',bank:'Bank or broker',etf:'ETF fund'}[s.type];
       d.company={name,items:[{t:'coins',role:'coins',loc:'company'}]};
       d.you.push({t:'login',role:'login',loc:'carry',mark:s.login==='app'?'lock':null});
-      d.head.push({label:name+' password',value:'*******',secret:'hunter2'});
+      d.head.push({label:name+' password',secret:'hunter2',dots:7});
       return d;
     }
     const keys=allKeys(s),several=s.m<s.n||TL(s);
@@ -128,14 +128,14 @@ const SetupMap=(()=>{
       if(isProv(k)){d.company=d.company||{name:'Provider',items:[]};d.company.items.push({t:'key',k:kk,role:'provkey',key:k,loc:'company'});return}
       if(k.device!=='none'){
         put(k.dloc,{t:{hw:'signer',phone:'phone',laptop:'laptop'}[k.device],k:kk,role:'device',key:k,mark:k.pin==='strong'?'lock':null});
-        if(k.pin!=='none')d.head.push({label:{hw:'Signer',phone:'Phone',laptop:'Laptop'}[k.device]+' unlock PIN',value:k.pin==='simple'?'1234':'8 digits',k:kk});
+        if(k.pin!=='none')d.head.push({label:{hw:'Signer',phone:'Phone',laptop:'Laptop'}[k.device]+' unlock PIN',secret:k.pin==='simple'?'1234':'31415926',dots:k.pin==='simple'?4:8,k:kk});
       }
       if(k.backup==='paper'||k.backup==='metal'){
         put(k.bloc,{t:k.backup==='paper'?'paper':'steel',k:kk,role:'backup',key:k,mark:s.tested?'tick':null});
         if(several&&s.config==='all')put(k.bloc,{t:'file',role:'file'});
-      }else if(k.backup==='memory')d.head.push({label:'Seed phrase',value:'never gonna give you… um',k:kk});
+      }else if(k.backup==='memory')d.head.push({label:'Seed phrase',secret:'never gonna give you… um',dots:12,k:kk});
       else if(k.backup==='cloud')d.cloud.push({t:'paper',k:kk,role:'backup',key:k,loc:'cloud'});
-      if(k.pass==='memory')d.head.push({label:'Wallet passphrase',value:'*******',secret:'hunter2',k:kk});
+      if(k.pass==='memory')d.head.push({label:'Wallet passphrase',secret:'hunter2',dots:7,k:kk});
       else if(k.pass==='written')put(k.ploc,{t:'note',k:kk,role:'pass',key:k});
     });
     if(several&&s.config==='one')put(s.cloc,{t:'file',role:'file'});
@@ -246,7 +246,8 @@ const SetupMap=(()=>{
   function card(o){
     const joke=text=>text?`<p class="mapjoke">${text}</p>`:'';
     if(o.spot)return `<h3>${SPOT_NAMES[o.spot]||o.name}</h3>`+joke(any(SPOT_JOKES[o.spot]));
-    if(o.head)return `<h3>Memorized</h3>`+o.head.map(l=>`<div class="maprow"><span>${kb(l.k)}${l.label}</span><span${l.secret?` data-secret="${l.secret}"`:''}>${l.value}</span></div>`).join('')+(o.head.some(l=>l.secret)?'<button class="btn small ghost" data-mapshow>Show it</button>':'')+joke('Also currently thinking about: '+any(THOUGHTS));
+    // Everything memorized is hidden behind dots. Clicking the dots shows that one; clicking again hides it.
+    if(o.head)return `<h3>Memorized</h3>`+o.head.map(l=>`<div class="maprow"><span>${kb(l.k)}${l.label}</span><button type="button" class="mapsecret" data-secret="${l.secret}" data-mask="${'•'.repeat(l.dots)}" aria-label="Show or hide">${'•'.repeat(l.dots)}</button></div>`).join('')+joke('Also currently thinking about: '+any(THOUGHTS));
     const head=`<h3>${NAMES[o.t]} ${kb(o.k)}</h3>${o.place?`<p>${o.place}</p>`:''}`;
     const list=(cls,num)=>`<div class="${cls}">${WORDS.map((w,i)=>`<div>${num?`<small>${i+1}. </small>`:''}${w}</div>`).join('')}</div>`;
     const jokes=joke(JOKES[o.t]&&any(JOKES[o.t]))+joke(PLACE_JOKES[o.loc]);
@@ -284,8 +285,8 @@ const SetupMap=(()=>{
   const PLACE_JOKES={bank:'Opening hours: never when you need it.',relative:'They think it’s a recipe.',friend:'They promised not to peek.',office:'In the drawer under the stapler.',cloud:'The cloud: just someone else’s computer.'};
   document.addEventListener('click',ev=>{
     // The card is a real dialog, so the dimmed backdrop covers the whole page. Esc, the button or a click outside closes it.
-    const dl=document.getElementById('mapitem'),tap=ev.target.closest('.maptap'),show=ev.target.closest('[data-mapshow]');
-    if(show){dl.querySelectorAll('[data-secret]').forEach(e=>e.textContent=e.dataset.secret);show.remove();return}
+    const dl=document.getElementById('mapitem'),tap=ev.target.closest('.maptap'),secret=ev.target.closest('.mapsecret');
+    if(secret){const shown=secret.classList.toggle('shown');secret.textContent=shown?secret.dataset.secret:secret.dataset.mask;return}
     if(ev.target===dl||ev.target.closest('[data-mapclose]')){dl.close();return}
     if(tap){dl.innerHTML=`<div class="mappop">${card(REG[+tap.dataset.i])}<button class="btn small" data-mapclose>Close</button></div>`;dl.showModal()}
   });

@@ -49,7 +49,8 @@ const THEFT=[
   {id:'t_carry',label:'Bag or phone stolen while out',w:.08,places:['carry'],takes:true},
   {id:'t_hot',label:'Malware on your phone or computer',w:.10,hot:true},
   {id:'t_cloud',label:'Cloud account hacked',w:.08,cloud:true},
-  {id:'t_duress',label:'Forced to hand over keys at home',w:.005,places:['home','carry'],duress:true},
+  // Deliberately not here: being forced, in person, to hand over keys. No setup is a real answer to that, so it is neither
+  // thrown as a disaster nor scored; the app would otherwise seem to promise one. See "There is no perfect setup" in ui.js.
   {id:'t_border',label:'Forced to unlock your devices at a border',w:.02,places:['carry'],border:true},
   {id:'t_phish',label:'Phishing: you type a seed into a fake website',w:.10,phish:true},
   {id:'t_lapse',label:'You forgot to update your wallet’s timelock',w:LAPSE,lapse:true},
@@ -473,7 +474,6 @@ const SAY={
   t_carry:['A stolen phone or bag alone doesn’t give a thief the coins.','A stolen phone or bag might be enough for a thief.','A stolen phone or bag can cost you everything.'],
   t_hot:['Malware on a phone or laptop can’t reach enough keys to spend.','Malware on your phone or laptop might reach enough keys.','Malware on your phone or laptop can take everything.'],
   t_cloud:['A hacked cloud account alone isn’t enough to spend.','A hacked cloud account might be enough to spend.','A hacked cloud account can take everything.'],
-  t_duress:['Someone forcing you at home can’t get enough keys on the spot.','Someone forcing you at home might get enough keys.','Someone forcing you at home can make you hand over everything.'],
   t_border:['Being forced to unlock your devices at a border doesn’t expose enough keys.','Being forced to unlock your devices at a border might expose enough keys.','If you’re forced to unlock your devices at a border, the coins are exposed.'],
   t_lapse:['If you forget to update the timelock, nobody else can reach the recovery key.','If you forget to update the timelock, someone who can reach the recovery key might use it.','If you forget to update the timelock, whoever holds the recovery key can take the coins.'],
   t_phish:['Being tricked into typing one seed into a fake website isn’t enough to steal from you.','If you’re tricked into typing your seed into a fake website, the coins are gone.','If you’re tricked into typing your seed into a fake website, the coins are gone.'],

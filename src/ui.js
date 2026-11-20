@@ -298,6 +298,10 @@ function perfectHTML(){
     <div><h3>What this simulator can’t score</h3>
       <ul class="plain"><li>A break in the maths itself, such as quantum computers that can work out a private key.</li><li>Bugs in bitcoin or in the wallet software everyone uses.</li><li>Bitcoin’s price. It swings a lot, and we don’t score that. We assume you’re holding for the long term and trust it to grow in value.</li><li>Anything nobody has thought of yet.</li></ul>
       <p class="hint" style="margin-top:6px">More keys don’t help with any of these. Every key in a 3-of-5 relies on the same maths, so a break that exposes one key can expose them all.</p></div>
+    <div><h3>Some things no setup protects against</h3>
+      <p>If someone threatens you in person to get your bitcoin, nothing in this simulator is a solution, and we won’t pretend otherwise. That is why it isn’t one of the disasters here.</p>
+      <p>The most anyone can do is lower the odds of being singled out, so take your privacy seriously:</p>
+      <ul class="plain"><li>Don’t brag about owning bitcoin, online or in person, and don’t say how much.</li><li>Don’t wear obvious bitcoin clothing or accessories in public.</li><li>Be careful about giving your name and home address to bitcoin-related companies. Customer lists get leaked.</li><li>Think about where bitcoin hardware is delivered, and who can see it arrive.</li></ul></div>
     <div><h3>Stay able to move</h3>
       <p>If bitcoin ever needs a new kind of address, for example a quantum-safe one, you would have to move your coins while there is still time. So keep an eye on the news, and keep a setup you can actually operate: keys you can reach, backups you have tested, secrets you still remember.</p></div>
     <div><h3>Even the best setup can go wrong</h3>
@@ -603,7 +607,7 @@ function changed(which){S.dis2=null;S.tally={n:0,a:0,b:0};if(which==='base')S.di
 const TAGLINE={
   t_home:'They even took the kitchen sink.',t_office:'The cleaner found something interesting.',t_rel:'“I was just looking for the Wi-Fi password.”',t_friend:'“I was just looking for the Wi-Fi password.”',
   t_bank:'An inside job.',t_carry:'Yoink.',t_hot:'You downloaded more RAM.',t_cloud:'hunter2 was not a strong password.',
-  t_duress:'The $5 wrench attack.',t_border:'Papers, please.',t_phish:'Your wallet urgently needs to be “validated”.',t_lapse:'You had one job.',
+  t_border:'Papers, please.',t_phish:'Your wallet urgently needs to be “validated”.',t_lapse:'You had one job.',
   t_guess:'correct horse battery staple',t_app:'It’s not a bug, it’s a feature.',t_brand:'It’s not a bug, it’s a feature.',t_supply:'It fell off the back of a truck.',
   t_prov:'“We take your security very seriously.”',t_provapp:'Automatic updates: what could go wrong?',t_prov2:'“We take your security very seriously.”',
   c_acct:'New phone, who dis?',c_hack:'“We take your security very seriously.”',c_freeze:'Withdrawals are temporarily paused.',c_frozen:'Computer says no.',c_rules:'It’s for your own protection.',

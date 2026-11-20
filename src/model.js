@@ -15,7 +15,7 @@ const PINS={none:'None',simple:'Simple',strong:'Strong'};
 const PASSES={none:'None',memory:'Memorized',written:'Written down'};
 const CONFIGS={none:'Only in the wallet app',one:'One extra copy',all:'A copy with every seed backup'};
 const ENTS={device:'The device or app',dice:'Device plus your dice rolls',diceonly:'Your dice rolls only',words:'Words you picked yourself'};
-const LETTERS='ABCDE';
+const LETTERS='12345'; // keys are numbered, so they can't be mistaken for brands A, B, C
 
 function newKey(){return{device:'hw',brand:'A',dloc:'home',pin:'simple',backup:'paper',bloc:'home',pass:'none',ploc:'home',ent:'device',net:'online',pstr:'simple',conn:'usb'}}
 function provKey(d){return Object.assign(newKey(),{device:d||'prov',backup:'none',brand:d==='prov2'?'B':'A'})}

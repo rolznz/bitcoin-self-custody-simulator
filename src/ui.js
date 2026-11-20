@@ -2,7 +2,7 @@
 /* ---------- state ---------- */
 const SATS=1e8;
 let S;
-function reset(){S={step:0,base:presetSetup('hot'),mine:null,editBase:false,open:{},conf:{before:null,after:null},note:'',custom:{},picked:{mine:false},dis:null,dis2:null,tally:{n:0,a:0,b:0},w:{old:SATS,vault:0,log:[],tx:null,receipt:null,report:null,done:{}}}}
+function reset(){S={step:0,base:presetSetup('hot'),mine:null,editBase:false,simBase:false,open:{},conf:{before:null,after:null},note:'',custom:{},picked:{mine:false},dis:null,dis2:null,tally:{n:0,a:0,b:0},w:{old:SATS,vault:0,log:[],tx:null,receipt:null,report:null,done:{}}}}
 reset();
 const $=id=>document.getElementById(id);
 const STEPS=['Start','Today','Build','Use it','Stress test'];
@@ -125,6 +125,15 @@ function disasterCard(which,setups,d,title,hint){
       <div class="dkeys"${(s.n===1&&!TL(s))||custodial(s)?' hidden':''}>${s.keys.map((k,i)=>`<span class="dk${o.hit[i]?' hit':''}"><span class="tok" style="--kc:var(--k${i})">${LETTERS[i]}</span>${word[o.hit[i]?0:1]}</span>`).join('')}${o.rhit==null?'':`<span class="dk${o.rhit?' hit':''}"><span class="tok" style="--kc:var(--base-bar)">R</span>${word[o.rhit?0:1]}</span>`}</div>
       <span>${o.text}</span><span class="st lv-${o.bad?'high':'low'}">${o.verdict}</span></div></div>`};
   const t=S.tally;
+  if(which==='today'){ // in the dialog on the Today screen: a grid of tiles to pick from, then the result
+    const head=(icon,text)=>`<div class="simhead"><span class="emo" aria-hidden="true">${icon}</span><h3>${text}</h3><button class="simx" data-act="simBase" aria-label="Close">×</button></div>`;
+    if(d&&!S.simList)return head(d.icon,d.label)+`<div role="status" class="dcmp">${one(setups[0],d.res[0],'')}</div>
+      <div class="rowb"><button class="btn small" id="dis-today" data-act="disaster" data-w="today">🎲 Throw another</button><button class="btn small ghost" data-act="simList">Back to the list</button></div>`;
+    const icon=e=>e.supply?'🚚':e.brand?'🐞':ICON[e.id]||'⚠️';
+    const tiles=k=>`<div class="dtiles">${list.filter(x=>x[0]===k).map(x=>`<button type="button" class="dtile" data-act="disaster" data-w="today" data-id="${x[1].id}"><span aria-hidden="true">${icon(x[1])}</span>${elabel(x[1],setups)}</button>`).join('')}</div>`;
+    return head('🔥',title)+`<button class="btn dsurprise" id="dis-today" data-act="disaster" data-w="today">🎲 Surprise me</button>
+      <h4>Theft</h4>${tiles('t')}<h4>Loss</h4>${tiles('l')}`;
+  }
   return `<div class="card"><h3>${title}</h3><p class="hint">${hint}</p>
     <div class="dctl"><button class="btn small${which==='today'?' outline':''}" id="dis-${which}" data-act="disaster" data-w="${which}">${d?'Another random one':'Random disaster'}</button><span class="hint">or</span>
       <details class="dmenu" id="pick-${which}"><summary aria-label="Pick a disaster">Pick one</summary><div class="dlist"><h4>Theft</h4>${opts('t')}<h4>Loss</h4>${opts('l')}</div></details></div>
@@ -158,12 +167,11 @@ function startFrom(){
   return `<div class="rowb"><span class="hint">Start from</span>${[['hot','Phone wallet'],['laptop','Laptop wallet'],['typical','Hardware wallet'],['exchange','Exchange'],['fintech','Payment app'],['bank','Bank or broker'],['etf','ETF'],['m23','2-of-3 on your own'],['prov','2-of-3 with a provider'],['prov5','3-of-5 with a provider']].map(([p,l])=>`<button class="btn ghost small" data-act="preset" data-w="base" data-p="${p}">${l}</button>`).join('')}</div>`;
 }
 function screenToday(){
+  // The map shows the setup. Its two buttons open the disaster panel and the edit form, each in a dialog (see render).
+  const tool=(act,on,icon,name,short)=>`<button class="maptool" data-act="${act}" aria-pressed="${on}" aria-label="${name}" title="${name}"><span aria-hidden="true">${icon}</span>${short}</button>`;
+  const intro=S.mapIntro==='run';
   return `<h2>Your setup today</h2>
-  <p class="lede">We’ve started you with a typical one. Your new setup gets compared with it.</p>
-  
-  <div class="card"><div class="setuphead">${setupList(S.base)}<button class="link" data-act="editBase">${S.editBase?'Done':'Change'}</button></div></div>
-  ${S.editBase?editor('base'):''}
-  ${disasterCard('today',[S.base],S.dis,'What could go wrong?','Throw a disaster at this setup.')}
+  <div class="mapcard${intro?' mapintro':''}">${SetupMap.svg(S.base)}${intro?'<button type="button" class="mapcap"></button>':''}<div class="maptools">${tool('simBase',S.simBase,'🔥','Simulate a disaster','Try a disaster')}${tool('editBase',S.editBase,'✏️','Edit this setup','Change it')}</div></div>
   <div><button class="btn" data-act="go" data-to="2">Build a new setup</button></div>`;
 }
 function screenBuild(){
@@ -334,11 +342,49 @@ function render(){
   document.body.classList.toggle('landing',S.step===0);
   $('reset').hidden=S.step===0;
   $('score').innerHTML=scoreboard(R);
+  // the disaster dialog, opened by the fire button on the map
+  const sim=$('sim');
+  if(S.simBase&&S.step===1){
+    sim.innerHTML=`<div class="simbody">${disasterCard('today',[S.base],S.dis,'What could go wrong?','')}</div>`;
+    if(!sim.open)sim.showModal();
+    sim.scrollTop=0;
+  }else if(sim.open)sim.close();
+  // the edit dialog, opened by the pencil button on the map. It is redrawn on every change, so keep its scroll position.
+  const ed=$('edit');
+  if(S.editBase&&S.step===1){
+    const y=ed.scrollTop;
+    ed.innerHTML=`<div class="simbody"><div class="simhead"><span class="emo" aria-hidden="true">✏️</span><h3>Change this setup</h3><button class="simx" data-act="editBase" aria-label="Close">×</button></div>${editor('base')}<div><button class="btn" data-act="editBase">Done</button></div></div>`;
+    if(!ed.open)ed.showModal();
+    ed.scrollTop=y;
+  }else if(ed.open)ed.close();
   if(act&&$(act))$(act).focus();
 }
 function go(to){
   if(to>1&&!S.mine)S.mine=clone(S.base);
-  S.step=to;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
+  const firstMap=to===1&&!mapIntroSeen&&!calm;
+  if(firstMap){mapIntroSeen=true;S.mapIntro='run'}
+  S.step=to;S.simBase=false;S.editBase=false;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
+  if(firstMap)runMapIntro();
+}
+/* ---------- map introduction ---------- */
+// The first time the map is shown it builds itself: you, then each thing you own, with a caption for each.
+// Each caption waits for a click or tap, so nobody is rushed. It plays once per page load and never under reduced motion.
+let mapIntroSeen=false;
+function runMapIntro(){
+  const card=document.querySelector('.mapcard.mapintro');if(!card)return;
+  const cap=card.querySelector('.mapcap'),beats=SetupMap.beats();let i=-1;
+  const next=()=>{
+    if(++i>=beats.length){ // done: show the finished map and its two buttons
+      S.mapIntro='done';card.removeEventListener('click',next);cap.remove();
+      card.classList.remove('mapintro');card.classList.add('mapfresh');return;
+    }
+    const b=beats[i];
+    if(b.steps.length)card.querySelectorAll(b.steps.map(s=>`[data-step="${s}"]`).join(',')).forEach(e=>e.classList.add('in'));
+    cap.innerHTML=`${esc(b.text)}<span aria-hidden="true">▸</span>`;cap.setAttribute('aria-label',b.text+' Continue');
+    cap.classList.remove('in');void cap.offsetWidth;cap.classList.add('in');
+  };
+  setTimeout(next,350);
+  card.addEventListener('click',()=>{if(i>=0)next()});
 }
 function resize(st,n){
   n=Math.max(1,Math.min(5,n));
@@ -416,6 +462,8 @@ document.addEventListener('click',ev=>{
   if(a==='go'){if(b.classList.contains('cta')&&driveOff(()=>go(+b.dataset.to)))return;return go(+b.dataset.to)}
   if(a==='reset'){reset();return go(0)}
   if(a==='editBase')S.editBase=!S.editBase;
+  if(a==='simBase'){S.simBase=!S.simBase;S.simList=true} // the dialog always opens on the list of disasters
+  if(a==='simList')S.simList=true;
   if(a==='conf'){S.conf[b.dataset.which]=+b.dataset.n}
   if(a==='preset'&&b.dataset.w==='base')S.base=presetSetup(b.dataset.p);
   else if(a==='preset'){const p=b.dataset.p;
@@ -451,7 +499,7 @@ document.addEventListener('click',ev=>{
 });
 function changed(which){S.dis2=null;S.tally={n:0,a:0,b:0};if(which==='base')S.dis=null}
 function disaster(w,id){
-  if(w==='today')S.dis=runDisaster([S.base],id,S.dis&&S.dis.id);
+  if(w==='today'){S.dis=runDisaster([S.base],id,S.dis&&S.dis.id);S.simList=false}
   else{S.dis2=runDisaster([S.base,S.mine],id,S.dis2&&S.dis2.id);const t=S.tally;t.n++;if(!S.dis2.res[0].bad)t.a++;if(!S.dis2.res[1].bad)t.b++}
 }
 document.addEventListener('change',ev=>{
@@ -465,6 +513,10 @@ document.addEventListener('change',ev=>{
   render();
 });
 $('how').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.currentTarget.close()});
+$('sim').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.currentTarget.close()});
+$('sim').addEventListener('close',()=>{if(S.simBase){S.simBase=false;render()}}); // Esc or a click outside
+$('edit').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.currentTarget.close()});
+$('edit').addEventListener('close',()=>{if(S.editBase){S.editBase=false;render()}});
 document.addEventListener('toggle',ev=>{const d=ev.target;if(d.dataset&&d.dataset.d)S.open[d.dataset.d]=d.open;
   if(d.classList&&d.classList.contains('dmenu')&&d.open)d.querySelector('.dlist').scrollIntoView({block:'nearest'})},true);
 // The disaster menu closes on a click outside it or on Escape.

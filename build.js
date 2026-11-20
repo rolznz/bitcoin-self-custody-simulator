@@ -9,10 +9,11 @@ const src = path.join(__dirname, 'src');
 const out = path.join(__dirname, 'index.html');
 const read = (file) => fs.readFileSync(path.join(src, file), 'utf8');
 
-// Embed each font that the CSS refers to as a data URI.
+// Embed each font and image that the CSS refers to as a data URI.
+const mime = { woff2: 'font/woff2', png: 'image/png' };
 const css = (file) =>
-  read(file).replace(/url\((fonts\/[\w-]+\.woff2)\)/g, (_, font) =>
-    `url(data:font/woff2;base64,${fs.readFileSync(path.join(src, font)).toString('base64')})`);
+  read(file).replace(/url\(((?:fonts|img)\/[\w-]+\.(woff2|png))\)/g, (_, asset, ext) =>
+    `url(data:${mime[ext]};base64,${fs.readFileSync(path.join(src, asset)).toString('base64')})`);
 
 const html = read('index.html')
   .replace(/<link rel="stylesheet" href="([^"]+)">\n/g, (_, file) => `<style>\n${css(file)}</style>\n`)

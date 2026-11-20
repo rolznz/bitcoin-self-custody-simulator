@@ -1,6 +1,6 @@
 # Notes for agents
 
-The app ships as one self-contained file, `index.html`, built from `src/`. See [PURPOSE.md](PURPOSE.md) for what it is for.
+The app ships as one self-contained file, `index.html`, built from `src/`. See [PURPOSE.md](PURPOSE.md) for what it is for and [LANDING.md](LANDING.md) for how the first screen works.
 
 ## Where things are
 
@@ -16,3 +16,4 @@ The app ships as one self-contained file, `index.html`, built from `src/`. See [
 - Edit `src/`, never `index.html`. Run `node build.js` after every change and commit `index.html` with the source. `node build.js --check` tells you whether it is current.
 - Don't read or print `index.html`: half of it is base64 font data.
 - `index.html` must stay self-contained: no network requests, no external files.
+- Never ask the user about their real bitcoin: where it is, how much they have, or how they hold it. Stating that nothing is sent or saved does not help; the question itself makes people suspicious. Offer pretend setups to pick from ("Pick a setup to start with") instead of asking them to describe their own ("Where is your bitcoin today?").

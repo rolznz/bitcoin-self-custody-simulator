@@ -10,6 +10,7 @@
   --primary:#5438F0; --on-primary:#FFFFFF; --base-bar:#A7A4CB;
   --k0:#FFB81F; --k1:#FF6B93; --k2:#19C29D; --k3:#9A82FF; --k4:#45A9FF; --tok-ink:#1B1840;
   --low:#17A865; --yel:#E0B400; --mid:#F07F00; --high:#EF5350; --shade:#000;
+  --sky:#8CCBFF; --sky2:#D4EEFF; --sun:#FFB81F; --cloud:#FFFFFF; --cloud2:#DDEEFF; --g1:#C6F06A; --g2:#3CC98C; --road1:#55507F; --road2:#2B2850; --bush:#2FA364; --bush2:#5CC66C; --bush3:#7FD877; --m1:#7FA6EA; --m2:#A9C4F4; --sea1:#56B6F0; --sea2:#C2E8FF; --wood:#C98A4B; --wood2:#9A6A3A; --bird:#3B4C7A; --night:0;
   --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
   --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
   box-sizing:border-box;
@@ -21,6 +22,7 @@
     --bg:#131129; --surface:#1E1B42; --soft:#28245A; --ink:#F1EFFF; --muted:#ACA8D8; --line:#37327A;
     --primary:#9C8AFF; --on-primary:#131129; --base-bar:#625E96;
     --low:#3DDC84; --yel:#FFE066; --mid:#FFA23D; --high:#FF6B6B; --shade:#fff;
+    --sky:#0C1030; --sky2:#1B2560; --sun:#EDEBFF; --cloud:#2C3478; --cloud2:#242B66; --g1:#1C8663; --g2:#0A4F44; --road1:#25224F; --road2:#0C0B22; --bush:#083F37; --bush2:#0D5647; --bush3:#136A56; --m1:#182058; --m2:#202A6A; --sea1:#16307A; --sea2:#1C3F8C; --wood:#5B4636; --wood2:#3E3026; --bird:#8E9AD0; --night:1;
   }
 }
 :root[data-theme="dark"]{
@@ -28,6 +30,7 @@
   --bg:#131129; --surface:#1E1B42; --soft:#28245A; --ink:#F1EFFF; --muted:#ACA8D8; --line:#37327A;
   --primary:#9C8AFF; --on-primary:#131129; --base-bar:#625E96;
   --low:#3DDC84; --yel:#FFE066; --mid:#FFA23D; --high:#FF6B6B; --shade:#fff;
+  --sky:#0C1030; --sky2:#1B2560; --sun:#EDEBFF; --cloud:#2C3478; --cloud2:#242B66; --g1:#1C8663; --g2:#0A4F44; --road1:#25224F; --road2:#0C0B22; --bush:#083F37; --bush2:#0D5647; --bush3:#136A56; --m1:#182058; --m2:#202A6A; --sea1:#16307A; --sea2:#1C3F8C; --wood:#5B4636; --wood2:#3E3026; --bird:#8E9AD0; --night:1;
 }
 *,*::before,*::after{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -265,6 +268,105 @@ footer button{background:none;border:0;text-decoration:underline;cursor:pointer;
   .cell::before{content:attr(data-who);display:block;font-size:.75rem;color:var(--muted)}
 }
 @media (max-width:380px){.key select{padding:8px 6px;font-size:.86rem}.key{padding:12px}}
+/* ---------- landing scene ---------- */
+#scene{display:none}
+body.landing{overflow-x:clip;background:linear-gradient(var(--sky),var(--sky2) 62%) no-repeat var(--sky2)}
+.landing body::before,body.landing::before{background:var(--sky)}
+.btn.cta{font-size:1.15rem;padding:15px 28px;border:3px solid var(--ink);box-shadow:0 6px 0 var(--ink);transition:transform .12s,box-shadow .12s}
+.btn.cta:hover{transform:translateY(-2px);box-shadow:0 8px 0 var(--ink)}
+.btn.cta:active{transform:translateY(5px);box-shadow:0 1px 0 var(--ink)}
+.landing .wrap{min-height:100svh;display:flex;flex-direction:column;padding-bottom:0}
+.landing .grid{position:relative;z-index:1}
+.landing #scene{display:block;position:relative;flex:1;min-height:260px;width:100vw;margin:0 0 0 calc(50% - 50vw);pointer-events:none}
+#scene svg{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible}
+.landing footer{position:relative;isolation:isolate;margin:0;padding:14px 0 16px;color:#F1EFFF}
+.landing footer::before{content:"";position:absolute;z-index:-1;top:-1px;bottom:0;left:calc(50% - 50vw);width:100vw;background:var(--road2)}
+.sc-night{opacity:var(--night)}.sc-day{opacity:calc(1 - var(--night))}
+/* ---------- landing car: flat panels in 3D, see buildCar() in ui.js ---------- */
+#scene{isolation:isolate}
+#scene .sc-front{z-index:2}
+#sc-carbox{position:absolute;left:0;right:0;bottom:0;height:200vh;overflow:hidden;z-index:3;pointer-events:none}
+#car3d{position:absolute;left:50%;bottom:0;width:0;height:0;transform:scale(var(--s,1))}
+#car3d div{position:absolute}
+#sc-mover,#sc-persp,#car3d .g{left:0;top:0;width:0;height:0}
+#sc-mover{transform:translate(0px,-104px) scale(.8)}
+#sc-persp{perspective:1600px}
+#car3d .g{transform-style:preserve-3d}
+#sc-tilt{transform:rotateX(-8deg)}
+#car3d .pl svg{display:block;width:100%;height:100%}
+/* ---------- landing entrance: plays once while body has .intro ---------- */
+/* The car waits out of sight behind the front hill, then jumps over the crest and lands. Units are the drawing's, measured
+   from its bottom centre. Each clip is 3s long but starts 1.35s in, so the whole entrance takes 1.65s. */
+.landing .stage>*{transition:opacity .5s,transform .5s}
+.intro.landing .stage>*{opacity:0;transform:translateY(10px);pointer-events:none}
+.intro #sc-carbox{animation:sc-layer 3s -1.35s both}
+.intro #sc-mover{animation:sc-move 3s -1.35s linear both}
+.intro #sc-yaw{animation:sc-yaw 3s -1.35s linear both}
+.intro #sc-pitch{animation:sc-pitch 3s -1.35s both}
+.intro #car3d .sc-spin{animation:sc-spin .45s linear infinite}
+.intro #sc-shadow{animation:sc-shadow 3s -1.35s both;transform-origin:600px 500px}
+.intro .sc-dust{animation:sc-dust 3s -1.35s both}
+@keyframes sc-layer{0%,70%{z-index:1}70.1%,100%{z-index:3}}
+@keyframes sc-move{0%,55%{transform:translate(0px,150px) scale(.56);animation-timing-function:cubic-bezier(.2,.7,.3,1)}70%{transform:translate(0px,-178px) scale(.74);animation-timing-function:cubic-bezier(.5,0,.9,.5)}80%{transform:translate(0px,-104px) scale(.8)}84%{transform:translate(0px,-104px) scale(.86,.71)}90%{transform:translate(0px,-104px) scale(.775,.84)}95%{transform:translate(0px,-104px) scale(.81,.785)}100%{transform:translate(0px,-104px) scale(.8)}}
+@keyframes sc-yaw{0%,80%{transform:rotateY(0deg)}85%{transform:rotateY(5deg)}93%{transform:rotateY(-2deg)}100%{transform:rotateY(0deg)}}
+@keyframes sc-pitch{0%,55%{transform:rotateX(16deg)}70%{transform:rotateX(0deg)}79%{transform:rotateX(-9deg)}85%{transform:rotateX(4deg)}100%{transform:rotateX(0deg)}}
+@keyframes sc-spin{to{transform:rotateX(-360deg)}}
+@keyframes sc-shadow{0%,70%{opacity:0;transform:scale(.5)}80%{opacity:.3;transform:scale(1)}84%{transform:scale(1.08)}100%{opacity:.3;transform:scale(1)}}
+@keyframes sc-dust{0%,79%{opacity:0;transform:scale(.2)}88%{opacity:1;transform:scale(1.2)}100%{opacity:1;transform:scale(1)}}
+/* ---------- landing: text ---------- */
+.scribble{position:relative;white-space:nowrap}
+.scribble svg{position:absolute;left:-2%;top:88%;width:104%;overflow:visible;pointer-events:none}
+.scribble path{fill:none;stroke:#F47B20;stroke-width:5;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:0}
+#car3d .pl{pointer-events:auto;cursor:pointer}
+.sc-dust{opacity:0}
+.sc-boat{transform:translate(calc((var(--x0) + var(--x1))/2),var(--y)) scale(var(--s))}
+.sc-birds{opacity:0}
+/* ---------- landing: everything that moves once the car has landed. None of it runs under reduced motion. ---------- */
+@media (prefers-reduced-motion:no-preference){
+  .scribble path{animation:sc-draw .45s ease-out .35s both}.scribble path+path{animation-delay:.75s}
+  .intro .scribble path{animation:none;stroke-dashoffset:1}
+  /* the car: engine running, a slow sway, the coin blinking, glancing about and waving now and then */
+  body:not(.intro) #sc-pitch{animation:sc-bob .5s ease-in-out infinite alternate}
+  body:not(.intro) #sc-yaw{animation:sc-sway 7s ease-in-out infinite alternate}
+  .c3-blink{transform-box:fill-box;transform-origin:center;animation:sc-blink 4.2s infinite}
+  .c3-look{animation:sc-look 11s ease-in-out infinite}
+  body:not(.intro) #car3d .c3-wave{animation:sc-wave 9s ease-in-out 2.5s infinite}
+  .landed .sc-dust{animation:sc-dust-away 1.8s ease-out both}
+  /* tap the car: a hop. Hover the button: it revs and the coin looks over. */
+  #sc-mover.hop{animation:sc-hop .7s both}
+  #sc-mover.hop .sc-spin,body:has(.cta:hover) #car3d .sc-spin,.leaving #car3d .sc-spin{animation:sc-spin .4s linear infinite}
+  body:has(.cta:hover):not(.intro) #sc-pitch{animation-duration:.14s}
+  body:has(.cta:hover) .c3-look{animation:none;transform:translate(-7px,-3px)}
+  /* "Get started": it drives off toward you */
+  .leaving #sc-mover{animation:sc-leave .62s cubic-bezier(.5,0,.9,.4) both}
+  .leaving .stage>*{opacity:0;transform:translateY(-10px)}
+  /* the sky and the sea */
+  .sc-cloud{animation:sc-drift var(--d) ease-in-out infinite alternate}
+  body:not(.intro) #sc-rays{animation:sc-turn 300s linear infinite} /* barely moving, and not at all until the car has landed */
+  .sc-glint{animation:sc-glint 4s ease-in-out var(--t) infinite}
+  .sc-boat{animation:sc-sail var(--d) linear var(--t) infinite}
+  .sc-birds{animation:sc-fly var(--d) linear var(--t) infinite}
+  /* a light breeze: each tree leans a degree or so from the foot of its trunk */
+  .sc-tree{transform-origin:0 36px;animation:sc-lean var(--d) ease-in-out var(--t) infinite alternate}
+  .sc-tuft{animation:sc-lean 3.2s ease-in-out var(--t,0s) infinite alternate;--lean:5deg}
+  .sc-flap{transform-box:fill-box;transform-origin:center;animation:sc-flap .5s ease-in-out var(--t,0s) infinite alternate}
+}
+@keyframes sc-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes sc-bob{from{transform:translateY(0)}to{transform:translateY(-3px)}}
+@keyframes sc-sway{from{transform:rotateY(-4deg)}to{transform:rotateY(4deg)}}
+@keyframes sc-blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+@keyframes sc-look{0%,38%,62%,88%,100%{transform:translate(0,0)}44%,56%{transform:translate(-6px,1px)}68%,82%{transform:translate(6px,-1px)}}
+@keyframes sc-wave{0%,62%,100%{transform:rotateZ(0deg) rotateX(0deg)}68%{transform:rotateZ(20deg) rotateX(107deg)}73%{transform:rotateZ(36deg) rotateX(107deg)}78%{transform:rotateZ(8deg) rotateX(107deg)}83%{transform:rotateZ(36deg) rotateX(107deg)}88%{transform:rotateZ(8deg) rotateX(107deg)}93%{transform:rotateZ(20deg) rotateX(107deg)}}
+@keyframes sc-dust-away{from{opacity:1;transform:scale(1)}to{opacity:0;transform:translate(calc(var(--dx)*46px),-14px) scale(1.5)}}
+@keyframes sc-hop{0%,100%{transform:translate(0px,-104px) scale(.8)}40%{transform:translate(0px,-172px) scale(.78,.82);animation-timing-function:cubic-bezier(.5,0,.9,.5)}66%{transform:translate(0px,-104px) scale(.8)}76%{transform:translate(0px,-104px) scale(.85,.73)}88%{transform:translate(0px,-104px) scale(.785,.82)}}
+@keyframes sc-leave{0%{transform:translate(0px,-104px) scale(.8)}18%{transform:translate(0px,-98px) scale(.76,.84)}100%{transform:translate(0px,330px) scale(3.4)}}
+@keyframes sc-drift{from{transform:translateX(0)}to{transform:translateX(var(--x))}}
+@keyframes sc-turn{to{transform:rotate(360deg)}}
+@keyframes sc-glint{0%,100%{opacity:.2}50%{opacity:1}}
+@keyframes sc-sail{from{transform:translate(var(--x0),var(--y)) scale(var(--s))}to{transform:translate(var(--x1),var(--y)) scale(var(--s))}}
+@keyframes sc-fly{0%{opacity:1;transform:translate(var(--x0),var(--y0))}45%{opacity:1;transform:translate(var(--x1),var(--y1))}45.1%,100%{opacity:0;transform:translate(var(--x1),var(--y1))}}
+@keyframes sc-lean{from{transform:rotate(calc(var(--lean,1.3deg)*-1))}to{transform:rotate(var(--lean,1.3deg))}}
+@keyframes sc-flap{from{transform:scaleY(1)}to{transform:scaleY(-.5)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}.die{animation:none!important}}
 /* Embedded fonts (latin subset, variable, SIL Open Font License 1.1), so the page makes no network requests.
    Bricolage Grotesque: github.com/ateliertriay/bricolage · Figtree: github.com/erikdkennedy/figtree */
@@ -275,12 +377,74 @@ footer button{background:none;border:0;text-decoration:underline;cursor:pointer;
 <body>
 <div class="wrap">
   <div class="top">
-    <div class="brand"><i><b style="background:var(--k0)"></b><b style="background:var(--k1)"></b><b style="background:var(--k2)"></b></i>Self-custody simulator</div>
+    <div class="brand"><i><b style="background:var(--k0)"></b><b style="background:var(--k1)"></b><b style="background:var(--k2)"></b></i>Bitcoin Self-custody simulator</div>
     <ol class="steps" id="steps"></ol>
   </div>
   <div class="grid">
     <main class="stage" id="stage"></main>
     <aside class="score" id="score" aria-live="polite"></aside>
+  </div>
+  <div id="scene" aria-hidden="true">
+    <svg viewBox="0 150 1200 450" preserveAspectRatio="xMidYMax slice">
+      <defs>
+        <linearGradient id="sc-gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--g1)"/><stop offset="1" style="stop-color:var(--g2)"/></linearGradient><linearGradient id="sc-gr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--road1)"/><stop offset="1" style="stop-color:var(--road2)"/></linearGradient><linearGradient id="sc-gs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sea1)"/><stop offset="1" style="stop-color:var(--sea2)"/></linearGradient>
+        
+        <clipPath id="sc-cm"><path d="M620 600C700 470 860 432 1000 420S1200 402 1260 398V600Z"/></clipPath>
+      </defs>
+      <!-- sky: stars at night, the sun with its rays (the moon at night), clouds -->
+      <g class="sc-night" fill="#EDEBFF">
+        <circle cx="590" cy="190" r="3"/><circle cx="700" cy="150" r="2"/><circle cx="1010" cy="150" r="3"/><circle cx="1090" cy="282" r="2"/>
+        <circle cx="1160" cy="170" r="2"/><circle cx="470" cy="300" r="2"/><circle cx="40" cy="330" r="2"/><circle cx="990" cy="300" r="2"/>
+      </g>
+      <g transform="translate(900 232)">
+        <g class="sc-day" id="sc-rays" fill="#FFFDF0"><g opacity=".75"><path transform="rotate(0)" d="M-7 -78L0 -135L7 -78Z"/><path transform="rotate(20)" d="M-7 -78L0 -170L7 -78Z"/><path transform="rotate(40)" d="M-7 -78L0 -135L7 -78Z"/><path transform="rotate(60)" d="M-7 -78L0 -170L7 -78Z"/><path transform="rotate(80)" d="M-7 -78L0 -135L7 -78Z"/><path transform="rotate(100)" d="M-7 -78L0 -170L7 -78Z"/><path transform="rotate(120)" d="M-7 -78L0 -135L7 -78Z"/><path transform="rotate(140)" d="M-7 -78L0 -170L7 -78Z"/><path transform="rotate(160)" d="M-7 -78L0 -135L7 -78Z"/><path transform="rotate(180)" d="M-7 -78L0 -170L7 -78Z"/><path transform="rotate(200)" d="M-7 -78L0 -135L7 -78Z"/><path transform="rotate(220)" d="M-7 -78L0 -170L7 -78Z"/><path transform="rotate(240)" d="M-7 -78L0 -135L7 -78Z"/><path transform="rotate(260)" d="M-7 -78L0 -170L7 -78Z"/><path transform="rotate(280)" d="M-7 -78L0 -135L7 -78Z"/><path transform="rotate(300)" d="M-7 -78L0 -170L7 -78Z"/><path transform="rotate(320)" d="M-7 -78L0 -135L7 -78Z"/><path transform="rotate(340)" d="M-7 -78L0 -170L7 -78Z"/></g></g>
+        <circle r="96" fill="#fff" opacity=".28"/><circle r="64" fill="var(--sun)"/><circle class="sc-day" cx="-10" cy="-12" r="44" fill="#FFD95A"/>
+      </g>
+      <g class="sc-cloud" style="--d:46s;--x:34px"><g transform="translate(690 208) scale(1.05)"><g fill="var(--cloud)"><rect width="150" height="32" rx="16"/><circle cx="40" cy="0" r="26"/><circle cx="84" cy="-12" r="36"/><circle cx="120" cy="4" r="22"/></g><rect x="14" y="20" width="122" height="12" rx="6" fill="var(--cloud2)"/></g></g><g class="sc-cloud" style="--d:60s;--x:-28px"><g transform="translate(1030 196) scale(0.9)"><g fill="var(--cloud)"><rect width="150" height="32" rx="16"/><circle cx="40" cy="0" r="26"/><circle cx="84" cy="-12" r="36"/><circle cx="120" cy="4" r="22"/></g><rect x="14" y="20" width="122" height="12" rx="6" fill="var(--cloud2)"/></g></g><g class="sc-cloud" style="--d:38s;--x:22px"><g transform="translate(170 330) scale(0.6)"><g fill="var(--cloud)"><rect width="150" height="32" rx="16"/><circle cx="40" cy="0" r="26"/><circle cx="84" cy="-12" r="36"/><circle cx="120" cy="4" r="22"/></g><rect x="14" y="20" width="122" height="12" rx="6" fill="var(--cloud2)"/></g></g><g class="sc-cloud" style="--d:52s;--x:-18px"><g transform="translate(1010 318) scale(0.42)"><g fill="var(--cloud)"><rect width="150" height="32" rx="16"/><circle cx="40" cy="0" r="26"/><circle cx="84" cy="-12" r="36"/><circle cx="120" cy="4" r="22"/></g><rect x="14" y="20" width="122" height="12" rx="6" fill="var(--cloud2)"/></g></g>
+      <!-- distant mountains and the sea -->
+      <g fill="var(--m2)"><path d="M-60 400C40 352 110 340 190 356S330 372 420 400Z"/><path d="M760 400C850 330 930 318 1010 344S1150 320 1260 350V400Z"/></g>
+      <g fill="var(--m1)"><path d="M120 400C220 366 300 360 370 374S470 386 540 400Z"/><path d="M640 400C720 372 790 364 860 374S1010 352 1100 366S1220 380 1260 384V400Z"/></g>
+      <rect x="-60" y="394" width="1320" height="110" fill="url(#sc-gs)"/>
+      <g fill="none" stroke="#fff" stroke-width="2.500" stroke-linecap="round" opacity=".7"><path class="sc-glint" style="--t:0s" d="M470 412h44"/><path class="sc-glint" style="--t:-1.4s" d="M500 424h26"/><path class="sc-glint" style="--t:-2.6s" d="M560 408h30"/><path class="sc-glint" style="--t:-0.8s" d="M700 416h40"/><path class="sc-glint" style="--t:-3.1s" d="M730 430h22"/><path class="sc-glint" style="--t:-2s" d="M860 410h34"/></g>
+      <!-- sailboats crossing the sea, and birds crossing the sky -->
+      <g class="sc-boat" style="--x0:300px;--x1:1010px;--y:409px;--s:1;--d:90s;--t:-12s"><g transform="scale(1 1)"><path d="M-13 0H13L8 7H-8Z" fill="#F4F1EA"/><path d="M-1 -2V-22L-12 -2Z" fill="#fff"/><path d="M2 -2V-17L10 -2Z" fill="#FFD84D"/></g></g><g class="sc-boat" style="--x0:1010px;--x1:300px;--y:402px;--s:0.6;--d:130s;--t:-70s"><g transform="scale(-1 1)"><path d="M-13 0H13L8 7H-8Z" fill="#F4F1EA"/><path d="M-1 -2V-22L-12 -2Z" fill="#fff"/><path d="M2 -2V-17L10 -2Z" fill="#FF6B93"/></g></g><g class="sc-boat" style="--x0:300px;--x1:1010px;--y:419px;--s:1.25;--d:70s;--t:-45s"><g transform="scale(1 1)"><path d="M-13 0H13L8 7H-8Z" fill="#F4F1EA"/><path d="M-1 -2V-22L-12 -2Z" fill="#fff"/><path d="M2 -2V-17L10 -2Z" fill="#9AD4FF"/></g></g><g class="sc-boat" style="--x0:1010px;--x1:300px;--y:413px;--s:0.8;--d:110s;--t:-20s"><g transform="scale(-1 1)"><path d="M-13 0H13L8 7H-8Z" fill="#F4F1EA"/><path d="M-1 -2V-22L-12 -2Z" fill="#fff"/><path d="M2 -2V-17L10 -2Z" fill="#fff"/></g></g>
+      <g fill="none" stroke="var(--bird)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <g class="sc-birds" style="--x0:-40px;--y0:330px;--x1:1240px;--y1:286px;--d:26s;--t:3s"><path class="sc-flap" style="--t:0s" transform="translate(0 0) scale(1.60)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/><path class="sc-flap" style="--t:-0.2s" transform="translate(26 12) scale(1.28)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/></g><g class="sc-birds" style="--x0:1240px;--y0:300px;--x1:-40px;--y1:322px;--d:34s;--t:9s"><path class="sc-flap" style="--t:-0.1s" transform="translate(0 0) scale(1.44)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/><path class="sc-flap" style="--t:-0.3s" transform="translate(-24 10) scale(1.12)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/><path class="sc-flap" style="--t:0s" transform="translate(-30 -12) scale(1.20)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/></g><g class="sc-birds" style="--x0:-40px;--y0:300px;--x1:1240px;--y1:330px;--d:30s;--t:15s"><path class="sc-flap" style="--t:-0.25s" transform="translate(0 0) scale(1.12)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/></g><g class="sc-birds" style="--x0:1240px;--y0:340px;--x1:-40px;--y1:296px;--d:38s;--t:21s"><path class="sc-flap" style="--t:0s" transform="translate(0 0) scale(1.36)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/><path class="sc-flap" style="--t:-0.15s" transform="translate(22 -10) scale(1.04)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/><path class="sc-flap" style="--t:-0.35s" transform="translate(40 6) scale(1.12)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/><path class="sc-flap" style="--t:-0.05s" transform="translate(58 -6) scale(0.96)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/></g>
+      </g>
+      <g></g>
+      <!-- green shore: a low hill on the left, and on the right the hill the road comes round -->
+      <path fill="url(#sc-gg)" d="M-60 600V452C80 418 300 424 480 476V600Z"/>
+      <path fill="url(#sc-gg)" d="M620 600C700 470 860 432 1000 420S1200 402 1260 398V600Z"/>
+      <g clip-path="url(#sc-cm)">
+        <path fill="url(#sc-gr)" d="M690 512C820 468 1000 432 1210 410V440C1090 452 1010 478 960 544Z"/>
+        <g fill="none" stroke="#EFEAFB"><path stroke-width="3" d="M716 510C832 472 1004 438 1210 415"/><path stroke-width="3" d="M942 540C996 478 1084 449 1210 435"/>
+        <path stroke-width="5" stroke-dasharray="20 22" d="M825 528C879 495 947 471 1029 453"/><path stroke-width="3" stroke-dasharray="11 13" stroke-dashoffset="-12" d="M1029 453C1084 441 1144 432 1210 425"/></g>
+      </g>
+    </svg>
+    <!-- the car is built from flat panels in 3D by buildCar() in ui.js -->
+    <div id="sc-carbox"><div id="car3d"><div id="sc-mover"><div id="sc-persp"><div class="g" id="sc-tilt"><div class="g" id="sc-yaw"><div class="g" id="sc-pitch"></div></div></div></div></div></div></div>
+    <svg class="sc-front" viewBox="0 150 1200 450" preserveAspectRatio="xMidYMax slice">
+      <!-- trees and a fence on the left, a mound and trees on the right -->
+      <g transform="translate(40 418) scale(1.5)"><g class="sc-tree" style="--d:6.5s;--t:0s"><rect x="-6" y="-10" width="12" height="46" rx="5" fill="var(--wood2)"/><g fill="var(--bush)"><circle cx="-26" cy="-22" r="26"/><circle cx="24" cy="-18" r="28"/><circle cx="0" cy="-48" r="30"/></g><g fill="var(--bush2)"><circle cx="-14" cy="-40" r="22"/><circle cx="16" cy="-36" r="20"/><circle cx="-2" cy="-62" r="20"/></g><circle cx="-8" cy="-60" r="13" fill="var(--bush3)"/></g></g><g transform="translate(128 424) scale(1.15)"><g class="sc-tree" style="--d:5.2s;--t:-2.1s"><rect x="-6" y="-10" width="12" height="46" rx="5" fill="var(--wood2)"/><g fill="var(--bush)"><circle cx="-26" cy="-22" r="26"/><circle cx="24" cy="-18" r="28"/><circle cx="0" cy="-48" r="30"/></g><g fill="var(--bush2)"><circle cx="-14" cy="-40" r="22"/><circle cx="16" cy="-36" r="20"/><circle cx="-2" cy="-62" r="20"/></g><circle cx="-8" cy="-60" r="13" fill="var(--bush3)"/></g></g><g transform="translate(222 440) scale(0.8)"><g class="sc-tree" style="--d:4.4s;--t:-3.3s"><rect x="-6" y="-10" width="12" height="46" rx="5" fill="var(--wood2)"/><g fill="var(--bush)"><circle cx="-26" cy="-22" r="26"/><circle cx="24" cy="-18" r="28"/><circle cx="0" cy="-48" r="30"/></g><g fill="var(--bush2)"><circle cx="-14" cy="-40" r="22"/><circle cx="16" cy="-36" r="20"/><circle cx="-2" cy="-62" r="20"/></g><circle cx="-8" cy="-60" r="13" fill="var(--bush3)"/></g></g>
+      <path fill="url(#sc-gg)" d="M-60 600V440C60 425 220 440 330 478S440 540 470 600Z"/>
+      <g fill="var(--wood)"><rect x="12" y="408" width="8" height="32" rx="3"/><rect x="66" y="408" width="8" height="32" rx="3"/><rect x="119" y="410" width="8" height="32" rx="3"/><rect x="171" y="415" width="8" height="32" rx="3"/><rect x="221" y="423" width="8" height="32" rx="3"/><rect x="266" y="433" width="8" height="32" rx="3"/><rect x="309" y="446" width="8" height="32" rx="3"/></g>
+      <g fill="none" stroke="var(--wood)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M-30 417L16 415L70 415L123 417L175 422L225 430L270 440L313 453"/><path d="M-30 428L16 426L70 426L123 428L175 433L225 441L270 451L313 464"/></g>
+      <g transform="translate(1170 436) scale(1.2)"><g class="sc-tree" style="--d:5.8s;--t:-1.2s"><rect x="-6" y="-10" width="12" height="46" rx="5" fill="var(--wood2)"/><g fill="var(--bush)"><circle cx="-26" cy="-22" r="26"/><circle cx="24" cy="-18" r="28"/><circle cx="0" cy="-48" r="30"/></g><g fill="var(--bush2)"><circle cx="-14" cy="-40" r="22"/><circle cx="16" cy="-36" r="20"/><circle cx="-2" cy="-62" r="20"/></g><circle cx="-8" cy="-60" r="13" fill="var(--bush3)"/></g></g><g transform="translate(1100 452) scale(0.75)"><g class="sc-tree" style="--d:4.8s;--t:-4s"><rect x="-6" y="-10" width="12" height="46" rx="5" fill="var(--wood2)"/><g fill="var(--bush)"><circle cx="-26" cy="-22" r="26"/><circle cx="24" cy="-18" r="28"/><circle cx="0" cy="-48" r="30"/></g><g fill="var(--bush2)"><circle cx="-14" cy="-40" r="22"/><circle cx="16" cy="-36" r="20"/><circle cx="-2" cy="-62" r="20"/></g><circle cx="-8" cy="-60" r="13" fill="var(--bush3)"/></g></g>
+      <path fill="url(#sc-gg)" d="M1260 600V452C1180 446 1080 470 1020 520S960 590 950 600Z"/>
+      <g transform="translate(1150 500) scale(1.1)"><g fill="var(--bush)"><circle cx="-20" r="20"/><circle cx="18" cy="-2" r="22"/></g><g fill="var(--bush2)"><circle cx="-2" cy="-12" r="18"/></g></g><g transform="translate(60 520) scale(1.2)"><g fill="var(--bush)"><circle cx="-20" r="20"/><circle cx="18" cy="-2" r="22"/></g><g fill="var(--bush2)"><circle cx="-2" cy="-12" r="18"/></g></g><g transform="translate(1056 512) scale(0.6)"><g fill="var(--bush)"><circle cx="-20" r="20"/><circle cx="18" cy="-2" r="22"/></g><g fill="var(--bush2)"><circle cx="-2" cy="-12" r="18"/></g></g>
+      <!-- the front hill: the road comes over its crest and widens toward you -->
+      <path fill="url(#sc-gg)" d="M0 600V524C200 492 420 470 600 468S1000 492 1200 524V600Z"/>
+      <path fill="url(#sc-gr)" d="M428 474Q600 460 772 474Q900 505 1200 600H0Q300 505 428 474Z"/>
+      <g fill="#EFEAFB">
+        <path d="M446 475Q330 507 52 600H96Q346 507 458 475Z"/><path d="M754 475Q870 507 1148 600H1104Q854 507 742 475Z"/>
+        <path d="M596 478H604L605 490H595Z"/><path d="M594 504H606L608 528H592Z"/><path d="M590 548H610L614 592H586Z"/>
+      </g>
+      <g transform="translate(342 492)"><rect x="-8" y="-36" width="16" height="42" rx="6" fill="#F4F1EA"/><rect x="-8" y="-14" width="16" height="20" rx="6" fill="#DAD5CB"/><rect x="-4" y="-30" width="8" height="10" rx="3" fill="#EF5350"/></g><g transform="translate(858 492)"><rect x="-8" y="-36" width="16" height="42" rx="6" fill="#F4F1EA"/><rect x="-8" y="-14" width="16" height="20" rx="6" fill="#DAD5CB"/><rect x="-4" y="-30" width="8" height="10" rx="3" fill="#EF5350"/></g>
+      <g fill="none" stroke="var(--bush)" stroke-width="5" stroke-linecap="round"><path class="sc-tuft" style="transform-origin:150px 532px" d="M150 532q-4 -14 -10 -20M150 532q0 -16 4 -24M150 532q6 -12 14 -16"/><path class="sc-tuft" style="transform-origin:1060px 536px;--t:-1.3s" d="M1060 536q-4 -14 -10 -20M1060 536q0 -16 4 -24M1060 536q6 -12 14 -16"/></g>
+      <!-- the car's shadow, and dust -->
+      <ellipse id="sc-shadow" cx="600" cy="500" rx="150" ry="13" fill="#000" opacity=".3"/>
+      <g class="sc-dust" style="transform-origin:470px 500px;--dx:-1"><g transform="translate(452 462) scale(1.15)"><g fill="#F3DFBE"><circle cx="4" cy="6" r="30"/><circle cx="-34" cy="12" r="20"/></g><g fill="#FFF3DC"><circle r="28"/><circle cx="-30" cy="6" r="20"/><circle cx="28" cy="8" r="18"/><circle cx="-6" cy="-22" r="18"/><circle cx="-52" cy="14" r="12"/></g></g></g><g class="sc-dust" style="transform-origin:730px 500px;--dx:1"><g transform="translate(1200 0) scale(-1 1)"><g transform="translate(452 462) scale(1.15)"><g fill="#F3DFBE"><circle cx="4" cy="6" r="30"/><circle cx="-34" cy="12" r="20"/></g><g fill="#FFF3DC"><circle r="28"/><circle cx="-30" cy="6" r="20"/><circle cx="28" cy="8" r="18"/><circle cx="-6" cy="-22" r="18"/><circle cx="-52" cy="14" r="12"/></g></g></g></g>
+    </svg>
   </div>
   <footer>
     <span>Pretend coins only. Scores are rough estimates, not advice. <button data-act="perfect">There is no perfect setup</button>.</span>
@@ -1020,10 +1184,9 @@ function confButtons(which){
 
 /* ---------- screens ---------- */
 function screenStart(){
-  return `<h1>Take self-custody for a test drive</h1>
-  <p class="lede">Wherever your bitcoin is today, on an exchange, in an app, at a bank or on your own keys, build a pretend setup and see how it compares.</p>
+  return `<h1>Take self-custody for a <span class="scribble">test drive<svg viewBox="0 0 260 26" aria-hidden="true"><path pathLength="1" d="M5 9C58 3 150 2 255 7"/><path pathLength="1" d="M22 20C84 14 168 14 240 18"/></svg></span></h1>
   <p><span class="pill">🔒 Runs in your browser. Nothing you pick is sent or saved.</span></p>
-  <div><button class="btn" data-act="go" data-to="1">Get started</button></div>`;
+  <div><button class="btn cta" data-act="go" data-to="1">Get started</button></div>`;
 }
 function disasterCard(which,setups,d,title,hint){
   const list=disasterList(setups),names=setups.length>1?['Before','Now']:[''];
@@ -1239,6 +1402,7 @@ function render(){
   $('steps').innerHTML=STEPS.map((s,i)=>`<li><button data-act="go" data-to="${i}" ${i===S.step?'aria-current="step"':''}><span class="no">${i+1}. </span>${s}</button></li>`).join('');
   $('stage').innerHTML=[screenStart,screenToday,screenBuild,screenUse,()=>screenStress(R)][S.step]();
   document.querySelector('.grid').classList.toggle('solo',S.step===0);
+  document.body.classList.toggle('landing',S.step===0);
   $('reset').hidden=S.step===0;
   $('score').innerHTML=scoreboard(R);
   if(act&&$(act))$(act).focus();
@@ -1320,7 +1484,7 @@ document.addEventListener('click',ev=>{
       if(v==='phone'||v==='laptop'||v==='hw'){const n=presetSetup(v==='phone'?'hot':v==='laptop'?'laptop':'typical');st.keys=n.keys;st.n=1;st.m=1}
       else{const mn=v.split('-').map(Number);setShape(st,mn[0],mn[1])}
       st.tested=false;if(s==='mine')S.w.report=null}}
-  if(a==='go')return go(+b.dataset.to);
+  if(a==='go'){if(b.classList.contains('cta')&&driveOff(()=>go(+b.dataset.to)))return;return go(+b.dataset.to)}
   if(a==='reset'){reset();return go(0)}
   if(a==='editBase')S.editBase=!S.editBase;
   if(a==='conf'){S.conf[b.dataset.which]=+b.dataset.n}
@@ -1379,6 +1543,116 @@ document.addEventListener('click',ev=>{document.querySelectorAll('.dmenu[open]')
 document.addEventListener('keydown',ev=>{if(ev.key!=='Escape')return;const d=document.querySelector('.dmenu[open]');if(d){d.open=false;d.querySelector('summary').focus()}});
 document.addEventListener('input',ev=>{if(ev.target.id==='note'){S.note=ev.target.value}});
 render();
+/* ---------- landing car ---------- */
+// The car is built from flat panels placed in 3D, so it can be seen from any angle.
+// x is right, y is down, z is toward the viewer. The origin is the road under the middle of the car.
+function buildCar(root){
+  const plane=(parent,w,h,transform,css,html)=>{
+    const d=document.createElement('div');d.className='pl';
+    d.style.cssText=`width:${w}px;height:${h}px;left:${-w/2}px;top:${-h/2}px;transform:${transform};${css||''}`;
+    if(html)d.innerHTML=html;parent.appendChild(d);return d;
+  };
+  const group=(parent,transform)=>{const d=document.createElement('div');d.className='g';if(transform)d.style.transform=transform;parent.appendChild(d);return d};
+  const mix=(a,b,t)=>'#'+[1,3,5].map(i=>Math.round(parseInt(a.substr(i,2),16)*(1-t)+parseInt(b.substr(i,2),16)*t).toString(16).padStart(2,'0')).join('');
+  // Outline of a rounded rectangle, clockwise from the top left.
+  const roundRect=(w,h,r,n)=>{
+    const pts=[],arc=(cx,cy,a0)=>{for(let i=0;i<=n;i++){const a=a0+Math.PI/2*i/n;pts.push([cx+r*Math.cos(a),cy+r*Math.sin(a)])}};
+    arc(w/2-r,-h/2+r,-Math.PI/2);arc(w/2-r,h/2-r,0);arc(-w/2+r,h/2-r,Math.PI/2);arc(-w/2+r,-h/2+r,Math.PI);return pts;
+  };
+  const circle=(r,n)=>Array.from({length:n},(_,i)=>[r*Math.cos(2*Math.PI*i/n),r*Math.sin(2*Math.PI*i/n)]);
+  // Side walls of an outline pushed out along z: one strip per edge, lighter on top, darker underneath.
+  const wallsZ=(parent,pts,cy,zc,depth,light,dark)=>pts.forEach((p,i)=>{
+    const q=pts[(i+1)%pts.length],dx=q[0]-p[0],dy=q[1]-p[1],L=Math.hypot(dx,dy);if(L<.01)return;
+    plane(parent,L+1,depth,`translate3d(${(p[0]+q[0])/2}px,${cy+(p[1]+q[1])/2}px,${zc}px) rotateZ(${Math.atan2(dy,dx)}rad) rotateX(90deg)`,`background:${mix(light,dark,(1-dx/L)/2)}`);
+  });
+
+  /* body: an orange pill 352 wide, 156 tall, 290 long */
+  const W=352,H=156,D=290,BY=-150;
+  plane(root,W,H,`translate3d(0,${BY}px,${D/2}px)`,'',`<svg viewBox="-176 -78 352 156">
+    <defs><linearGradient id="c3-o" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFA033"/><stop offset=".5" stop-color="#F47B20"/><stop offset="1" stop-color="#DE6410"/></linearGradient>
+    <linearGradient id="c3-c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD95A"/><stop offset="1" stop-color="#FFB81F"/></linearGradient>
+    <linearGradient id="c3-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9AD4FF"/><stop offset="1" stop-color="#3F97E6"/></linearGradient></defs>
+    <rect x="-176" y="-78" width="352" height="156" rx="74" fill="url(#c3-o)"/>
+    <path d="M-120 -64h240" stroke="#FFC078" stroke-width="7" stroke-linecap="round" opacity=".8"/>
+    <rect x="-176" y="-26" width="20" height="50" rx="10" fill="#FFD84D"/><rect x="156" y="-26" width="20" height="50" rx="10" fill="#FFD84D"/>
+    <g class="sc-night"><g fill="#FFE9A0" opacity=".3"><circle cx="-150" cy="-1" r="30"/><circle cx="150" cy="-1" r="30"/></g></g>
+    <rect x="-104" y="-58" width="148" height="110" rx="14" fill="#1B1840"/><rect x="-88" y="-42" width="116" height="18" rx="5" fill="#F47B20"/>
+    <g fill="#FFF4E0"><rect x="-88" y="-12" width="74" height="10" rx="5"/><rect x="-88" y="12" width="100" height="10" rx="5"/>
+    <rect x="72" y="-50" width="56" height="24" rx="11"/><rect x="72" y="-16" width="56" height="24" rx="11"/><rect x="72" y="18" width="56" height="24" rx="11"/></g></svg>`);
+  plane(root,W,H,`translate3d(0,${BY}px,${-D/2}px) rotateY(180deg)`,'',`<svg viewBox="-176 -78 352 156">
+    <rect x="-176" y="-78" width="352" height="156" rx="74" fill="#D9620F"/>
+    <rect x="-170" y="-22" width="16" height="44" rx="8" fill="#EF5350"/><rect x="154" y="-22" width="16" height="44" rx="8" fill="#EF5350"/>
+    <rect x="-26" y="26" width="52" height="18" rx="9" fill="#1B1840"/></svg>`);
+  wallsZ(root,roundRect(W,H,74,7),BY,0,D,'#FFB04A','#B94E08');
+
+  /* wheels: four cylinders, each in a group that spins about its axle */
+  const R=50,TW=58,N=12,hub='<svg viewBox="-50 -50 100 100"><circle r="23" fill="#FFF4E0"/><g fill="#C9C2B0"><circle r="6"/><circle cy="-14" r="3.5"/><circle cx="12" cy="7" r="3.5"/><circle cx="-12" cy="7" r="3.5"/></g></svg>';
+  for(const sx of[-1,1])for(const sz of[-1,1]){
+    const w=group(group(root,`translate3d(${sx*130}px,${-R}px,${sz*92}px)`));w.classList.add('sc-spin');
+    for(let i=0;i<N;i++){
+      const a=2*Math.PI*i/N,b=2*Math.PI*(i+1)/N,y1=R*Math.cos(a),z1=R*Math.sin(a),y2=R*Math.cos(b),z2=R*Math.sin(b);
+      plane(w,TW,Math.hypot(y2-y1,z2-z1)+1,`translate3d(0,${(y1+y2)/2}px,${(z1+z2)/2}px) rotateX(${Math.atan2(z2-z1,y2-y1)}rad)`,`background:${i%2?'#1B1840':'#2B2756'}`);
+    }
+    for(const side of[-1,1])plane(w,2*R,2*R,`translate3d(${side*TW/2}px,0,0) rotateY(90deg)`,'border-radius:50%;background:#1B1840',side===sx?hub:'');
+  }
+
+  /* the coin: a thick disc with a face on the front and a bitcoin mark on the back */
+  const CY=-296,CZ=-30,CR=64,CT=18;
+  plane(root,2*CR,2*CR,`translate3d(0,${CY}px,${CZ+CT/2}px)`,'',`<svg viewBox="-64 -64 128 128">
+    <circle r="64" fill="url(#c3-c)"/><circle r="55" fill="none" stroke="#F2A900" stroke-width="3" opacity=".6"/>
+    <g class="c3-look"><g class="c3-blink"><ellipse cx="-22" cy="-12" rx="8" ry="11" fill="#1B1840"/><ellipse cx="22" cy="-12" rx="8" ry="11" fill="#1B1840"/>
+    <circle cx="-19" cy="-17" r="3.2" fill="#fff"/><circle cx="25" cy="-17" r="3.2" fill="#fff"/></g></g>
+    <circle cx="-40" cy="10" r="10" fill="#FF6B93" opacity=".75"/><circle cx="40" cy="10" r="10" fill="#FF6B93" opacity=".75"/>
+    <path d="M-14 12Q-7 22 0 13Q7 22 14 12" fill="none" stroke="#1B1840" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`);
+  plane(root,2*CR,2*CR,`translate3d(0,${CY}px,${CZ-CT/2}px) rotateY(180deg)`,'',`<svg viewBox="-64 -64 128 128"><circle r="64" fill="#F2A900"/><circle r="50" fill="none" stroke="#FFCB3D" stroke-width="5"/>
+    <g fill="#FFCB3D"><rect x="-10" y="-36" width="6" height="72" rx="3"/><rect x="2" y="-36" width="6" height="72" rx="3"/><path d="M-20 -28H8Q26 -28 26 -15Q26 -3 12 -1Q30 1 30 14Q30 28 10 28H-20Z"/></g></svg>`);
+  wallsZ(root,circle(CR,20),CY,CZ,CT,'#F8B21A','#D58E00');
+
+  /* steering wheel (a tilted ring), arms and hands, roll bar, side glass */
+  for(let k=0;k<4;k++)plane(root,128,128,`translate3d(0,-236px,30px) rotateX(62deg) translateZ(${k*4-6}px)`,'','<svg viewBox="-64 -64 128 128"><circle r="55" fill="none" stroke="#1B1840" stroke-width="14"/></svg>'); // stacked rings, so it has some thickness
+  // Arms: each hangs from a shoulder on the coin's edge and reaches forward to the wheel. Arm and hand are crossed
+  // panels so they show from any side. The arm on the viewer's right swings up from its shoulder to wave.
+  for(const sx of[-1,1]){
+    const arm=group(group(root,`translate3d(${sx*52}px,-262px,-21px)`));if(sx>0)arm.classList.add('c3-wave');
+    const dx=sx*2,dy=18,dz=57,L=Math.hypot(dx,dy,dz),aim=`translate3d(${dx/2}px,${dy/2}px,${dz/2}px) rotateY(${Math.atan2(-dz,dx)}rad) rotateZ(${Math.asin(dy/L)}rad)`;
+    for(const rx of[0,90])plane(arm,L,15,`${aim} rotateX(${rx}deg)`,'border-radius:7px;background:#F5A800');
+    for(const r of['','rotateY(90deg)','rotateX(90deg)'])plane(arm,36,36,`translate3d(${dx}px,${dy}px,${dz}px) ${r}`,'border-radius:50%;background:#FFB81F'); // three discs: round from every side
+  }
+  plane(root,180,86,'translate3d(0,-262px,-96px)','','<svg viewBox="-90 -43 180 86"><path d="M-84 43V-18Q-84 -37 -66 -37H66Q84 -37 84 -18V43" fill="none" stroke="#1B1840" stroke-width="12" stroke-linecap="round"/></svg>');
+  for(const sx of[-1,1]){
+    plane(root,68,88,`translate3d(${sx*124}px,-270px,-20px) scaleX(${-sx})`,'','<svg viewBox="-34 -44 68 88"><path d="M-30 44L-8 -30Q-2 -44 12 -40L24 -36Q34 -32 32 -20L24 44Z" fill="url(#c3-b)"/></svg>');
+    plane(root,90,62,`translate3d(${sx*124}px,-257px,-20px) rotateY(90deg)`,'border-radius:12px 26px 0 0;background:linear-gradient(#9AD4FF,#3F97E6);opacity:.6');
+  }
+}
+buildCar($('sc-pitch'));
+// One unit of the drawing in pixels, so the car layer can match the painted scene at any window size.
+new ResizeObserver(([e])=>{const r=e.contentRect;if(r.width)e.target.style.setProperty('--s',Math.max(r.width/1200,r.height/450))}).observe($('scene'));
+/* ---------- landing entrance ---------- */
+// The car jumps in once per page load. A click or tap skips to the end. Skipped entirely under reduced motion.
+const calm=matchMedia('(prefers-reduced-motion:reduce)').matches,introStart=performance.now();
+function endIntro(){
+  if(!document.body.classList.contains('intro'))return;
+  document.body.classList.remove('intro');
+  if(performance.now()-introStart>1000)document.body.classList.add('landed'); // it did land, so let the dust drift away
+}
+if(!calm){
+  document.body.classList.add('intro');
+  setTimeout(endIntro,1650);
+  addEventListener('pointerdown',endIntro,{once:true});
+}
+// Tap the car and it hops.
+$('car3d').addEventListener('click',()=>{
+  const m=$('sc-mover');if(calm||m.classList.contains('hop')||document.body.classList.contains('leaving'))return;
+  m.classList.add('hop');setTimeout(()=>m.classList.remove('hop'),700);
+});
+// "Get started": the car drives off toward you, then the next screen opens. Returns false if there is nothing to play.
+function driveOff(then){
+  const c=document.body.classList;
+  if(calm||!c.contains('landing'))return false;
+  if(c.contains('leaving'))return true;
+  c.add('leaving');setTimeout(()=>{then();c.remove('leaving')},620);
+  return true;
+}
 </script>
 </body>
 </html>

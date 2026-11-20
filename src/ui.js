@@ -113,10 +113,9 @@ function confButtons(which){
 
 /* ---------- screens ---------- */
 function screenStart(){
-  return `<h1>Take self-custody for a test drive</h1>
-  <p class="lede">Wherever your bitcoin is today, on an exchange, in an app, at a bank or on your own keys, build a pretend setup and see how it compares.</p>
+  return `<h1>Take self-custody for a <span class="scribble">test drive<svg viewBox="0 0 260 26" aria-hidden="true"><path pathLength="1" d="M5 9C58 3 150 2 255 7"/><path pathLength="1" d="M22 20C84 14 168 14 240 18"/></svg></span></h1>
   <p><span class="pill">🔒 Runs in your browser. Nothing you pick is sent or saved.</span></p>
-  <div><button class="btn" data-act="go" data-to="1">Get started</button></div>`;
+  <div><button class="btn cta" data-act="go" data-to="1">Get started</button></div>`;
 }
 function disasterCard(which,setups,d,title,hint){
   const list=disasterList(setups),names=setups.length>1?['Before','Now']:[''];
@@ -332,6 +331,7 @@ function render(){
   $('steps').innerHTML=STEPS.map((s,i)=>`<li><button data-act="go" data-to="${i}" ${i===S.step?'aria-current="step"':''}><span class="no">${i+1}. </span>${s}</button></li>`).join('');
   $('stage').innerHTML=[screenStart,screenToday,screenBuild,screenUse,()=>screenStress(R)][S.step]();
   document.querySelector('.grid').classList.toggle('solo',S.step===0);
+  document.body.classList.toggle('landing',S.step===0);
   $('reset').hidden=S.step===0;
   $('score').innerHTML=scoreboard(R);
   if(act&&$(act))$(act).focus();
@@ -413,7 +413,7 @@ document.addEventListener('click',ev=>{
       if(v==='phone'||v==='laptop'||v==='hw'){const n=presetSetup(v==='phone'?'hot':v==='laptop'?'laptop':'typical');st.keys=n.keys;st.n=1;st.m=1}
       else{const mn=v.split('-').map(Number);setShape(st,mn[0],mn[1])}
       st.tested=false;if(s==='mine')S.w.report=null}}
-  if(a==='go')return go(+b.dataset.to);
+  if(a==='go'){if(b.classList.contains('cta')&&driveOff(()=>go(+b.dataset.to)))return;return go(+b.dataset.to)}
   if(a==='reset'){reset();return go(0)}
   if(a==='editBase')S.editBase=!S.editBase;
   if(a==='conf'){S.conf[b.dataset.which]=+b.dataset.n}
@@ -472,3 +472,113 @@ document.addEventListener('click',ev=>{document.querySelectorAll('.dmenu[open]')
 document.addEventListener('keydown',ev=>{if(ev.key!=='Escape')return;const d=document.querySelector('.dmenu[open]');if(d){d.open=false;d.querySelector('summary').focus()}});
 document.addEventListener('input',ev=>{if(ev.target.id==='note'){S.note=ev.target.value}});
 render();
+/* ---------- landing car ---------- */
+// The car is built from flat panels placed in 3D, so it can be seen from any angle.
+// x is right, y is down, z is toward the viewer. The origin is the road under the middle of the car.
+function buildCar(root){
+  const plane=(parent,w,h,transform,css,html)=>{
+    const d=document.createElement('div');d.className='pl';
+    d.style.cssText=`width:${w}px;height:${h}px;left:${-w/2}px;top:${-h/2}px;transform:${transform};${css||''}`;
+    if(html)d.innerHTML=html;parent.appendChild(d);return d;
+  };
+  const group=(parent,transform)=>{const d=document.createElement('div');d.className='g';if(transform)d.style.transform=transform;parent.appendChild(d);return d};
+  const mix=(a,b,t)=>'#'+[1,3,5].map(i=>Math.round(parseInt(a.substr(i,2),16)*(1-t)+parseInt(b.substr(i,2),16)*t).toString(16).padStart(2,'0')).join('');
+  // Outline of a rounded rectangle, clockwise from the top left.
+  const roundRect=(w,h,r,n)=>{
+    const pts=[],arc=(cx,cy,a0)=>{for(let i=0;i<=n;i++){const a=a0+Math.PI/2*i/n;pts.push([cx+r*Math.cos(a),cy+r*Math.sin(a)])}};
+    arc(w/2-r,-h/2+r,-Math.PI/2);arc(w/2-r,h/2-r,0);arc(-w/2+r,h/2-r,Math.PI/2);arc(-w/2+r,-h/2+r,Math.PI);return pts;
+  };
+  const circle=(r,n)=>Array.from({length:n},(_,i)=>[r*Math.cos(2*Math.PI*i/n),r*Math.sin(2*Math.PI*i/n)]);
+  // Side walls of an outline pushed out along z: one strip per edge, lighter on top, darker underneath.
+  const wallsZ=(parent,pts,cy,zc,depth,light,dark)=>pts.forEach((p,i)=>{
+    const q=pts[(i+1)%pts.length],dx=q[0]-p[0],dy=q[1]-p[1],L=Math.hypot(dx,dy);if(L<.01)return;
+    plane(parent,L+1,depth,`translate3d(${(p[0]+q[0])/2}px,${cy+(p[1]+q[1])/2}px,${zc}px) rotateZ(${Math.atan2(dy,dx)}rad) rotateX(90deg)`,`background:${mix(light,dark,(1-dx/L)/2)}`);
+  });
+
+  /* body: an orange pill 352 wide, 156 tall, 290 long */
+  const W=352,H=156,D=290,BY=-150;
+  plane(root,W,H,`translate3d(0,${BY}px,${D/2}px)`,'',`<svg viewBox="-176 -78 352 156">
+    <defs><linearGradient id="c3-o" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFA033"/><stop offset=".5" stop-color="#F47B20"/><stop offset="1" stop-color="#DE6410"/></linearGradient>
+    <linearGradient id="c3-c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD95A"/><stop offset="1" stop-color="#FFB81F"/></linearGradient>
+    <linearGradient id="c3-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9AD4FF"/><stop offset="1" stop-color="#3F97E6"/></linearGradient></defs>
+    <rect x="-176" y="-78" width="352" height="156" rx="74" fill="url(#c3-o)"/>
+    <path d="M-120 -64h240" stroke="#FFC078" stroke-width="7" stroke-linecap="round" opacity=".8"/>
+    <rect x="-176" y="-26" width="20" height="50" rx="10" fill="#FFD84D"/><rect x="156" y="-26" width="20" height="50" rx="10" fill="#FFD84D"/>
+    <g class="sc-night"><g fill="#FFE9A0" opacity=".3"><circle cx="-150" cy="-1" r="30"/><circle cx="150" cy="-1" r="30"/></g></g>
+    <rect x="-104" y="-58" width="148" height="110" rx="14" fill="#1B1840"/><rect x="-88" y="-42" width="116" height="18" rx="5" fill="#F47B20"/>
+    <g fill="#FFF4E0"><rect x="-88" y="-12" width="74" height="10" rx="5"/><rect x="-88" y="12" width="100" height="10" rx="5"/>
+    <rect x="72" y="-50" width="56" height="24" rx="11"/><rect x="72" y="-16" width="56" height="24" rx="11"/><rect x="72" y="18" width="56" height="24" rx="11"/></g></svg>`);
+  plane(root,W,H,`translate3d(0,${BY}px,${-D/2}px) rotateY(180deg)`,'',`<svg viewBox="-176 -78 352 156">
+    <rect x="-176" y="-78" width="352" height="156" rx="74" fill="#D9620F"/>
+    <rect x="-170" y="-22" width="16" height="44" rx="8" fill="#EF5350"/><rect x="154" y="-22" width="16" height="44" rx="8" fill="#EF5350"/>
+    <rect x="-26" y="26" width="52" height="18" rx="9" fill="#1B1840"/></svg>`);
+  wallsZ(root,roundRect(W,H,74,7),BY,0,D,'#FFB04A','#B94E08');
+
+  /* wheels: four cylinders, each in a group that spins about its axle */
+  const R=50,TW=58,N=12,hub='<svg viewBox="-50 -50 100 100"><circle r="23" fill="#FFF4E0"/><g fill="#C9C2B0"><circle r="6"/><circle cy="-14" r="3.5"/><circle cx="12" cy="7" r="3.5"/><circle cx="-12" cy="7" r="3.5"/></g></svg>';
+  for(const sx of[-1,1])for(const sz of[-1,1]){
+    const w=group(group(root,`translate3d(${sx*130}px,${-R}px,${sz*92}px)`));w.classList.add('sc-spin');
+    for(let i=0;i<N;i++){
+      const a=2*Math.PI*i/N,b=2*Math.PI*(i+1)/N,y1=R*Math.cos(a),z1=R*Math.sin(a),y2=R*Math.cos(b),z2=R*Math.sin(b);
+      plane(w,TW,Math.hypot(y2-y1,z2-z1)+1,`translate3d(0,${(y1+y2)/2}px,${(z1+z2)/2}px) rotateX(${Math.atan2(z2-z1,y2-y1)}rad)`,`background:${i%2?'#1B1840':'#2B2756'}`);
+    }
+    for(const side of[-1,1])plane(w,2*R,2*R,`translate3d(${side*TW/2}px,0,0) rotateY(90deg)`,'border-radius:50%;background:#1B1840',side===sx?hub:'');
+  }
+
+  /* the coin: a thick disc with a face on the front and a bitcoin mark on the back */
+  const CY=-296,CZ=-30,CR=64,CT=18;
+  plane(root,2*CR,2*CR,`translate3d(0,${CY}px,${CZ+CT/2}px)`,'',`<svg viewBox="-64 -64 128 128">
+    <circle r="64" fill="url(#c3-c)"/><circle r="55" fill="none" stroke="#F2A900" stroke-width="3" opacity=".6"/>
+    <g class="c3-look"><g class="c3-blink"><ellipse cx="-22" cy="-12" rx="8" ry="11" fill="#1B1840"/><ellipse cx="22" cy="-12" rx="8" ry="11" fill="#1B1840"/>
+    <circle cx="-19" cy="-17" r="3.2" fill="#fff"/><circle cx="25" cy="-17" r="3.2" fill="#fff"/></g></g>
+    <circle cx="-40" cy="10" r="10" fill="#FF6B93" opacity=".75"/><circle cx="40" cy="10" r="10" fill="#FF6B93" opacity=".75"/>
+    <path d="M-14 12Q-7 22 0 13Q7 22 14 12" fill="none" stroke="#1B1840" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`);
+  plane(root,2*CR,2*CR,`translate3d(0,${CY}px,${CZ-CT/2}px) rotateY(180deg)`,'',`<svg viewBox="-64 -64 128 128"><circle r="64" fill="#F2A900"/><circle r="50" fill="none" stroke="#FFCB3D" stroke-width="5"/>
+    <g fill="#FFCB3D"><rect x="-10" y="-36" width="6" height="72" rx="3"/><rect x="2" y="-36" width="6" height="72" rx="3"/><path d="M-20 -28H8Q26 -28 26 -15Q26 -3 12 -1Q30 1 30 14Q30 28 10 28H-20Z"/></g></svg>`);
+  wallsZ(root,circle(CR,20),CY,CZ,CT,'#F8B21A','#D58E00');
+
+  /* steering wheel (a tilted ring), arms and hands, roll bar, side glass */
+  for(let k=0;k<4;k++)plane(root,128,128,`translate3d(0,-236px,30px) rotateX(62deg) translateZ(${k*4-6}px)`,'','<svg viewBox="-64 -64 128 128"><circle r="55" fill="none" stroke="#1B1840" stroke-width="14"/></svg>'); // stacked rings, so it has some thickness
+  // Arms: each hangs from a shoulder on the coin's edge and reaches forward to the wheel. Arm and hand are crossed
+  // panels so they show from any side. The arm on the viewer's right swings up from its shoulder to wave.
+  for(const sx of[-1,1]){
+    const arm=group(group(root,`translate3d(${sx*52}px,-262px,-21px)`));if(sx>0)arm.classList.add('c3-wave');
+    const dx=sx*2,dy=18,dz=57,L=Math.hypot(dx,dy,dz),aim=`translate3d(${dx/2}px,${dy/2}px,${dz/2}px) rotateY(${Math.atan2(-dz,dx)}rad) rotateZ(${Math.asin(dy/L)}rad)`;
+    for(const rx of[0,90])plane(arm,L,15,`${aim} rotateX(${rx}deg)`,'border-radius:7px;background:#F5A800');
+    for(const r of['','rotateY(90deg)','rotateX(90deg)'])plane(arm,36,36,`translate3d(${dx}px,${dy}px,${dz}px) ${r}`,'border-radius:50%;background:#FFB81F'); // three discs: round from every side
+  }
+  plane(root,180,86,'translate3d(0,-262px,-96px)','','<svg viewBox="-90 -43 180 86"><path d="M-84 43V-18Q-84 -37 -66 -37H66Q84 -37 84 -18V43" fill="none" stroke="#1B1840" stroke-width="12" stroke-linecap="round"/></svg>');
+  for(const sx of[-1,1]){
+    plane(root,68,88,`translate3d(${sx*124}px,-270px,-20px) scaleX(${-sx})`,'','<svg viewBox="-34 -44 68 88"><path d="M-30 44L-8 -30Q-2 -44 12 -40L24 -36Q34 -32 32 -20L24 44Z" fill="url(#c3-b)"/></svg>');
+    plane(root,90,62,`translate3d(${sx*124}px,-257px,-20px) rotateY(90deg)`,'border-radius:12px 26px 0 0;background:linear-gradient(#9AD4FF,#3F97E6);opacity:.6');
+  }
+}
+buildCar($('sc-pitch'));
+// One unit of the drawing in pixels, so the car layer can match the painted scene at any window size.
+new ResizeObserver(([e])=>{const r=e.contentRect;if(r.width)e.target.style.setProperty('--s',Math.max(r.width/1200,r.height/450))}).observe($('scene'));
+/* ---------- landing entrance ---------- */
+// The car jumps in once per page load. A click or tap skips to the end. Skipped entirely under reduced motion.
+const calm=matchMedia('(prefers-reduced-motion:reduce)').matches,introStart=performance.now();
+function endIntro(){
+  if(!document.body.classList.contains('intro'))return;
+  document.body.classList.remove('intro');
+  if(performance.now()-introStart>1000)document.body.classList.add('landed'); // it did land, so let the dust drift away
+}
+if(!calm){
+  document.body.classList.add('intro');
+  setTimeout(endIntro,1650);
+  addEventListener('pointerdown',endIntro,{once:true});
+}
+// Tap the car and it hops.
+$('car3d').addEventListener('click',()=>{
+  const m=$('sc-mover');if(calm||m.classList.contains('hop')||document.body.classList.contains('leaving'))return;
+  m.classList.add('hop');setTimeout(()=>m.classList.remove('hop'),700);
+});
+// "Get started": the car drives off toward you, then the next screen opens. Returns false if there is nothing to play.
+function driveOff(then){
+  const c=document.body.classList;
+  if(calm||!c.contains('landing'))return false;
+  if(c.contains('leaving'))return true;
+  c.add('leaving');setTimeout(()=>{then();c.remove('leaving')},620);
+  return true;
+}

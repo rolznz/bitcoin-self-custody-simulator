@@ -259,7 +259,7 @@ details .fields{margin-top:8px}
 #fb{min-height:120px}
 textarea{width:100%;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);padding:10px;min-height:70px;resize:vertical}
 footer{margin:28px 0 12px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:.85rem}
-footer button{background:none;border:0;text-decoration:underline;cursor:pointer;color:inherit;padding:0}
+footer button,footer a{background:none;border:0;text-decoration:underline;cursor:pointer;color:inherit;padding:0}
 
 @media (max-width:820px){
   .grid{grid-template-columns:minmax(0,1fr)}
@@ -280,8 +280,39 @@ footer button{background:none;border:0;text-decoration:underline;cursor:pointer;
 }
 @media (max-width:380px){.key select{padding:8px 6px;font-size:.86rem}.key{padding:12px}}
 /* ---------- map of a setup, see map.js ---------- */
-.mapcard{position:relative;border-radius:20px;overflow:hidden}
-.map{display:block;width:100%;height:auto}
+/* On the Today screen the map fills everything between the header and the footer, edge to edge. The sea is the
+   card's own background, so it carries on past the drawing on screens that are wider or taller than the picture. */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+body.mapscreen{overflow-x:clip;background:linear-gradient(#7EC8FF,#4FA9EE) no-repeat #4FA9EE} /* the sea is the whole page, behind the header and footer too */
+body.mapscreen::before{background:#7EC8FF}
+/* the sea is the same in light and dark themes, so the text on it is always dark */
+.mapscreen .brand,.mapscreen footer,.mapscreen .steps button:not([aria-current]){color:#1B1840}
+.mapscreen .steps button[aria-current]{background:#1B1840;color:#fff}
+.mapscreen .brand i b{border-color:#7EC8FF}
+.mapscreen .wrap{min-height:100svh;display:flex;flex-direction:column}
+.mapscreen .grid{flex:1;display:flex;align-items:stretch}.mapscreen .score{display:none}
+.mapscreen .stage{flex:1;display:flex;flex-direction:column}
+.mapscreen footer{margin-top:14px}
+.mapcard{position:relative;flex:1;min-height:440px;width:100vw;margin:0 0 0 calc(50% - 50vw);overflow:hidden}
+.map{position:absolute;inset:8px 0 64px;width:100%;height:calc(100% - 72px);display:block}
+.mapscore{position:absolute;left:14px;bottom:14px;display:flex;gap:14px;align-items:center;height:48px;padding:0 16px;border-radius:24px;border:3px solid #1B1840;background:#fff;color:#1B1840;box-shadow:0 4px 0 #1B1840;font-size:.9rem;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.mapscore:hover{transform:translateY(-2px);box-shadow:0 6px 0 #1B1840}
+.mapscore span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.mapscore i{width:12px;height:12px;border-radius:50%}
+.mapintro .mapscore{opacity:0;pointer-events:none}.mapfresh .mapscore{animation:mapin .5s both}
+@media (max-width:760px){
+  .mapcard{min-height:520px}
+  .map{inset:4px 0 132px;height:calc(100% - 136px)}
+  .mapscore{left:10px;right:10px;bottom:72px;justify-content:center}
+}
+/* the full scoreboard inside its dialog: undo the sticky side panel and the narrow-screen summary */
+.scorefull.score{position:static;order:0;margin:0;padding:0;border-radius:0;box-shadow:none;background:none;display:grid;gap:14px}
+.scorefull.score h2,.scorefull .info{display:none} /* the dialog has its own title, and "See more details" replaces the i button */
+.scoremore .how{padding:0}.scoremore .howhead .x,.scoremore .seg{display:none}
+.scoremore{border-top:2px solid var(--line);padding-top:14px}
+.scorefull.score .worry,.scorefull.score .note{display:block}.scorefull.score .effort{display:grid}
+.scorefull.score .meters{display:grid;grid-template-columns:1fr;gap:14px}
+.share a{color:var(--primary);font-weight:700;overflow-wrap:anywhere}
 .map text{font-family:var(--body);fill:#1B1840}
 .maptap{cursor:pointer}
 .mappulse{transform-box:fill-box;transform-origin:50% 100%}
@@ -294,9 +325,17 @@ footer button{background:none;border:0;text-decoration:underline;cursor:pointer;
 /* the introduction: everything starts hidden and arrives beat by beat, see runMapIntro() in ui.js */
 .mapstep{transform-box:fill-box;transform-origin:50% 100%}
 .mapintro .map{pointer-events:none}
-.mapintro .mapstep,.mapintro .maptools{opacity:0}
-.mapintro .maptools{pointer-events:none} /* hidden buttons must not catch the click that continues the introduction */
+.mapintro .maptap:has(.in),.mapintro .maptap.in{pointer-events:auto} /* a thing can be opened as soon as it has arrived */
+.mapintro .mapstep,.mapintro .maptool{opacity:0}
+.mapintro .maptool.in{opacity:1}
+.mapintro .maptools{pointer-events:none} /* buttons must not catch the click that continues the introduction */
+.mapline{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.mapline line{stroke:#fff;stroke-width:5;stroke-linecap:round;opacity:.6;stroke-dasharray:1;animation:mapline .25s ease-out both}
+.mapline circle{fill:#fff;opacity:.6;animation:mapcap0 .2s .2s both}
+@keyframes mapline{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes mapcap0{from{opacity:0}to{opacity:.6}}
 .mapintro .mapstep.in{opacity:1;animation:mapin .5s both}
+.mapintro .mapstep.in.was{animation:none} /* already there before a redraw: no second entrance */
 .mapfresh .maptool{animation:mapin .5s both}.mapfresh .maptool+.maptool{animation-delay:.12s}
 .mapcap{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);max-width:calc(100% - 24px);background:#1B1840;color:#fff;font-family:var(--display);font-weight:700;font-size:1.15rem;padding:10px 18px;border-radius:16px;border:0;text-align:center;opacity:0;cursor:pointer}
 .mapintro{cursor:pointer}
@@ -304,12 +343,24 @@ footer button{background:none;border:0;text-decoration:underline;cursor:pointer;
 @media (prefers-reduced-motion:no-preference){.mapcap span{animation:mapnudge .9s ease-in-out infinite}}
 @keyframes mapnudge{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
 .mapcap.in{opacity:1;animation:mapcap .35s both}
+.mapcap.up{bottom:112px}
+/* the way forward is filled in and set a little apart from the two things to do on this screen */
+.maptool.next{background:var(--primary);color:var(--on-primary);padding:0 16px;margin-left:8px}
+@media (max-width:760px){ /* phones: score chip, then the two tools side by side, then the way forward on its own row */
+  .maptools{left:10px;right:10px;justify-content:center;gap:8px;flex-wrap:wrap}
+  .maptool{flex:1;font-size:.86rem}.maptool.next{flex-basis:100%;margin-left:0}
+  .mapscore{bottom:132px}
+  .map{inset:4px 0 190px;height:calc(100% - 194px)}
+  .mapcard{min-height:560px}
+  .mapcap{bottom:14px;font-size:1rem;width:calc(100% - 24px)}
+  .mapcap.up{bottom:158px}
+}
 @keyframes mapin{0%{opacity:0;transform:translateY(-34px) scale(.6)}60%{opacity:1;transform:translateY(3px) scale(1.06)}100%{opacity:1;transform:none}}
 @keyframes mapcap{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%)}}
 .maptool:hover{transform:translateY(-2px);box-shadow:0 6px 0 #1B1840}
 .maptool:active,.maptool[aria-pressed="true"]{transform:translateY(3px);box-shadow:0 1px 0 #1B1840;background:#FFD84D}
-.mappop{position:absolute;inset:0;display:grid;place-items:center;background:rgb(27 24 64/.35);z-index:2}
-.mappop>div{background:var(--surface);border-radius:18px;padding:18px 20px;min-width:240px;max-width:min(320px,86%);display:grid;gap:10px;box-shadow:0 10px 0 rgb(27 24 64/.25)}
+#mapitem{width:auto;min-width:min(260px,calc(100vw - 24px));max-width:min(340px,calc(100vw - 24px));border-radius:18px;overflow:visible}
+.mappop{padding:18px 20px;display:grid;gap:10px}
 .mappop h3{font-size:1.1rem}.mappop p{margin:0;color:var(--muted);font-size:.92rem}
 .mappop button{justify-self:start}
 .mapkb{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;font-size:.72rem;font-weight:800;color:#1B1840;margin:0 6px 0 0;vertical-align:1px}
@@ -501,14 +552,16 @@ body.landing{overflow-x:clip;background:linear-gradient(var(--sky),var(--sky2) 6
     </svg>
   </div>
   <footer>
-    <span>Pretend coins only. Scores are rough estimates, not advice. <button data-act="perfect">There is no perfect setup</button>.</span>
+    <span>Pretend coins only. Scores are rough estimates, not advice. <button data-act="perfect">There is no perfect setup</button>. <a href="https://github.com/rolznz/bitcoin-self-custody-simulator" target="_blank" rel="noopener">Source code</a>.</span>
     <button data-act="reset" id="reset" hidden>Start over</button>
     <span style="flex-basis:100%">Never enter your seed or passphrase into any website. This simulator will never ask for them.</span>
   </footer>
 </div>
 <dialog id="how" aria-labelledby="howtitle"></dialog>
 <dialog id="sim" aria-label="Simulate a disaster"></dialog>
-<dialog id="edit" aria-label="Change this setup"></dialog>
+<dialog id="edit" aria-label="Edit current setup"></dialog>
+<dialog id="scores" aria-label="Scoreboard"></dialog>
+<dialog id="mapitem" aria-label="About this item"></dialog>
 <script>
 /* ---------- model ---------- */
 const PLACES={home:'🏠 Home',office:'🏢 Office',relative:'👪 Relative’s place',friend:'🤝 Friend’s place',bank:'🏦 Bank box',carry:'🎒 On you'};
@@ -1236,7 +1289,7 @@ const SetupMap=(()=>{
     you+=label(YOU.x,YOU.y+22,'You')+'</g>'+row(YOU.x+42+(S.you.length-1)*17,YOU.y+2,S.you,'With you',.85);
     if(S.head.length){ // thought bubble: closed until clicked
       REG.push({head:S.head});
-      you+=`<g class="maptap mapstep" data-step="end" data-i="${REG.length-1}"><title>Memorized</title><circle cx="${YOU.x+6}" cy="${YOU.y-86}" r="4" fill="#fff"/><circle cx="${YOU.x+2}" cy="${YOU.y-99}" r="6.5" fill="#fff"/>
+      you+=`<g class="maptap mapstep" data-step="head" data-i="${REG.length-1}"><title>Memorized</title><circle cx="${YOU.x+6}" cy="${YOU.y-86}" r="4" fill="#fff"/><circle cx="${YOU.x+2}" cy="${YOU.y-99}" r="6.5" fill="#fff"/>
         <g class="mappulse"><rect x="${YOU.x-34}" y="${YOU.y-146}" width="68" height="38" rx="19" fill="#fff"/><g fill="#8E8AB8"><circle cx="${YOU.x-14}" cy="${YOU.y-127}" r="4.5"/><circle cx="${YOU.x}" cy="${YOU.y-127}" r="4.5"/><circle cx="${YOU.x+14}" cy="${YOU.y-127}" r="4.5"/></g></g></g>`;
     }
     // the company across the water, and the cloud: always drawn, faded when unused, like every other place
@@ -1247,8 +1300,7 @@ const SetupMap=(()=>{
     const cloud=`<g opacity="${S.cloud.length?1:.5}"><ellipse cx="118" cy="150" rx="62" ry="12" fill="#000" opacity=".1"/><g fill="#fff"><rect x="50" y="64" width="150" height="40" rx="20"/><circle cx="92" cy="64" r="28"/><circle cx="140" cy="54" r="36"/></g></g>`+row(124,102,S.cloud,'Cloud',.8)+label(124,124,'Cloud',!S.cloud.length);
     B.sort((a,b)=>a[0]-b[0]);
     return `<svg class="map" viewBox="0 0 800 560" role="img" aria-label="A map of this setup: where each device and backup is kept">
-      <defs><linearGradient id="map-sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7EC8FF"/><stop offset="1" stop-color="#4FA9EE"/></linearGradient><linearGradient id="map-grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C6F06A"/><stop offset="1" stop-color="#5FCF8A"/></linearGradient></defs>
-      <rect width="800" height="560" fill="url(#map-sea)"/>
+      <defs><linearGradient id="map-grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C6F06A"/><stop offset="1" stop-color="#5FCF8A"/></linearGradient></defs>
       <path d="M40 60h30M720 300h36M700 480h44M30 470h28M610 30h24M22 250h20M560 520h30M330 36h30" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".55"/>
       <ellipse cx="350" cy="320" rx="322" ry="204" fill="#1B8E77"/><ellipse cx="350" cy="306" rx="322" ry="204" fill="#E9DDB0"/><ellipse cx="350" cy="302" rx="308" ry="192" fill="url(#map-grass)"/>
       ${far}<g class="mapstep" data-step="end">${paths}</g>${B.map(b=>b[1]).join('')}${T.join('')}${you}${cloud}
@@ -1257,15 +1309,27 @@ const SetupMap=(()=>{
 
   /* The introduction: the map builds itself in a few beats, each with a short caption. Worded as "let's say", because
      this is a pretend starting point and not a claim about the player. With many things, they all arrive in one beat. */
-  const SAY={phone:'your wallet is on your phone',laptop:'your wallet is on your laptop',signer:'your key is on a hardware signer',login:'all you hold is a login',coins:'your coins are with a company',key:'a company holds one key',paper:'your seed phrase is on paper',steel:'your seed phrase is stamped in steel',note:'your passphrase is written down',file:'there is a copy of the wallet file'};
-  const AT={'Home':', at home','Relative’s place':', at a relative’s place','Office':', at the office','Friend’s place':', at a friend’s place','Bank box':', in a bank box','Cloud':', in the cloud'};
+  const SAY={phone:'you have a bitcoin wallet on your phone',laptop:'you have a bitcoin wallet on your laptop',signer:'your key is on a hardware signer',login:'all you hold is a login',coins:'your coins are with a company',key:'a company holds one key',paper:'you wrote down the 12-word recovery phrase on a piece of paper',steel:'you stamped the 12-word recovery phrase into steel',note:'your passphrase is written down',file:'there is a copy of the wallet file'};
+  const AT={'Home':' at home','Relative’s place':' at a relative’s place','Office':' at the office','Friend’s place':' at a friend’s place','Bank box':' in a bank box','Cloud':' in the cloud'};
   const ORDER=['coins','phone','laptop','signer','key','login','paper','steel','note','file'];
   function beats(){
     const things=REG.map((t,i)=>({t,i})).filter(x=>x.t.t).sort((a,b)=>ORDER.indexOf(a.t.t)-ORDER.indexOf(b.t.t));
     const out=[{steps:['you'],text:'This is you.'}];
     if(things.length>3)out.push({steps:things.map(x=>'t'+x.i),text:'Let’s say this is your setup.'});
     else things.forEach((x,n)=>out.push({steps:['t'+x.i],text:(n?'And ':'Let’s say ')+SAY[x.t.t]+(AT[x.t.place]||'')+'.'}));
-    out.push({steps:[],text:'✏️ You can change this setup at any time.'});
+    // What is memorized arrives as the thought bubble. An unlock PIN belongs with its device, so the bubble comes
+    // straight after the device; with no PIN it comes last.
+    const head=(REG.find(t=>t.head)||{}).head;
+    if(head){
+      const pin=head.find(l=>/unlock PIN/.test(l.label)),one=pin||head[0],lower=l=>l.label[0].toLowerCase()+l.label.slice(1);
+      const beat={steps:['head'],text:pin||head.length===1?`And your ${lower(one)} is memorized.`:'And some things are memorized.'};
+      const device=out.findIndex(b=>b.steps.length===1&&REG[+b.steps[0].slice(1)]&&['phone','laptop','signer'].includes(REG[+b.steps[0].slice(1)].t));
+      if(pin&&device>0)out.splice(device+1,0,beat);else out.push(beat);
+    }
+    // the last three are about buttons on the screen, not things on the map; "point" is what the caption's line leads to
+    out.push({steps:[],point:'[data-act="simBase"]',text:'🔥 Press “Try a disaster” to see what could go wrong.'});
+    out.push({steps:[],point:'[data-act="editBase"]',text:'✏️ You can edit your current setup at any time.'});
+    out.push({steps:[],point:'.maptool.next',text:'🚀 When you’re ready, press “Improve it” to build a better one.'});
     return out;
   }
 
@@ -1281,11 +1345,11 @@ const SetupMap=(()=>{
     return head;
   }
   document.addEventListener('click',ev=>{
-    const pop=ev.target.closest('.mappop'),tap=ev.target.closest('.maptap'),show=ev.target.closest('[data-mapshow]');
-    if(show){pop.querySelectorAll('[data-secret]').forEach(e=>e.textContent=e.dataset.secret);show.remove();return}
-    if(pop){if(ev.target===pop||ev.target.closest('[data-mapclose]'))pop.remove();return}
-    document.querySelectorAll('.mappop').forEach(p=>p.remove());
-    if(tap)tap.closest('.mapcard').insertAdjacentHTML('beforeend',`<div class="mappop"><div>${card(REG[+tap.dataset.i])}<button class="btn small" data-mapclose>Close</button></div></div>`);
+    // The card is a real dialog, so the dimmed backdrop covers the whole page. Esc, the button or a click outside closes it.
+    const dl=document.getElementById('mapitem'),tap=ev.target.closest('.maptap'),show=ev.target.closest('[data-mapshow]');
+    if(show){dl.querySelectorAll('[data-secret]').forEach(e=>e.textContent=e.dataset.secret);show.remove();return}
+    if(ev.target===dl||ev.target.closest('[data-mapclose]')){dl.close();return}
+    if(tap){dl.innerHTML=`<div class="mappop">${card(REG[+tap.dataset.i])}<button class="btn small" data-mapclose>Close</button></div>`;dl.showModal()}
   });
   return {svg,beats}; // beats() describes the map drawn by the latest svg() call
 })();
@@ -1297,6 +1361,7 @@ function reset(){S={step:0,base:presetSetup('hot'),mine:null,editBase:false,simB
 reset();
 const $=id=>document.getElementById(id);
 const STEPS=['Start','Today','Build','Use it','Stress test'];
+const SHARE_URL='https://rolznz.github.io/bitcoin-self-custody-simulator/';
 const btc=s=>(s/SATS).toFixed(4).replace(/\.?0+$/,'')+' BTC';
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -1459,11 +1524,14 @@ function startFrom(){
 }
 function screenToday(){
   // The map shows the setup. Its two buttons open the disaster panel and the edit form, each in a dialog (see render).
-  const tool=(act,on,icon,name,short)=>`<button class="maptool" data-act="${act}" aria-pressed="${on}" aria-label="${name}" title="${name}"><span aria-hidden="true">${icon}</span>${short}</button>`;
-  const intro=S.mapIntro==='run';
-  return `<h2>Your setup today</h2>
-  <div class="mapcard${intro?' mapintro':''}">${SetupMap.svg(S.base)}${intro?'<button type="button" class="mapcap"></button>':''}<div class="maptools">${tool('simBase',S.simBase,'🔥','Simulate a disaster','Try a disaster')}${tool('editBase',S.editBase,'✏️','Edit this setup','Change it')}</div></div>
-  <div><button class="btn" data-act="go" data-to="2">Build a new setup</button></div>`;
+  // The map fills the screen. A chip in one corner gives the two risks in a word each and opens the full scoreboard.
+  const tool=(attrs,on,icon,name,short)=>`<button class="maptool" ${attrs}${on==null?'':` aria-pressed="${on}"`} aria-label="${name}" title="${name}"><span aria-hidden="true">${icon}</span>${short}</button>`;
+  const intro=S.mapIntro==='run',sc=scoreOf(S.base),word={low:'Low',mid:'Medium',high:'High'};
+  const risk=(name,v)=>`<span><i style="background:${riskColor(v)}"></i>${name} <b>${word[level(v)]}</b></span>`;
+  return `<h2 class="sr">Your setup today</h2>
+  <div class="mapcard${intro?' mapintro':''}">${SetupMap.svg(S.base)}${intro?'<svg class="mapline" aria-hidden="true"></svg><button type="button" class="mapcap"></button>':''}
+    <button class="mapscore" data-act="scores" aria-label="Theft risk ${word[level(sc.theft)]}, loss risk ${word[level(sc.loss)]}. Open the scoreboard">${risk('Theft risk',sc.theft)}${risk('Loss risk',sc.loss)}</button>
+    <div class="maptools">${tool('data-act="simBase"',S.simBase,'🔥','Simulate a disaster','Try a disaster')}${tool('data-act="editBase"',S.editBase,'✏️','Edit current setup','Edit current setup')}<button class="maptool next" data-act="go" data-to="2"><span aria-hidden="true">🚀</span>Improve it →</button></div></div>`;
 }
 function screenBuild(){
   return `<h2>Build your new setup</h2>
@@ -1525,7 +1593,9 @@ function screenStress(R){
   <div class="card"><p class="hint">Overall</p><p class="verdict">${verdict}</p>${R.mine.control!==R.base.control?`<p style="font-weight:700;margin-top:6px">${(dT+dL<0)===(R.mine.control>R.base.control)?'And':'But'} ${R.mine.control>R.base.control?(R.mine.control===4?'the coins are now fully yours.':'more of the control is now yours.'):'you’ve handed over some control.'}</p>`:''}
     <div class="deltas"><span class="pill">Theft risk ${num(R.base.theft)} to ${num(R.mine.theft)} ${arrow(dT)}</span><span class="pill">Loss risk ${num(R.base.loss)} to ${num(R.mine.loss)} ${arrow(dL)}</span><span class="pill">Control: ${R.base.control===R.mine.control?CTRL[R.mine.control].toLowerCase():CTRL[R.base.control].toLowerCase()+', now '+CTRL[R.mine.control].toLowerCase()}</span><span class="pill">Setup effort ${R.base.setup} to ${R.mine.setup} of 5</span><span class="pill">Spending effort ${S.base.type==='etf'?'can’t spend':R.base.spend} to ${S.mine.type==='etf'?'can’t spend':R.mine.spend+' of 5'}</span></div>
     <h3 style="margin-top:16px">Your new setup in plain words</h3>${summaryBody(S.mine)}
-    <p class="hint" style="margin-top:10px">Not happy? <button class="btn ghost small" data-act="go" data-to="2">Tweak your setup</button></p></div>`;
+    <p class="hint" style="margin-top:10px">Not happy? <button class="btn ghost small" data-act="go" data-to="2">Tweak your setup</button></p></div>
+  <div class="card share"><h3>Like the app? Help share it.</h3>
+    <div class="rowb"><a href="${SHARE_URL}">${SHARE_URL.replace('https://','')}</a><button class="btn small" data-act="share">${S.shared?'Copied':'Copy link'}</button></div></div>`;
 }
 function feedbackText(){
   const c=S.conf;
@@ -1644,38 +1714,66 @@ function render(){
   const ed=$('edit');
   if(S.editBase&&S.step===1){
     const y=ed.scrollTop;
-    ed.innerHTML=`<div class="simbody"><div class="simhead"><span class="emo" aria-hidden="true">✏️</span><h3>Change this setup</h3><button class="simx" data-act="editBase" aria-label="Close">×</button></div>${editor('base')}<div><button class="btn" data-act="editBase">Done</button></div></div>`;
+    ed.innerHTML=`<div class="simbody"><div class="simhead"><span class="emo" aria-hidden="true">✏️</span><h3>Edit current setup</h3><button class="simx" data-act="editBase" aria-label="Close">×</button></div>${editor('base')}<div><button class="btn" data-act="editBase">Done</button></div></div>`;
     if(!ed.open)ed.showModal();
     ed.scrollTop=y;
   }else if(ed.open)ed.close();
+  // the full scoreboard, opened from the chip on the map
+  const sb=$('scores');
+  if(S.scoresOpen&&S.step===1){
+    sb.innerHTML=`<div class="simbody"><div class="simhead"><span class="emo" aria-hidden="true">📊</span><h3>Scoreboard</h3><button class="simx" data-act="scores" aria-label="Close">×</button></div><div class="score scorefull">${scoreboard(R)}</div>
+      <div><button class="btn small ghost" data-act="scoresMore" aria-expanded="${!!S.scoresMore}">${S.scoresMore?'Hide details':'See more details'}</button></div>
+      ${S.scoresMore?`<div class="scoremore">${howHTML()}</div>`:''}</div>`;
+    if(!sb.open)sb.showModal();
+  }else if(sb.open)sb.close();
+  document.body.classList.toggle('mapscreen',S.step===1);
+  if(S.step===1&&S.mapIntro==='run')paintMapIntro(false); // the map was just redrawn mid-introduction: put it back as it was
   if(act&&$(act))$(act).focus();
 }
 function go(to){
   if(to>1&&!S.mine)S.mine=clone(S.base);
   const firstMap=to===1&&!mapIntroSeen&&!calm;
-  if(firstMap){mapIntroSeen=true;S.mapIntro='run'}
-  S.step=to;S.simBase=false;S.editBase=false;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
+  if(firstMap){mapIntroSeen=true;S.mapIntro='run';mapBeat=-1}
+  if(to===0&&S.step!==0)startIntro(); // coming back to the first screen replays the car's entrance
+  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
   if(firstMap)runMapIntro();
 }
 /* ---------- map introduction ---------- */
 // The first time the map is shown it builds itself: you, then each thing you own, with a caption for each.
 // Each caption waits for a click or tap, so nobody is rushed. It plays once per page load and never under reduced motion.
-let mapIntroSeen=false;
-function runMapIntro(){
+// How far it has got is kept in mapBeat, not in the page, because the screen is redrawn on every change of state:
+// paintMapIntro() can rebuild the current moment on a freshly drawn map, so a redraw can never leave the map empty.
+let mapIntroSeen=false,mapBeat=-1;
+function runMapIntro(){setTimeout(()=>{if(mapBeat<0)nextMapBeat()},350)}
+function nextMapBeat(){
+  if(S.mapIntro!=='run')return;
+  if(++mapBeat<SetupMap.beats().length)return paintMapIntro(true);
+  S.mapIntro='done'; // show the finished map and its buttons
   const card=document.querySelector('.mapcard.mapintro');if(!card)return;
-  const cap=card.querySelector('.mapcap'),beats=SetupMap.beats();let i=-1;
-  const next=()=>{
-    if(++i>=beats.length){ // done: show the finished map and its two buttons
-      S.mapIntro='done';card.removeEventListener('click',next);cap.remove();
-      card.classList.remove('mapintro');card.classList.add('mapfresh');return;
-    }
-    const b=beats[i];
-    if(b.steps.length)card.querySelectorAll(b.steps.map(s=>`[data-step="${s}"]`).join(',')).forEach(e=>e.classList.add('in'));
-    cap.innerHTML=`${esc(b.text)}<span aria-hidden="true">▸</span>`;cap.setAttribute('aria-label',b.text+' Continue');
-    cap.classList.remove('in');void cap.offsetWidth;cap.classList.add('in');
-  };
-  setTimeout(next,350);
-  card.addEventListener('click',()=>{if(i>=0)next()});
+  card.querySelectorAll('.mapcap,.mapline').forEach(e=>e.remove());
+  card.classList.remove('mapintro');card.classList.add('mapfresh');
+}
+function paintMapIntro(arriving){
+  const card=document.querySelector('.mapcard.mapintro');if(!card||mapBeat<0)return;
+  const cap=card.querySelector('.mapcap'),line=card.querySelector('.mapline'),beats=SetupMap.beats(),b=beats[mapBeat],at=mapBeat;
+  // everything up to now is on the map; only what belongs to the newest caption animates in
+  beats.slice(0,mapBeat+1).forEach((x,n)=>card.querySelectorAll([...x.steps.map(s=>`[data-step="${s}"]`),x.point].filter(Boolean).join(',')).forEach(e=>{e.classList.add('in');e.classList.toggle('was',n<mapBeat||!arriving)}));
+  cap.innerHTML=`${esc(b.text)}<span aria-hidden="true">▸</span>`;cap.setAttribute('aria-label',b.text+' Continue');
+  cap.classList.toggle('up',!!b.point); // a caption about a button sits above the buttons, so its line can slant down to one
+  cap.classList.remove('in');void cap.offsetWidth;cap.classList.add('in');
+  // a faint line from the caption to what it is talking about, drawn once that thing has landed
+  const target=card.querySelector(b.point||`[data-step="${b.steps[0]}"]`);
+  line.innerHTML='';
+  if(target)setTimeout(()=>{
+    if(mapBeat!==at||!line.isConnected)return;
+    const c=card.getBoundingClientRect(),t=target.getBoundingClientRect(),k=cap.getBoundingClientRect(),tx=t.left+t.width/2;
+    // up to a thing on the map from the top of the caption, or down to a button from the bottom of it
+    const below=t.top>=k.bottom,x1=Math.max(k.left+24,Math.min(k.right-24,below?tx:k.left+k.width/2))-c.left,y1=(below?k.bottom:k.top)-c.top;
+    const x2=tx-c.left,y2=(below?t.top-5:Math.min(t.top+t.height/2,k.top-6))-c.top;
+    line.innerHTML=`<line pathLength="1" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><circle cx="${x2}" cy="${y2}" r="7"/>`;
+  },b.point||!arriving?80:520);
+  // A click continues, unless it is on a thing that has already arrived: that opens its card.
+  if(!card.dataset.intro){card.dataset.intro=1;card.addEventListener('click',ev=>{if(!ev.target.closest('.maptap'))nextMapBeat()})}
 }
 function resize(st,n){
   n=Math.max(1,Math.min(5,n));
@@ -1754,6 +1852,12 @@ document.addEventListener('click',ev=>{
   if(a==='reset'){reset();return go(0)}
   if(a==='editBase')S.editBase=!S.editBase;
   if(a==='simBase'){S.simBase=!S.simBase;S.simList=true} // the dialog always opens on the list of disasters
+  if(a==='scores'){S.scoresOpen=!S.scoresOpen;S.scoresMore=false}
+  if(a==='scoresMore'){S.scoresMore=!S.scoresMore;S.how='base'} // the explanation opens further down the same dialog
+  if(a==='share'){ // copy the link; where the page isn't allowed to, the link is still there to copy by hand
+    try{navigator.clipboard.writeText(SHARE_URL).then(()=>{S.shared=true;render()},()=>{})}catch(e){}
+    return;
+  }
   if(a==='simList')S.simList=true;
   if(a==='conf'){S.conf[b.dataset.which]=+b.dataset.n}
   if(a==='preset'&&b.dataset.w==='base')S.base=presetSetup(b.dataset.p);
@@ -1808,6 +1912,8 @@ $('sim').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.curren
 $('sim').addEventListener('close',()=>{if(S.simBase){S.simBase=false;render()}}); // Esc or a click outside
 $('edit').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.currentTarget.close()});
 $('edit').addEventListener('close',()=>{if(S.editBase){S.editBase=false;render()}});
+$('scores').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.currentTarget.close()});
+$('scores').addEventListener('close',()=>{if(S.scoresOpen){S.scoresOpen=false;render()}});
 document.addEventListener('toggle',ev=>{const d=ev.target;if(d.dataset&&d.dataset.d)S.open[d.dataset.d]=d.open;
   if(d.classList&&d.classList.contains('dmenu')&&d.open)d.querySelector('.dlist').scrollIntoView({block:'nearest'})},true);
 // The disaster menu closes on a click outside it or on Escape.
@@ -1901,17 +2007,23 @@ buildCar($('sc-pitch'));
 new ResizeObserver(([e])=>{const r=e.contentRect;if(r.width)e.target.style.setProperty('--s',Math.max(r.width/1200,r.height/450))}).observe($('scene'));
 /* ---------- landing entrance ---------- */
 // The car jumps in once per page load. A click or tap skips to the end. Skipped entirely under reduced motion.
-const calm=matchMedia('(prefers-reduced-motion:reduce)').matches,introStart=performance.now();
+const calm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+let introStart=0,introTimer=0;
 function endIntro(){
   if(!document.body.classList.contains('intro'))return;
+  clearTimeout(introTimer);
   document.body.classList.remove('intro');
   if(performance.now()-introStart>1000)document.body.classList.add('landed'); // it did land, so let the dust drift away
 }
-if(!calm){
-  document.body.classList.add('intro');
-  setTimeout(endIntro,1650);
+// Plays on page load, and again whenever the player comes back to the first screen.
+function startIntro(){
+  if(calm)return;
+  introStart=performance.now();clearTimeout(introTimer);
+  document.body.classList.remove('landed');document.body.classList.add('intro');
+  introTimer=setTimeout(endIntro,1650);
   addEventListener('pointerdown',endIntro,{once:true});
 }
+startIntro();
 // Tap the car and it hops.
 $('car3d').addEventListener('click',()=>{
   const m=$('sc-mover');if(calm||m.classList.contains('hop')||document.body.classList.contains('leaving'))return;

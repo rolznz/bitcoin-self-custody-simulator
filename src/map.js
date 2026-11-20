@@ -109,7 +109,7 @@ const SetupMap=(()=>{
     you+=label(YOU.x,YOU.y+22,'You')+'</g>'+row(YOU.x+42+(S.you.length-1)*17,YOU.y+2,S.you,'With you',.85);
     if(S.head.length){ // thought bubble: closed until clicked
       REG.push({head:S.head});
-      you+=`<g class="maptap mapstep" data-step="end" data-i="${REG.length-1}"><title>Memorized</title><circle cx="${YOU.x+6}" cy="${YOU.y-86}" r="4" fill="#fff"/><circle cx="${YOU.x+2}" cy="${YOU.y-99}" r="6.5" fill="#fff"/>
+      you+=`<g class="maptap mapstep" data-step="head" data-i="${REG.length-1}"><title>Memorized</title><circle cx="${YOU.x+6}" cy="${YOU.y-86}" r="4" fill="#fff"/><circle cx="${YOU.x+2}" cy="${YOU.y-99}" r="6.5" fill="#fff"/>
         <g class="mappulse"><rect x="${YOU.x-34}" y="${YOU.y-146}" width="68" height="38" rx="19" fill="#fff"/><g fill="#8E8AB8"><circle cx="${YOU.x-14}" cy="${YOU.y-127}" r="4.5"/><circle cx="${YOU.x}" cy="${YOU.y-127}" r="4.5"/><circle cx="${YOU.x+14}" cy="${YOU.y-127}" r="4.5"/></g></g></g>`;
     }
     // the company across the water, and the cloud: always drawn, faded when unused, like every other place
@@ -120,8 +120,7 @@ const SetupMap=(()=>{
     const cloud=`<g opacity="${S.cloud.length?1:.5}"><ellipse cx="118" cy="150" rx="62" ry="12" fill="#000" opacity=".1"/><g fill="#fff"><rect x="50" y="64" width="150" height="40" rx="20"/><circle cx="92" cy="64" r="28"/><circle cx="140" cy="54" r="36"/></g></g>`+row(124,102,S.cloud,'Cloud',.8)+label(124,124,'Cloud',!S.cloud.length);
     B.sort((a,b)=>a[0]-b[0]);
     return `<svg class="map" viewBox="0 0 800 560" role="img" aria-label="A map of this setup: where each device and backup is kept">
-      <defs><linearGradient id="map-sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7EC8FF"/><stop offset="1" stop-color="#4FA9EE"/></linearGradient><linearGradient id="map-grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C6F06A"/><stop offset="1" stop-color="#5FCF8A"/></linearGradient></defs>
-      <rect width="800" height="560" fill="url(#map-sea)"/>
+      <defs><linearGradient id="map-grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C6F06A"/><stop offset="1" stop-color="#5FCF8A"/></linearGradient></defs>
       <path d="M40 60h30M720 300h36M700 480h44M30 470h28M610 30h24M22 250h20M560 520h30M330 36h30" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".55"/>
       <ellipse cx="350" cy="320" rx="322" ry="204" fill="#1B8E77"/><ellipse cx="350" cy="306" rx="322" ry="204" fill="#E9DDB0"/><ellipse cx="350" cy="302" rx="308" ry="192" fill="url(#map-grass)"/>
       ${far}<g class="mapstep" data-step="end">${paths}</g>${B.map(b=>b[1]).join('')}${T.join('')}${you}${cloud}
@@ -130,15 +129,27 @@ const SetupMap=(()=>{
 
   /* The introduction: the map builds itself in a few beats, each with a short caption. Worded as "let's say", because
      this is a pretend starting point and not a claim about the player. With many things, they all arrive in one beat. */
-  const SAY={phone:'your wallet is on your phone',laptop:'your wallet is on your laptop',signer:'your key is on a hardware signer',login:'all you hold is a login',coins:'your coins are with a company',key:'a company holds one key',paper:'your seed phrase is on paper',steel:'your seed phrase is stamped in steel',note:'your passphrase is written down',file:'there is a copy of the wallet file'};
-  const AT={'Home':', at home','Relative’s place':', at a relative’s place','Office':', at the office','Friend’s place':', at a friend’s place','Bank box':', in a bank box','Cloud':', in the cloud'};
+  const SAY={phone:'you have a bitcoin wallet on your phone',laptop:'you have a bitcoin wallet on your laptop',signer:'your key is on a hardware signer',login:'all you hold is a login',coins:'your coins are with a company',key:'a company holds one key',paper:'you wrote down the 12-word recovery phrase on a piece of paper',steel:'you stamped the 12-word recovery phrase into steel',note:'your passphrase is written down',file:'there is a copy of the wallet file'};
+  const AT={'Home':' at home','Relative’s place':' at a relative’s place','Office':' at the office','Friend’s place':' at a friend’s place','Bank box':' in a bank box','Cloud':' in the cloud'};
   const ORDER=['coins','phone','laptop','signer','key','login','paper','steel','note','file'];
   function beats(){
     const things=REG.map((t,i)=>({t,i})).filter(x=>x.t.t).sort((a,b)=>ORDER.indexOf(a.t.t)-ORDER.indexOf(b.t.t));
     const out=[{steps:['you'],text:'This is you.'}];
     if(things.length>3)out.push({steps:things.map(x=>'t'+x.i),text:'Let’s say this is your setup.'});
     else things.forEach((x,n)=>out.push({steps:['t'+x.i],text:(n?'And ':'Let’s say ')+SAY[x.t.t]+(AT[x.t.place]||'')+'.'}));
-    out.push({steps:[],text:'✏️ You can change this setup at any time.'});
+    // What is memorized arrives as the thought bubble. An unlock PIN belongs with its device, so the bubble comes
+    // straight after the device; with no PIN it comes last.
+    const head=(REG.find(t=>t.head)||{}).head;
+    if(head){
+      const pin=head.find(l=>/unlock PIN/.test(l.label)),one=pin||head[0],lower=l=>l.label[0].toLowerCase()+l.label.slice(1);
+      const beat={steps:['head'],text:pin||head.length===1?`And your ${lower(one)} is memorized.`:'And some things are memorized.'};
+      const device=out.findIndex(b=>b.steps.length===1&&REG[+b.steps[0].slice(1)]&&['phone','laptop','signer'].includes(REG[+b.steps[0].slice(1)].t));
+      if(pin&&device>0)out.splice(device+1,0,beat);else out.push(beat);
+    }
+    // the last three are about buttons on the screen, not things on the map; "point" is what the caption's line leads to
+    out.push({steps:[],point:'[data-act="simBase"]',text:'🔥 Press “Try a disaster” to see what could go wrong.'});
+    out.push({steps:[],point:'[data-act="editBase"]',text:'✏️ You can edit your current setup at any time.'});
+    out.push({steps:[],point:'.maptool.next',text:'🚀 When you’re ready, press “Improve it” to build a better one.'});
     return out;
   }
 
@@ -154,11 +165,11 @@ const SetupMap=(()=>{
     return head;
   }
   document.addEventListener('click',ev=>{
-    const pop=ev.target.closest('.mappop'),tap=ev.target.closest('.maptap'),show=ev.target.closest('[data-mapshow]');
-    if(show){pop.querySelectorAll('[data-secret]').forEach(e=>e.textContent=e.dataset.secret);show.remove();return}
-    if(pop){if(ev.target===pop||ev.target.closest('[data-mapclose]'))pop.remove();return}
-    document.querySelectorAll('.mappop').forEach(p=>p.remove());
-    if(tap)tap.closest('.mapcard').insertAdjacentHTML('beforeend',`<div class="mappop"><div>${card(REG[+tap.dataset.i])}<button class="btn small" data-mapclose>Close</button></div></div>`);
+    // The card is a real dialog, so the dimmed backdrop covers the whole page. Esc, the button or a click outside closes it.
+    const dl=document.getElementById('mapitem'),tap=ev.target.closest('.maptap'),show=ev.target.closest('[data-mapshow]');
+    if(show){dl.querySelectorAll('[data-secret]').forEach(e=>e.textContent=e.dataset.secret);show.remove();return}
+    if(ev.target===dl||ev.target.closest('[data-mapclose]')){dl.close();return}
+    if(tap){dl.innerHTML=`<div class="mappop">${card(REG[+tap.dataset.i])}<button class="btn small" data-mapclose>Close</button></div>`;dl.showModal()}
   });
   return {svg,beats}; // beats() describes the map drawn by the latest svg() call
 })();

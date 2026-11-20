@@ -540,7 +540,7 @@ document.addEventListener('click',ev=>{
       else{const mn=v.split('-').map(Number);setShape(st,mn[0],mn[1])}
       st.tested=false;if(s==='mine')S.w.report=null}}
   if(a==='go'){if(b.classList.contains('cta')&&driveOff(()=>go(+b.dataset.to)))return;return go(+b.dataset.to)}
-  if(a==='reset'){reset();startIntro();return go(0)} // "Start over" replays the car's entrance as well
+  if(a==='reset'){reset();mapIntroSeen=false;startIntro();return go(0)} // "Start over" replays the car's entrance, and the map's onboarding when you next reach it
   if(a==='editBase'){ // editing the setup ends any run of disasters. On the Build screen the form starts from the setup as it stands.
     S.editBase=!S.editBase;
     if(S.editBase){S.mapDis=S.run=null;if(S.step===2)S.picked.mine=true}

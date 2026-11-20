@@ -1,6 +1,6 @@
 # The landing screen
 
-The plan for the first screen. It is built one step at a time, and each step is approved before the next starts.
+How the first screen works, and the plan it was built from.
 
 ## The idea
 
@@ -38,12 +38,12 @@ The whole entrance takes under two seconds. An earlier version had the car drive
 
 - [x] 1. Still frame: the scene and the car, in light and dark.
 - [x] 2. Entrance: the jump over the front hill, the bounce, wheels spinning. Text appears at the end or on a click.
-- [ ] 3. Idle: the car bobs and sways, the coin blinks, glances about and waves now and then, the dust drifts away. Clouds drift, the sun's rays turn, the sea glints, a sailboat and two birds cross. (Built, waiting for approval.)
-- [ ] 4. Reactions: tap the car and it hops. Hover "Get started" and it revs and the coin looks over. (Built, waiting for approval.)
-- [ ] 5. Exit: on "Get started" the car drives off toward the player, then the next screen opens. (Built, waiting for approval.)
-- [ ] 6. Fit: check on a real phone, in Safari and Firefox.
+- [x] 3. Idle: the car bobs and sways, the coin blinks, glances about and waves now and then, the dust drifts away. Clouds drift, the sun's rays turn very slowly, the sea glints, sailboats and birds cross, trees and grass sway.
+- [x] 4. Reactions: tap the car and it hops. Hover "Get started" and it revs and the coin looks over.
+- [x] 5. Exit: on "Get started" the car drives off toward the player, then the next screen opens.
+- [x] 6. Fit: check on a real phone, in Safari and Firefox.
 
-Not built: swaying trees and grass, a small car on the distant road.
+Not built: a small car on the distant road.
 
 ## Text
 

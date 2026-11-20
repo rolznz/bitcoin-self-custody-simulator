@@ -277,6 +277,7 @@ body.landing{overflow-x:clip;background:linear-gradient(var(--sky),var(--sky2) 6
 .btn.cta:active{transform:translateY(5px);box-shadow:0 1px 0 var(--ink)}
 .landing .wrap{min-height:100svh;display:flex;flex-direction:column;padding-bottom:0}
 .landing .grid{position:relative;z-index:1}
+.landing .steps{display:none} /* no step links on the first screen; they come back from the second screen on */
 .landing #scene{display:block;position:relative;flex:1;min-height:260px;width:100vw;margin:0 0 0 calc(50% - 50vw);pointer-events:none}
 #scene svg{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible}
 .landing footer{position:relative;isolation:isolate;margin:0;padding:14px 0 16px;color:#F1EFFF}
@@ -377,7 +378,7 @@ body.landing{overflow-x:clip;background:linear-gradient(var(--sky),var(--sky2) 6
 <body>
 <div class="wrap">
   <div class="top">
-    <div class="brand"><i><b style="background:var(--k0)"></b><b style="background:var(--k1)"></b><b style="background:var(--k2)"></b></i>Bitcoin Self-custody simulator</div>
+    <div class="brand"><i><b style="background:var(--k1)"></b><b style="background:var(--k0)"></b><b style="background:var(--k2)"></b></i>Bitcoin Self-custody simulator</div>
     <ol class="steps" id="steps"></ol>
   </div>
   <div class="grid">

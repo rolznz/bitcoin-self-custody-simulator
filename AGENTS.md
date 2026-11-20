@@ -1,6 +1,6 @@
 # Notes for agents
 
-The app ships as one self-contained file, `index.html`, built from `src/`. See [PURPOSE.md](PURPOSE.md) for what it is for and [LANDING.md](LANDING.md) for how the first screen works.
+The app ships as one self-contained file, `index.html`, built from `src/`. See [PURPOSE.md](PURPOSE.md) for what it is for and [docs/LANDING.md](docs/LANDING.md) for how the first screen works.
 
 ## Where things are
 

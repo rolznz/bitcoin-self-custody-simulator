@@ -174,9 +174,9 @@ function screenToday(){
   const intro=S.mapIntro==='run',sc=scoreOf(S.base),word={low:'Low',mid:'Medium',high:'High'};
   const risk=(name,v)=>`<span><i style="background:${riskColor(v)}"></i>${name} <b>${word[level(v)]}</b></span>`;
   return `<h2 class="sr">Your setup today</h2>
-  <div class="mapcard${intro?' mapintro':''}">${SetupMap.svg(S.base)}${intro?'<svg class="mapline" aria-hidden="true"></svg><button type="button" class="mapcap"></button>':''}
+  <div class="mapcard${intro?' mapintro':''}">${SetupMap.svg(S.base)}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
     <button class="mapscore" data-act="scores" aria-label="Theft risk ${word[level(sc.theft)]}, loss risk ${word[level(sc.loss)]}. Open the scoreboard">${risk('Theft risk',sc.theft)}${risk('Loss risk',sc.loss)}</button>
-    <div class="maptools">${tool('data-act="simBase"',S.simBase,'🔥','Simulate a disaster','Try a disaster')}${tool('data-act="editBase"',S.editBase,'✏️','Edit current setup','Edit current setup')}<button class="maptool next" data-act="go" data-to="2"><span aria-hidden="true">🚀</span>Improve it →</button></div></div>`;
+    <div class="maptools">${tool('data-act="help"',S.helpOpen,'❓','Help','Help')}${tool('data-act="simBase"',S.simBase,'🔥','Simulate a disaster','Try a disaster')}${tool('data-act="editBase"',S.editBase,'✏️','Edit current setup','Edit current setup')}<button class="maptool next" data-act="go" data-to="2"><span aria-hidden="true">🚀</span>Improve it →</button></div></div>`;
 }
 function screenBuild(){
   return `<h2>Build your new setup</h2>
@@ -371,6 +371,16 @@ function render(){
       ${S.scoresMore?`<div class="scoremore">${howHTML()}</div>`:''}</div>`;
     if(!sb.open)sb.showModal();
   }else if(sb.open)sb.close();
+  // help, opened from the map: everything the footer says on the other screens
+  const hp=$('help');
+  if(S.helpOpen&&S.step===1){
+    hp.innerHTML=`<div class="simbody"><div class="simhead"><span class="emo" aria-hidden="true">❓</span><h3>Help</h3><button class="simx" data-act="help" aria-label="Close">×</button></div>
+      <p>Pretend coins only. Scores are rough estimates, not advice.</p>
+      <p><b>Never enter your seed or passphrase into any website.</b> This simulator will never ask for them.</p>
+      <div class="rowb"><button class="btn small ghost" data-act="helpMore" aria-expanded="${!!S.helpMore}">There is no perfect setup</button><button class="btn small ghost" data-act="reset">Start over</button><span class="helpgh">${document.querySelector('footer .gh').outerHTML}</span></div>
+      ${S.helpMore?`<div class="scoremore">${perfectHTML()}</div>`:''}</div>`;
+    if(!hp.open)hp.showModal();
+  }else if(hp.open)hp.close();
   document.body.classList.toggle('mapscreen',S.step===1);
   if(S.step===1&&S.mapIntro==='run')paintMapIntro(false); // the map was just redrawn mid-introduction: put it back as it was
   if(act&&$(act))$(act).focus();
@@ -380,7 +390,8 @@ function go(to){
   const firstMap=to===1&&!mapIntroSeen&&!calm;
   if(firstMap){mapIntroSeen=true;S.mapIntro='run';mapBeat=-1}
   if(to===0&&S.step!==0)startIntro(); // coming back to the first screen replays the car's entrance
-  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
+  if(to!==1&&S.mapIntro==='run')S.mapIntro='done'; // leaving the map (by "Improve it", say) ends its introduction
+  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.helpOpen=false;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
   if(firstMap)runMapIntro();
 }
 /* ---------- map introduction ---------- */
@@ -403,7 +414,7 @@ function paintMapIntro(arriving){
   const cap=card.querySelector('.mapcap'),line=card.querySelector('.mapline'),beats=SetupMap.beats(),b=beats[mapBeat],at=mapBeat;
   // everything up to now is on the map; only what belongs to the newest caption animates in
   beats.slice(0,mapBeat+1).forEach((x,n)=>card.querySelectorAll([...x.steps.map(s=>`[data-step="${s}"]`),x.point].filter(Boolean).join(',')).forEach(e=>{e.classList.add('in');e.classList.toggle('was',n<mapBeat||!arriving)}));
-  cap.innerHTML=`${esc(b.text)}<span aria-hidden="true">▸</span>`;cap.setAttribute('aria-label',b.text+' Continue');
+  cap.innerHTML=`${mapBeat?'<button type="button" class="mapback" aria-label="Back">◂</button>':''}<span>${esc(b.text)}</span><button type="button" class="mapnext" aria-label="Continue">▸</button>`;
   cap.classList.toggle('up',!!b.point); // a caption about a button sits above the buttons, so its line can slant down to one
   cap.classList.remove('in');void cap.offsetWidth;cap.classList.add('in');
   // a faint line from the caption to what it is talking about, drawn once that thing has landed
@@ -417,9 +428,20 @@ function paintMapIntro(arriving){
     const x2=tx-c.left,y2=(below?t.top-5:Math.min(t.top+t.height/2,k.top-6))-c.top;
     line.innerHTML=`<line pathLength="1" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><circle cx="${x2}" cy="${y2}" r="7"/>`;
   },b.point||!arriving?80:520);
-  // A click continues, unless it is on a thing that has already arrived: that opens its card.
-  if(!card.dataset.intro){card.dataset.intro=1;card.addEventListener('click',ev=>{if(!ev.target.closest('.maptap'))nextMapBeat()})}
+  // A click continues, unless it is on something that has already arrived: a thing opens its card, a button does its job.
+  // The arrow on the left of the caption goes back one step.
+  if(!card.dataset.intro){card.dataset.intro=1;card.addEventListener('click',ev=>{
+    if(ev.target.closest('.mapback'))return prevMapBeat();
+    if(!ev.target.closest('.maptap,.maptool'))nextMapBeat();
+  })}
 }
+function prevMapBeat(){
+  if(S.mapIntro!=='run'||mapBeat<1)return;
+  mapBeat--;render(); // redrawing clears whatever the later step had brought in; render() then repaints up to this step
+}
+// Things and buttons can be used as soon as their caption has introduced them. One rule for all of them: closing the
+// dialog that opened moves the introduction on, the same as a click on the map would.
+for(const id of ['sim','edit','mapitem'])$(id).addEventListener('close',()=>{if(S.mapIntro==='run'&&S.step===1)nextMapBeat()});
 function resize(st,n){
   n=Math.max(1,Math.min(5,n));
   while(st.keys.length<n)st.keys.push(newKey());
@@ -497,6 +519,8 @@ document.addEventListener('click',ev=>{
   if(a==='reset'){reset();return go(0)}
   if(a==='editBase')S.editBase=!S.editBase;
   if(a==='simBase'){S.simBase=!S.simBase;S.simList=true} // the dialog always opens on the list of disasters
+  if(a==='help'){S.helpOpen=!S.helpOpen;S.helpMore=false}
+  if(a==='helpMore')S.helpMore=!S.helpMore;
   if(a==='scores'){S.scoresOpen=!S.scoresOpen;S.scoresMore=false}
   if(a==='scoresMore'){S.scoresMore=!S.scoresMore;S.how='base'} // the explanation opens further down the same dialog
   if(a==='share'){ // copy the link; where the page isn't allowed to, the link is still there to copy by hand
@@ -559,6 +583,8 @@ $('edit').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.curre
 $('edit').addEventListener('close',()=>{if(S.editBase){S.editBase=false;render()}});
 $('scores').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.currentTarget.close()});
 $('scores').addEventListener('close',()=>{if(S.scoresOpen){S.scoresOpen=false;render()}});
+$('help').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.currentTarget.close()});
+$('help').addEventListener('close',()=>{if(S.helpOpen){S.helpOpen=false;render()}});
 document.addEventListener('toggle',ev=>{const d=ev.target;if(d.dataset&&d.dataset.d)S.open[d.dataset.d]=d.open;
   if(d.classList&&d.classList.contains('dmenu')&&d.open)d.querySelector('.dlist').scrollIntoView({block:'nearest'})},true);
 // The disaster menu closes on a click outside it or on Escape.

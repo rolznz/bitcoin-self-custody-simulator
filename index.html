@@ -305,6 +305,20 @@ body.mapscreen::before{background:#7EC8FF}
 .mapscore:hover{transform:translateY(-2px);box-shadow:0 6px 0 #1B1840}
 .mapscore span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .mapscore i{width:12px;height:12px;border-radius:50%}
+/* Build screen: two rows, Before and Now. When a change moves the scores, the Now row plays old to new: the dot swells
+   and changes colour, the old word and number slide out, the new ones slide in, and the chip glows for a moment. */
+.mapscore.rows{display:grid;grid-template-columns:auto auto auto;gap:3px 14px;height:auto;padding:8px 18px;border-radius:22px;text-align:left}
+.mapscore.rows small{font-weight:700;color:#5A5688;font-size:.78rem}
+.swap{display:inline-grid}.swap em{grid-area:1/1;font-style:normal;white-space:nowrap}
+.chg .swap em:first-child{opacity:0;animation:chgout .5s 1s both}
+.chg .swap em:last-child{animation:chgin .5s 1.25s both}
+.chg i{animation:chgdot 1.1s .8s both}
+.mapscore.changing{animation:chgglow 3s both}
+@keyframes chgout{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-9px)}}
+@keyframes chgin{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+@keyframes chgdot{from{background:var(--a);transform:scale(1)}50%{transform:scale(1.9)}to{background:var(--b);transform:scale(1)}}
+@keyframes chgglow{0%,100%{box-shadow:0 4px 0 #1B1840}12%,70%{box-shadow:0 4px 0 #1B1840,0 0 0 7px #FFD84D}}
+@media (prefers-reduced-motion:reduce){.chg .swap em,.chg i,.mapscore.changing{animation:none}}
 .mapintro .mapscore{opacity:0;pointer-events:none}.mapfresh .mapscore{animation:mapin .5s both}
 @media (max-width:760px){
   .mapcard{min-height:520px}
@@ -321,6 +335,7 @@ body.mapscreen::before{background:#7EC8FF}
 .share a{color:var(--primary);font-weight:700;overflow-wrap:anywhere}
 .map text{font-family:var(--body);fill:#1B1840}
 .maptap{cursor:pointer}
+.mapplace{transition:filter .15s}.mapplace:hover{filter:brightness(1.07)} /* buildings, the cloud and the company: clickable, for a name and a joke */
 .mappulse{transform-box:fill-box;transform-origin:50% 100%}
 @media (prefers-reduced-motion:no-preference){.mappulse{animation:mappulse 2.4s ease-in-out var(--t,0s) infinite}}
 @keyframes mappulse{0%,60%,100%{transform:scale(1)}30%{transform:scale(1.12)}}
@@ -403,11 +418,36 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
 .fate-taken{animation:fxtake .7s 1.5s both}
 .fate-safe{animation:fxsafe .5s 1.4s both}
 .fxmark{opacity:0;animation:fxin .3s 2s both}
-.mapresult{position:absolute;left:14px;bottom:80px;width:min(400px,calc(100% - 28px));background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:18px;box-shadow:0 5px 0 #1B1840;padding:14px 16px;display:grid;gap:8px;animation:fxbar .35s 2.1s both} /* bottom left, over open sea, clear of the figure */
+/* left over from an earlier disaster in the same run: drawn as it ended up, with no replay */
+.mapfate.was,.fxmark.was{animation:none}.fxmark.was{opacity:1}
+.fate-gone.was{filter:grayscale(1) brightness(.3);opacity:.45;transform:scale(.82) rotate(-6deg)}
+.fate-taken.was{opacity:.12;transform:translate(34px,-10px) scale(.45)}
+.fate-hacked.was{filter:saturate(.5) brightness(.85)}
+.mapresult .runs{font-weight:700;font-size:.9rem}
+.mapresult .tagline{color:#5A5688;font-size:.9rem;margin-top:-6px}
+/* which setup this map is, and (on the Build screen) the next recommended changes as tappable cards */
+.maplabel{position:absolute;left:14px;top:10px;background:#1B1840;color:#fff;font-family:var(--display);font-weight:700;font-size:.95rem;padding:6px 14px;border-radius:14px}
+.mapintro .maplabel{opacity:0}
+.mapcards{position:absolute;right:14px;bottom:80px;width:min(320px,calc(100% - 28px));display:grid;gap:8px} /* bottom right, over open sea beside the island */
+.mapcardtip{display:grid;gap:3px;text-align:left;background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:16px;box-shadow:0 4px 0 #1B1840;padding:10px 14px;font-size:.9rem;cursor:pointer;transition:transform .12s,box-shadow .12s}
+button.mapcardtip:hover{transform:translateY(-2px);box-shadow:0 6px 0 #1B1840}
+button.mapcardtip:active{transform:translateY(3px);box-shadow:0 1px 0 #1B1840}
+.mapcardtip small{font-weight:700;color:#5A5688}.mapcardtip b{font-size:.98rem;line-height:1.25}.mapcardtip span{color:#5A5688;font-size:.84rem}
+.mapcardtip.done{cursor:default;background:#E3F6EA}
+/* phones: the cards or the result sit between the map and the buttons, and the map moves up to make room */
+@media (max-width:760px){
+  .mapcards,.mapresult{bottom:196px;left:10px;right:10px;width:auto}
+  .mapscore.rows{justify-content:center;font-size:.84rem;padding:6px 12px;gap:2px 10px}
+  .mapcard:has(.mapscore.rows) .mapcards,.mapcard:has(.mapscore.rows) .mapresult{bottom:204px} /* the two-row chip is a little taller */
+  .mapcardtip{padding:7px 12px;gap:1px}.mapcardtip small{display:none}.mapcardtip b{font-size:.9rem}
+  .mapcard.lift{min-height:680px}
+  .mapcard.lift .map{inset:44px 0 356px;height:calc(100% - 400px)}
+}
+.mapresult{position:absolute;right:14px;bottom:80px;width:min(360px,calc(100% - 28px));background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:18px;box-shadow:0 5px 0 #1B1840;padding:14px 16px;display:grid;gap:8px;animation:fxbar .35s 2.1s both} /* bottom left, over open sea, clear of the figure */
 .mapresult b{font-family:var(--display);font-size:1.1rem}
 .mapresult .st{justify-self:start}
 .mapresult.bad{background:#FDE7E7}.mapresult.ok{background:#E3F6EA}
-@media (max-width:760px){.mapresult{bottom:200px}}
+@media (max-width:760px){.mapresult{bottom:196px;left:10px;right:10px;width:auto}}
 @keyframes fxbar{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes fxdrop{from{transform:translateY(-340px);opacity:0}30%{opacity:1}to{transform:none;opacity:1}}
 @keyframes fxgone{to{opacity:0}}
@@ -930,7 +970,7 @@ function outcome(s,kind,e,r){
     if(e.takes&&!bad&&allKeys(s).some(k=>real(k)&&e.places.includes(k.dloc))){
       const L=outcome(s,'l',{id:'l_stolen',places:e.places},Object.assign({},r,{k:r.b,kr:r.bk,c:r.bc}));
       if(L.bad){bad=gone=true;text+=L.why?` But ${L.why}, so the coins are lost.${L.tip}`:' But you had no working way to recover, so the coins are lost.'}
-      else text+=s.n===1&&!TL(s)?` ${backupName(s.keys[0],true)} brings the key back.`:' You can still recover your coins.';
+      else text+=s.n===1&&!TL(s)?` ${backupName(s.keys[0],true)} can bring the key back.`:' You can still recover your coins.';
     }
     if(!bad&&!rhit&&!touches(s,e))text=untouched(e);
   }else{
@@ -953,7 +993,7 @@ function outcome(s,kind,e,r){
       const one=own.length===1,cnt=(n,w)=>n===1?(one?'your ':'a ')+w:`${n} ${w}s`;
       if(dG&&bG)text=`You lost ${cnt(dG,'device')} and ${cnt(bG,'backup')}, but every key can still be recovered. Replace what was lost soon.`;
       else if(bG)text=`You lost ${cnt(bG,'backup')}, but ${one?'the key is still on your device':'the keys are still on your devices'}. Make a new backup soon.`;
-      else if(dG)text=`You lost ${cnt(dG,'device')}, but ${dG===1?backupName(own.find(k=>real(k)&&gone(k.dloc)))+' brings the key back':'the backups bring the keys back'}.`;
+      else if(dG)text=`You lost ${cnt(dG,'device')}, but ${dG===1?backupName(own.find(k=>real(k)&&gone(k.dloc)))+' can bring the key back':'the backups can bring the keys back'}.`;
     }
     if(e.dev&&ev.dead&&!TL(s)){const i=s.keys.indexOf(ev.dead),nm=s.n>1?`Key ${LETTERS[i]}’s device`:'Your device';
       text=bad?(s.n===1?'Your device died, and there was no working backup.':left<s.m?`${nm} died with no working backup, and that left too few keys.`:`${nm} died with no working backup, and without the wallet file you can’t use the keys that are left.`):hit[i]?`${nm} died with no working backup, but you can still spend with the other keys.`:`${nm} died, but its backup brought the key back.`}
@@ -977,7 +1017,7 @@ function outcome(s,kind,e,r){
 // Names a key's backup exactly, so a result can say which thing saved you: "your paper recovery phrase backup at home".
 function backupName(k,capital){
   const at=p=>p==='bank'?' in the bank box':p==='carry'?' in your pocket':' at '+PLAIN[p];
-  const n={paper:'your paper recovery phrase backup'+at(k.bloc),metal:'your steel recovery phrase backup'+at(k.bloc),memory:'the recovery phrase you memorized',cloud:'your recovery phrase backup in the cloud'}[k.backup]||'your backup';
+  const n={paper:'your recovery phrase, written on paper'+at(k.bloc)+',',metal:'your recovery phrase, stamped in steel'+at(k.bloc)+',',memory:'the recovery phrase you memorized',cloud:'your recovery phrase backup in the cloud'}[k.backup]||'your backup';
   return capital?n[0].toUpperCase()+n.slice(1):n;
 }
 function runDisaster(setups,id,lastId){
@@ -1305,8 +1345,17 @@ const SetupMap=(()=>{
      or none, if the disaster never came near it. The rules follow the model's own event flags, so a new event of an
      existing kind needs nothing here. */
   let FX=null;
+  /* Disasters compound: what earlier ones destroyed or carried off stays that way. FX.prior holds those fates by thing.
+     A thing already gone can't be struck again; anything else can. fate() gives [fate, fresh]: fresh means the disaster
+     playing now did it, so it animates; the rest is drawn as it was left. */
+  const tid=t=>`${t.role||t.t}:${t.k==null?'':t.k}:${t.loc||''}`;
   function fate(t){
-    if(!FX)return '';
+    const prior=FX&&FX.prior&&FX.prior[tid(t)];
+    if(prior==='gone'||prior==='taken')return [prior,false];
+    const f=FX&&FX.ev?strike(t):'';
+    return f?[f,true]:[prior||'',false];
+  }
+  function strike(t){
     const e=FX.ev,theft=FX.kind==='t',k=t.key,hit=t.k==='R'?!!FX.rhit:t.k!=null&&!!FX.hit[t.k];
     const hacked=hit?'hacked':'safe',lost=hit?'gone':'safe';
     if(e.duress||e.border)return e.places.includes(t.loc)&&t.k!=null?(hit?(e.border?'hacked':'taken'):'safe'):''; // forced: what you have on you or at home
@@ -1337,10 +1386,10 @@ const SetupMap=(()=>{
   const FXMARK={gone:['#EF5350','<path d="M-5 -5L5 5M5 -5L-5 5" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>'],hacked:['#EF5350','<path d="M0 -7v7" stroke="#fff" stroke-width="3.8" stroke-linecap="round"/><circle cy="6" r="2.2" fill="#fff"/>'],safe:['#17A865','<path d="M-6 0l4 4l7 -8" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>']};
   function token(x,y,t,s=1){
     REG.push(t);
-    const f=fate(t);t.fate=f;t.x=x;t.y=y;
-    const mark=FXMARK[f]?`<g class="fxmark" transform="translate(0 -24)"><circle r="13" fill="${FXMARK[f][0]}" stroke="#fff" stroke-width="2.5"/>${FXMARK[f][1]}</g>`:'';
+    const [f,fresh]=fate(t);t.fate=f;t.fresh=fresh;t.id=tid(t);t.x=x;t.y=y;
+    const mark=FXMARK[f]?`<g class="fxmark${fresh?'':' was'}" transform="translate(0 -24)"><circle r="13" fill="${FXMARK[f][0]}" stroke="#fff" stroke-width="2.5"/>${FXMARK[f][1]}</g>`:'';
     const badge=t.k==null?'':`<circle cx="17" cy="-46" r="10" fill="${keyColor(t.k)}" stroke="#fff" stroke-width="2"/><text x="17" y="-42" text-anchor="middle" font-size="11" font-weight="800">${keyName(t.k)}</text>`;
-    return `<g class="maptap" data-i="${REG.length-1}" transform="translate(${x.toFixed(1)} ${y}) scale(${s})"><title>${NAMES[t.t]}</title><g class="mapstep" data-step="t${REG.length-1}"><ellipse rx="20" ry="6" fill="#000" opacity=".16"/><g class="mapfate ${f?'fate-'+f:''}"><g class="mappulse" style="--t:${-(REG.length%6)*.4}s">${TOK[t.t]}${badge}${MARK[t.mark]||''}</g></g>${mark}</g></g>`;
+    return `<g class="maptap" data-i="${REG.length-1}" transform="translate(${x.toFixed(1)} ${y}) scale(${s})"><title>${NAMES[t.t]}</title><g class="mapstep" data-step="t${REG.length-1}"><ellipse rx="20" ry="6" fill="#000" opacity=".16"/><g class="mapfate ${f?'fate-'+f:''}${fresh?'':' was'}"><g class="mappulse" style="--t:${-(REG.length%6)*.4}s">${TOK[t.t]}${badge}${MARK[t.mark]||''}</g></g>${mark}</g></g>`;
   }
   const label=(x,y,text,dim)=>{const w=text.length*7.2+18;return `<g opacity="${dim?.6:1}"><rect x="${x-w/2}" y="${y-13}" width="${w}" height="20" rx="10" fill="#fff" opacity=".9"/><text x="${x}" y="${y+1.5}" text-anchor="middle" font-size="13" font-weight="700">${text}</text></g>`};
   // a row of tokens centred on x; they close up when there are many
@@ -1377,6 +1426,9 @@ const SetupMap=(()=>{
     return d;
   }
 
+  // Places (and you) can be clicked too. They open a card with nothing but a name and a joke: see SPOT_JOKES.
+  // The attributes go on the place's group; a <title> can't, so the name is the label for screen readers.
+  const spot=(id,name)=>{REG.push({spot:id,name});return `class="maptap mapplace" data-i="${REG.length-1}" role="button" aria-label="${name}"`};
   // Every disaster is a target plus one of six effects. The target is where it strikes: a place, you, the cloud, the
   // company across the water, the things it reaches, or (for time passing) the whole island.
   function effectKind(){
@@ -1393,7 +1445,7 @@ const SetupMap=(()=>{
     if(e.prov||e.gov||(e.cust&&!e.login))return spots.company;
     if(e.login||e.phish)return you;
     if(e.id==='l_time')return {x:350,top:210,front:300};
-    const t=REG.find(t=>t.fate&&t.fate!=='safe')||REG.find(t=>t.fate); // strikes things directly: aim at the first one it reaches
+    const t=REG.find(t=>t.fresh&&t.fate!=='safe')||REG.find(t=>t.fresh); // strikes things directly: aim at the first one it reaches
     return t?{x:t.x,top:t.y-112,front:t.y}:you;
   }
   // What happens there: the disaster's icon drops in, then the effect. Timing is in the CSS (.fx…): drop, effect, then the things react.
@@ -1418,11 +1470,12 @@ const SetupMap=(()=>{
       const items=S.places[id],b=building(p.x,p.y,p.b),y=b.front+38;
       spots[id]={x:p.x,top:b.top,front:b.front};
       if(items.length)paths+=`<path d="M${YOU.x} ${YOU.y-6}Q${(YOU.x+p.x)/2} ${Math.max(YOU.y,p.y)-10} ${p.x} ${p.y+34}" fill="none" stroke="#EAD9A8" stroke-width="9" stroke-linecap="round" opacity=".9"/>`;
-      B.push([p.y,`<g opacity="${items.length?1:.5}">${b.svg}</g>`]);
+      B.push([p.y,`<g ${spot(id,p.name)} opacity="${items.length?1:.5}">${b.svg}</g>`]);
       T.push(row(p.x,y,items,p.name)+label(p.x,y+(items.length?18:-22),p.name,!items.length));
     }
     // you: a game piece, holding what you carry
-    let you=`<g class="mapstep" data-step="you"><ellipse cx="${YOU.x}" cy="${YOU.y+2}" rx="24" ry="8" fill="#000" opacity=".18"/><path d="M${YOU.x-21} ${YOU.y}Q${YOU.x-22} ${YOU.y-34} ${YOU.x-9} ${YOU.y-52}H${YOU.x+9}Q${YOU.x+22} ${YOU.y-34} ${YOU.x+21} ${YOU.y}Z" fill="#5438F0"/><path d="M${YOU.x-21} ${YOU.y}Q${YOU.x-22} ${YOU.y-18} ${YOU.x-17} ${YOU.y-30}H${YOU.x+17}Q${YOU.x+22} ${YOU.y-18} ${YOU.x+21} ${YOU.y}Z" fill="#4329D6"/><circle cx="${YOU.x}" cy="${YOU.y-62}" r="16" fill="#5438F0"/><circle cx="${YOU.x-5}" cy="${YOU.y-66}" r="5" fill="#7C66FF"/>`;
+    REG.push({spot:'you'});
+    let you=`<g class="mapstep maptap" data-i="${REG.length-1}" data-step="you"><title>You</title><ellipse cx="${YOU.x}" cy="${YOU.y+2}" rx="24" ry="8" fill="#000" opacity=".18"/><path d="M${YOU.x-21} ${YOU.y}Q${YOU.x-22} ${YOU.y-34} ${YOU.x-9} ${YOU.y-52}H${YOU.x+9}Q${YOU.x+22} ${YOU.y-34} ${YOU.x+21} ${YOU.y}Z" fill="#5438F0"/><path d="M${YOU.x-21} ${YOU.y}Q${YOU.x-22} ${YOU.y-18} ${YOU.x-17} ${YOU.y-30}H${YOU.x+17}Q${YOU.x+22} ${YOU.y-18} ${YOU.x+21} ${YOU.y}Z" fill="#4329D6"/><circle cx="${YOU.x}" cy="${YOU.y-62}" r="16" fill="#5438F0"/><circle cx="${YOU.x-5}" cy="${YOU.y-66}" r="5" fill="#7C66FF"/>`;
     if(S.you.length)you+=`<path d="M${YOU.x+14} ${YOU.y-38}Q${YOU.x+26} ${YOU.y-36} ${YOU.x+34} ${YOU.y-22}" fill="none" stroke="#5438F0" stroke-width="8" stroke-linecap="round"/>`;
     you+=label(YOU.x,YOU.y+22,'You')+'</g>'+row(YOU.x+42+(S.you.length-1)*17,YOU.y+2,S.you,'With you',.85);
     if(S.head.length){ // thought bubble: closed until clicked
@@ -1432,16 +1485,16 @@ const SetupMap=(()=>{
     }
     // the company across the water, and the cloud: always drawn, faded when unused, like every other place
     const c=COMPANY,cb=building(c.x,c.y,c.b),co=S.company;spots.company={x:c.x,top:cb.top,front:cb.front};
-    const far=`<g opacity="${co?1:.5}"><ellipse cx="${c.x}" cy="${c.y+16}" rx="96" ry="48" fill="#1B8E77"/><ellipse cx="${c.x}" cy="${c.y+8}" rx="96" ry="48" fill="#E9DDB0"/><ellipse cx="${c.x}" cy="${c.y+6}" rx="88" ry="42" fill="#7ED6A0"/>${cb.svg}</g>`+
+    const far=`<g ${spot('company',co?co.name:'Exchange')} opacity="${co?1:.5}"><ellipse cx="${c.x}" cy="${c.y+16}" rx="96" ry="48" fill="#1B8E77"/><ellipse cx="${c.x}" cy="${c.y+8}" rx="96" ry="48" fill="#E9DDB0"/><ellipse cx="${c.x}" cy="${c.y+6}" rx="88" ry="42" fill="#7ED6A0"/>${cb.svg}</g>`+
       (co?row(c.x-58,c.y+52,co.items,co.name)+`<path d="M${YOU.x+70} ${YOU.y-50}Q520 60 ${c.x-96} ${c.y+30}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="3 9" stroke-linecap="round" opacity=".9"/>`:'')+
       label(c.x+4,c.y+62,co?co.name:'Exchange',!co);
-    const cloud=`<g opacity="${S.cloud.length?1:.5}"><ellipse cx="118" cy="150" rx="62" ry="12" fill="#000" opacity=".1"/><g fill="#fff"><rect x="50" y="64" width="150" height="40" rx="20"/><circle cx="92" cy="64" r="28"/><circle cx="140" cy="54" r="36"/></g></g>`+row(124,102,S.cloud,'Cloud',.8)+label(124,124,'Cloud',!S.cloud.length);
+    const cloud=`<g ${spot('cloud','Cloud')} opacity="${S.cloud.length?1:.5}"><ellipse cx="118" cy="150" rx="62" ry="12" fill="#000" opacity=".1"/><g fill="#fff"><rect x="50" y="64" width="150" height="40" rx="20"/><circle cx="92" cy="64" r="28"/><circle cx="140" cy="54" r="36"/></g></g>`+row(124,102,S.cloud,'Cloud',.8)+label(124,124,'Cloud',!S.cloud.length);
     B.sort((a,b)=>a[0]-b[0]);
     return `<svg class="map" viewBox="0 0 800 560" role="img" aria-label="A map of this setup: where each device and backup is kept">
       <defs><linearGradient id="map-grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C6F06A"/><stop offset="1" stop-color="#5FCF8A"/></linearGradient></defs>
       <path d="M40 60h30M720 300h36M700 480h44M30 470h28M610 30h24M22 250h20M560 520h30M330 36h30" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".55"/>
       <ellipse cx="350" cy="320" rx="322" ry="204" fill="#1B8E77"/><ellipse cx="350" cy="306" rx="322" ry="204" fill="#E9DDB0"/><ellipse cx="350" cy="302" rx="308" ry="192" fill="url(#map-grass)"/>
-      ${far}<g class="mapstep" data-step="end">${paths}</g>${B.map(b=>b[1]).join('')}${T.join('')}${you}${cloud}${FX?effects(target(spots)):''}
+      ${far}<g class="mapstep" data-step="end">${paths}</g>${B.map(b=>b[1]).join('')}${T.join('')}${you}${cloud}${FX&&FX.ev?effects(target(spots)):''}
     </svg>`;
   }
 
@@ -1476,6 +1529,7 @@ const SetupMap=(()=>{
   const kb=k=>k==null?'':`<b class="mapkb" style="background:${keyColor(k)}" title="Key ${keyName(k)}">${keyName(k)}</b>`;
   function card(o){
     const joke=text=>text?`<p class="mapjoke">${text}</p>`:'';
+    if(o.spot)return `<h3>${SPOT_NAMES[o.spot]||o.name}</h3>`+joke(any(SPOT_JOKES[o.spot]));
     if(o.head)return `<h3>Memorized</h3>`+o.head.map(l=>`<div class="maprow"><span>${kb(l.k)}${l.label}</span><span${l.secret?` data-secret="${l.secret}"`:''}>${l.value}</span></div>`).join('')+(o.head.some(l=>l.secret)?'<button class="btn small ghost" data-mapshow>Show it</button>':'')+joke('Also currently thinking about: '+any(THOUGHTS));
     const head=`<h3>${NAMES[o.t]} ${kb(o.k)}</h3>${o.place?`<p>${o.place}</p>`:''}`;
     const list=(cls,num)=>`<div class="${cls}">${WORDS.map((w,i)=>`<div>${num?`<small>${i+1}. </small>`:''}${w}</div>`).join('')}</div>`;
@@ -1499,6 +1553,18 @@ const SetupMap=(()=>{
     login:['Two-factor code sent to a phone number you had in 2016.'],
     key:['They promise they haven’t looked.'],
   };
+  // The places themselves, and you. Purely for life: a name and one of a few lines, different each time.
+  const SPOT_NAMES={home:'Your home',relative:'Your relative’s place',office:'Your office',friend:'Your friend’s place',bank:'The bank',cloud:'The cloud',you:'You'};
+  const SPOT_JOKES={
+    home:['Home sweet home. The dishes can wait.','There’s a drawer in here full of cables you will never use.','The Wi-Fi password is on the fridge.'],
+    relative:['Your grandma just made freshly baked cookies 😋','They still ask when you’ll get a real job.','Someone in here is forwarding chain emails.'],
+    office:['This meeting could have been an email.','The printer is jammed. It has always been jammed.','Somebody hit “reply all”.'],
+    friend:['They still owe you for that pizza in 2019.','You helped them move. Twice.','Their couch has seen things.'],
+    bank:['Free pens. Chained to the desk.','Please take a number.','Your call is important to us.'],
+    cloud:['Storage almost full. Upgrade now?','Syncing… since 2019.','There is no cloud. It’s just someone else’s computer.'],
+    company:['Wen moon?','Number go up.','Support will reply within 3 to 5 business years.'],
+    you:['This is you. Looking good.','You, slightly idealised.','Reminder: drink some water.'],
+  };
   const PLACE_JOKES={bank:'Opening hours: never when you need it.',relative:'They think it’s a recipe.',friend:'They promised not to peek.',office:'In the drawer under the stapler.',cloud:'The cloud: just someone else’s computer.'};
   document.addEventListener('click',ev=>{
     // The card is a real dialog, so the dimmed backdrop covers the whole page. Esc, the button or a click outside closes it.
@@ -1507,7 +1573,9 @@ const SetupMap=(()=>{
     if(ev.target===dl||ev.target.closest('[data-mapclose]')){dl.close();return}
     if(tap){dl.innerHTML=`<div class="mappop">${card(REG[+tap.dataset.i])}<button class="btn small" data-mapclose>Close</button></div>`;dl.showModal()}
   });
-  return {svg,beats}; // beats() describes the map drawn by the latest svg() call
+  // beats() and things() describe the map drawn by the latest svg() call. things() lists what is on it and what became of each.
+  const things=()=>REG.filter(t=>t.t).map(t=>({id:t.id,role:t.role,k:t.k,fate:t.fate,fresh:t.fresh}));
+  return {svg,beats,things};
 })();
 //--UI--
 /* ---------- state ---------- */
@@ -1518,12 +1586,6 @@ reset();
 const $=id=>document.getElementById(id);
 const STEPS=['Start','Today','Build','Use it','Stress test'];
 const SHARE_URL='https://rolznz.github.io/bitcoin-self-custody-simulator/';
-// A random disaster for the map: one that can actually reach the current setup (the rest can still be picked from the
-// list), and never the same one twice running.
-function onMapPick(){
-  const all=disasterList([S.base]).map(x=>x[1]),can=all.filter(e=>touches(S.base,e)),from=(can.length?can:all).filter(e=>!S.dis||e.id!==S.dis.id);
-  return (from.length?from:all)[Math.floor(Math.random()*(from.length||all.length))].id;
-}
 const btc=s=>(s/SATS).toFixed(4).replace(/\.?0+$/,'')+' BTC';
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -1684,29 +1746,45 @@ function setupList(s){
 function startFrom(){
   return `<div class="rowb"><span class="hint">Start from</span>${[['hot','Phone wallet'],['laptop','Laptop wallet'],['typical','Hardware wallet'],['exchange','Exchange'],['fintech','Payment app'],['bank','Bank or broker'],['etf','ETF'],['m23','2-of-3 on your own'],['prov','2-of-3 with a provider'],['prov5','3-of-5 with a provider']].map(([p,l])=>`<button class="btn ghost small" data-act="preset" data-w="base" data-p="${p}">${l}</button>`).join('')}</div>`;
 }
-function screenToday(){
+let buildSeen=null; // the new setup's scores as last drawn on the Build screen, to notice when a change moves them
+function screenMap(which){
   // The map shows the setup. Its two buttons open the disaster panel and the edit form, each in a dialog (see render).
   // The map fills the screen. A chip in one corner gives the two risks in a word each and opens the full scoreboard.
   const tool=(attrs,on,icon,name,short)=>`<button class="maptool" ${attrs}${on==null?'':` aria-pressed="${on}"`} aria-label="${name}" title="${name}"><span aria-hidden="true">${icon}</span>${short}</button>`;
-  const intro=S.mapIntro==='run',sc=scoreOf(S.base),word={low:'Low',mid:'Medium',high:'High'};
+  const intro=which==='base'&&S.mapIntro==='run',sc=scoreOf(S[which]),word={low:'Low',mid:'Medium',high:'High'};
   const risk=(name,v)=>`<span><i style="background:${riskColor(v)}"></i>${name} <b>${word[level(v)]}</b></span>`;
   // A disaster that can be shown on the map plays there, and its result is a bar over the map instead of a dialog.
-  const d=S.mapDis,o=d&&d.res[0];
-  const fx=d?{ev:d.ev,kind:d.kind,hit:o.hit,rhit:o.rhit,bad:o.bad,dead:o.dead,icon:d.icon}:null;
-  const result=fx?`<div class="mapresult ${o.bad?'bad':'ok'}" role="status"><b>${d.icon} ${d.label}</b><span>${o.text}</span><span class="st lv-${o.bad?'high':'low'}">${o.verdict}</span>
-      <div class="rowb"><button class="btn small" data-act="mapAnother">🎲 Another</button><button class="btn small ghost" data-act="simPick">Pick one</button><button class="btn small ghost" data-act="mapDisDone">Done</button></div></div>`:'';
-  return `<h2 class="sr">Your setup today</h2>
-  <div class="mapcard${intro?' mapintro':''}">${SetupMap.svg(S.base,fx)}${result}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
-    <button class="mapscore" data-act="scores" aria-label="Theft risk ${word[level(sc.theft)]}, loss risk ${word[level(sc.loss)]}. Open the scoreboard">${risk('Theft risk',sc.theft)}${risk('Loss risk',sc.loss)}</button>
-    <div class="maptools">${tool('data-act="help"',S.helpOpen,'❓','Help','Help')}${tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster')}${tool('data-act="editBase"',S.editBase,'✏️','Edit current setup','Edit current setup')}<button class="maptool next" data-act="go" data-to="2"><span aria-hidden="true">🚀</span>Improve it →</button></div></div>`;
+  // Disasters stack up until the coins are gone or the player resets (see throwDisaster).
+  const R=S.run,d=R&&S.mapDis,o=d&&d.res[0],over=R&&R.over;
+  const fx=d?fxOf(d,R):null;
+  const result=fx?`<div class="mapresult ${over?'bad':'ok'}" role="status"><b>${d.icon} ${d.label}</b>${tagline(d.id)?`<i class="tagline">${tagline(d.id)}</i>`:''}<span>${o.text}${over&&over.text?' '+over.text:''}</span>
+      <span class="rowb"><span class="st lv-${over?'high':'low'}">${over?over.verdict:'Coins safe'}</span><span class="runs">${over?(R.n?`after surviving ${R.n}`:'at the first disaster'):`Survived ${R.n} in a row`}</span></span>
+      <div class="rowb">${over?'<button class="btn small" data-act="mapDisDone">↺ Reset and try again</button><button class="btn small ghost" data-act="simPick">Pick one</button>':'<button class="btn small" data-act="mapAnother">🎲 Another</button><button class="btn small ghost" data-act="simPick">Pick one</button><button class="btn small ghost" data-act="mapDisDone">↺ Reset</button>'}</div></div>`:'';
+  // The Build screen is the same map showing the new setup. Its chip compares each risk with the current setup's, and
+  // while no disaster is playing it offers the model's next recommended changes as cards that apply with one tap.
+  const build=which==='mine',was=build?scoreOf(S.base):null;
+  // On the Build screen the chip has two rows, Before and Now, each with its own coloured dots. When a change moves the
+  // scores, the Now row plays from the old values to the new ones for about three seconds (see .chg in the CSS).
+  if(build){
+    if(buildSeen&&(buildSeen.theft!==sc.theft||buildSeen.loss!==sc.loss))S.chipAnim={from:buildSeen,until:Date.now()+3200};
+    buildSeen={theft:sc.theft,loss:sc.loss};
+  }
+  const moving=build&&S.chipAnim&&Date.now()<S.chipAnim.until?S.chipAnim.from:null;
+  const cell=(name,v,from)=>from!=null&&from!==v
+    ?`<span class="chg"><i style="background:${riskColor(v)};--a:${riskColor(from)};--b:${riskColor(v)}"></i>${name} <b class="swap"><em>${word[level(from)]} ${from}</em><em>${word[level(v)]} ${v}</em></b></span>`
+    :`<span><i style="background:${riskColor(v)}"></i>${name} <b>${word[level(v)]} ${v}</b></span>`;
+  const chip=build?`<small>Before</small>${cell('Theft',was.theft)}${cell('Loss',was.loss)}<small>Now</small>${cell('Theft',sc.theft,moving&&moving.theft)}${cell('Loss',sc.loss,moving&&moving.loss)}`
+    :risk('Theft risk',sc.theft)+risk('Loss risk',sc.loss);
+  const tips=build&&!fx?bestChanges(S.mine,true):null;
+  const tip=(k,title,x)=>x?`<button class="mapcardtip" data-act="mapApply" data-k="${k}"><small>${title}</small><b>${x.do}</b><span>Theft ${x.from.theft} → ${x.to.theft} · Loss ${x.from.loss} → ${x.to.loss}</span></button>`:'';
+  const cards=tips?`<div class="mapcards">${tip('small','💡 A small step',tips.small)}${tip('big','🏗️ A big step',tips.big)}${!tips.small&&!tips.big?'<div class="mapcardtip done"><b>Nothing more to suggest.</b><span>From here, every change trades one risk for another.</span></div>':''}</div>`:'';
+  return `<h2 class="sr">${build?'Build your new setup':'Your setup today'}</h2>
+  <div class="mapcard${intro?' mapintro':''}${result||cards?' lift':''}">${SetupMap.svg(S[which],fx)}<span class="maplabel">${build?'Your new setup':'Your current setup'}</span>${result}${cards}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
+    <button class="mapscore${build?' rows':''}${moving?' changing':''}" data-act="scores" aria-label="${build?`Before: theft risk ${was.theft}, loss risk ${was.loss}. Now: theft risk ${sc.theft}, loss risk ${sc.loss}`:`Theft risk ${word[level(sc.theft)]}, loss risk ${word[level(sc.loss)]}`}. Open the scoreboard">${chip}</button>
+    <div class="maptools">${tool('data-act="help"',S.helpOpen,'❓','Help','Help')}${tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster')}${tool('data-act="editBase"',S.editBase,'✏️',build?'Edit new setup':'Edit current setup',build?'Edit new setup':'Edit current setup')}<button class="maptool next" data-act="go" data-to="${build?3:2}"><span aria-hidden="true">${build?'🧪':'🚀'}</span>${build?'Try using it →':'Improve it →'}</button></div></div>`;
 }
-function screenBuild(){
-  return `<h2>Build your new setup</h2>
-  <p class="lede">Anything goes. Change things and watch the scores move.</p>
-  <div><button class="btn small outline" data-act="rec">Get a recommendation</button></div>
-  ${editor('mine')}
-  <div><button class="btn" data-act="go" data-to="3">Try using it</button></div>`;
-}
+function screenToday(){return screenMap('base')}
+function screenBuild(){return screenMap('mine')}
 function signPanel(){
   const tx=S.w.tx,st=S.mine,usable=st.keys.filter(k=>k.device!=='none'||k.backup!=='none').length;
   const slots=Array.from({length:st.m},(_,j)=>tx.sigs[j]===undefined?'<span class="slot"></span>':`<span class="tok" style="--kc:var(--k${tx.sigs[j]})">${LETTERS[tx.sigs[j]]}</span>`).join('');
@@ -1870,24 +1948,26 @@ function render(){
   document.body.classList.toggle('landing',S.step===0);
   $('reset').hidden=S.step===0;
   $('score').innerHTML=scoreboard(R);
-  // the disaster dialog, opened by the fire button on the map
+  // The map is the Today screen (the current setup) and the Build screen (the new one). Its dialogs work on whichever is showing.
+  const onMap=S.step===1||S.step===2,mw=S.step===2?'mine':'base';
+  // the disaster dialog: the list to pick from
   const sim=$('sim');
-  if(S.simBase&&S.step===1){
-    sim.innerHTML=`<div class="simbody">${disasterCard('today',[S.base],S.dis,'What could go wrong?','')}</div>`;
+  if(S.simBase&&onMap){
+    sim.innerHTML=`<div class="simbody">${disasterCard('today',[S[mw]],S.dis,'What could go wrong?','')}</div>`;
     if(!sim.open)sim.showModal();
     sim.scrollTop=0;
   }else if(sim.open)sim.close();
   // the edit dialog, opened by the pencil button on the map. It is redrawn on every change, so keep its scroll position.
   const ed=$('edit');
-  if(S.editBase&&S.step===1){
+  if(S.editBase&&onMap){
     const y=ed.scrollTop;
-    ed.innerHTML=`<div class="simbody"><div class="simhead"><span class="emo" aria-hidden="true">✏️</span><h3>Edit current setup</h3><button class="simx" data-act="editBase" aria-label="Close">×</button></div>${editor('base')}<div><button class="btn" data-act="editBase">Done</button></div></div>`;
+    ed.innerHTML=`<div class="simbody"><div class="simhead"><span class="emo" aria-hidden="true">✏️</span><h3>${mw==='mine'?'Edit new setup':'Edit current setup'}</h3><button class="simx" data-act="editBase" aria-label="Close">×</button></div>${editor(mw)}<div><button class="btn" data-act="editBase">Done</button></div></div>`;
     if(!ed.open)ed.showModal();
     ed.scrollTop=y;
   }else if(ed.open)ed.close();
   // the full scoreboard, opened from the chip on the map
   const sb=$('scores');
-  if(S.scoresOpen&&S.step===1){
+  if(S.scoresOpen&&onMap){
     sb.innerHTML=`<div class="simbody"><div class="simhead"><span class="emo" aria-hidden="true">📊</span><h3>Scoreboard</h3><button class="simx" data-act="scores" aria-label="Close">×</button></div><div class="score scorefull">${scoreboard(R)}</div>
       <div><button class="btn small ghost" data-act="scoresMore" aria-expanded="${!!S.scoresMore}">${S.scoresMore?'Hide details':'See more details'}</button></div>
       ${S.scoresMore?`<div class="scoremore">${howHTML()}</div>`:''}</div>`;
@@ -1895,7 +1975,7 @@ function render(){
   }else if(sb.open)sb.close();
   // help, opened from the map: everything the footer says on the other screens
   const hp=$('help');
-  if(S.helpOpen&&S.step===1){
+  if(S.helpOpen&&onMap){
     hp.innerHTML=`<div class="simbody"><div class="simhead"><span class="emo" aria-hidden="true">❓</span><h3>Help</h3><button class="simx" data-act="help" aria-label="Close">×</button></div>
       <p>Pretend coins only. Scores are rough estimates, not advice.</p>
       <p><b>Never enter your seed or passphrase into any website.</b> This simulator will never ask for them.</p>
@@ -1903,7 +1983,7 @@ function render(){
       ${S.helpMore?`<div class="scoremore">${perfectHTML()}</div>`:''}</div>`;
     if(!hp.open)hp.showModal();
   }else if(hp.open)hp.close();
-  document.body.classList.toggle('mapscreen',S.step===1);
+  document.body.classList.toggle('mapscreen',onMap);
   if(S.step===1&&S.mapIntro==='run')paintMapIntro(false); // the map was just redrawn mid-introduction: put it back as it was
   if(act&&$(act))$(act).focus();
 }
@@ -1913,7 +1993,8 @@ function go(to){
   if(firstMap){mapIntroSeen=true;S.mapIntro='run';mapBeat=-1}
   if(to===0&&S.step!==0)startIntro(); // coming back to the first screen replays the car's entrance
   if(to!==1&&S.mapIntro==='run')S.mapIntro='done'; // leaving the map (by "Improve it", say) ends its introduction
-  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.helpOpen=false;S.mapDis=null;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
+  buildSeen=null;S.chipAnim=null; // arriving on the Build screen never animates the scores; only changes made there do
+  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.helpOpen=false;S.mapDis=S.run=null;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
   if(firstMap)runMapIntro();
 }
 /* ---------- map introduction ---------- */
@@ -2039,16 +2120,23 @@ document.addEventListener('click',ev=>{
       st.tested=false;if(s==='mine')S.w.report=null}}
   if(a==='go'){if(b.classList.contains('cta')&&driveOff(()=>go(+b.dataset.to)))return;return go(+b.dataset.to)}
   if(a==='reset'){reset();startIntro();return go(0)} // "Start over" replays the car's entrance as well
-  if(a==='editBase')S.editBase=!S.editBase;
+  if(a==='editBase'){ // editing the setup ends any run of disasters. On the Build screen the form starts from the setup as it stands.
+    S.editBase=!S.editBase;
+    if(S.editBase){S.mapDis=S.run=null;if(S.step===2)S.picked.mine=true}
+  }
   // "Try a disaster" always throws a random one onto the map. Choosing a particular one comes afterwards, from the result.
-  if(a==='simBase'||a==='mapAnother')disaster('today',onMapPick());
+  if(a==='simBase'||a==='mapAnother')throwDisaster(null);
   if(a==='simPick'){S.simBase=true;S.simList=true}
   if(a==='simClose')S.simBase=false;
-  if(a==='mapDisDone'){S.mapDis=null;render();if(S.mapIntro==='run')nextMapBeat();return} // during the onboarding, Done also moves on
+  if(a==='mapDisDone'){S.mapDis=S.run=null;render();if(S.mapIntro==='run')nextMapBeat();return} // Reset: the map as it was. During the onboarding it also moves on.
   if(a==='help'){S.helpOpen=!S.helpOpen;S.helpMore=false}
   if(a==='helpMore')S.helpMore=!S.helpMore;
   if(a==='scores'){S.scoresOpen=!S.scoresOpen;S.scoresMore=false}
-  if(a==='scoresMore'){S.scoresMore=!S.scoresMore;S.how='base'} // the explanation opens further down the same dialog
+  if(a==='scoresMore'){S.scoresMore=!S.scoresMore;S.how=S.step===2?'mine':'base'} // the explanation opens further down the same dialog
+  if(a==='mapApply'){ // a recommendation card on the Build map: apply it, and any run of disasters starts afresh
+    const t=bestChanges(S.mine,true)[b.dataset.k];
+    if(t){S.mine=clone(t.setup);S.picked.mine=true;S.w.report=null;changed('mine');S.mapDis=S.run=null}
+  }
   if(a==='share'){ // copy the link; where the page isn't allowed to, the link is still there to copy by hand
     try{navigator.clipboard.writeText(SHARE_URL).then(()=>{S.shared=true;render()},()=>{})}catch(e){}
     return;
@@ -2088,11 +2176,57 @@ document.addEventListener('click',ev=>{
   if((a==='buy'||a==='testOut')&&$('sign'))$('sign').scrollIntoView({block:'nearest'});
 });
 function changed(which){S.dis2=null;S.tally={n:0,a:0,b:0};if(which==='base')S.dis=null}
-function disaster(w,id){
-  if(w==='today'){
-    // Every disaster plays on the map, so the dialog (which is only the list to pick from) closes.
-    S.dis=S.mapDis=runDisaster([S.base],id,S.dis&&S.dis.id);S.simBase=false;
+/* ---------- disaster taglines ---------- */
+// One line under each disaster's name on the map, mostly borrowed from memes. They are jokes about the event,
+// never advice. Brand and supply-chain events have an id per brand, so those match on the start of the id.
+const TAGLINE={
+  t_home:'They even took the kitchen sink.',t_office:'The cleaner found something interesting.',t_rel:'“I was just looking for the Wi-Fi password.”',t_friend:'“I was just looking for the Wi-Fi password.”',
+  t_bank:'An inside job.',t_carry:'Yoink.',t_hot:'You downloaded more RAM.',t_cloud:'hunter2 was not a strong password.',
+  t_duress:'The $5 wrench attack.',t_border:'Papers, please.',t_phish:'Your wallet urgently needs to be “validated”.',t_lapse:'You had one job.',
+  t_guess:'correct horse battery staple',t_app:'It’s not a bug, it’s a feature.',t_brand:'It’s not a bug, it’s a feature.',t_supply:'It fell off the back of a truck.',
+  t_prov:'“We take your security very seriously.”',t_provapp:'Automatic updates: what could go wrong?',t_prov2:'“We take your security very seriously.”',
+  c_acct:'New phone, who dis?',c_hack:'“We take your security very seriously.”',c_freeze:'Withdrawals are temporarily paused.',c_frozen:'Computer says no.',c_rules:'It’s for your own protection.',
+  l_dev:'Have you tried turning it off and on again?',l_home:'This is fine.',l_office:'It was in the box marked “misc”.',l_rel:'It did not spark joy.',l_friend:'Dude, where’s my seed?',
+  l_bank:'Sorry, we’re closed.',l_carry:'It’s in your other trousers. It is not in your other trousers.',l_cloud:'Forgot your password? So did we.',
+  l_prov:'It’s not you, it’s us.',l_prov2:'It’s not you, it’s us.',c_bust:'Assets are fine.',l_gov:'“We’re from the government and we’re here to help.”',l_bug:'Works on my machine.',
+  l_time:'One does not simply remember twelve words.',
+};
+const tagline=id=>TAGLINE[id]||TAGLINE[Object.keys(TAGLINE).find(k=>id.startsWith(k))]||'';
+/* ---------- a run of disasters on the map ---------- */
+// Disasters compound. S.run keeps: a working copy of the setup ("live") with whatever was destroyed or carried off
+// removed, so the model judges each new disaster against what is actually left; which keys thieves hold so far; what
+// became of each thing on the map; and how many disasters the setup has survived. A run ends when the coins are gone.
+const mapSetup=()=>S.step===2&&S.mine?S.mine:S.base;
+const fxOf=(d,R)=>{const o=d.res[0];return {ev:d.ev,kind:d.kind,hit:o.hit,rhit:o.rhit,bad:o.bad,dead:o.dead,icon:d.icon,prior:R.fates}};
+function throwDisaster(id){
+  if(!S.run||S.run.over)S.run={live:clone(mapSetup()),fates:{},now:{},stolen:[],n:0,over:null};
+  const R=S.run,L=R.live;
+  Object.assign(R.fates,R.now);R.now={}; // the previous disaster's damage is now part of the scenery
+  if(!id){ // random: one that can still reach something, and not the same one twice running
+    const all=disasterList([L]).map(x=>x[1]),can=all.filter(e=>touches(L,e)),from=(can.length?can:all).filter(e=>!S.dis||e.id!==S.dis.id),pool=from.length?from:all;
+    id=pool[Math.floor(Math.random()*pool.length)].id;
   }
+  const d=S.dis=S.mapDis=runDisaster([L],id),o=d.res[0];
+  S.simBase=false; // the dialog is only the list to pick from
+  SetupMap.svg(mapSetup(),fxOf(d,R)); // a dry run of the drawing, to learn what this disaster does to each thing
+  for(const t of SetupMap.things()){
+    if(!t.fresh||t.fate==='safe')continue;
+    R.now[t.id]=t.fate;
+    const k=t.k==='R'?L.rkey:L.keys[t.k];
+    if(t.fate==='hacked'||!k&&t.role!=='file')continue; // hacked things are still there; the thief holding the key is counted below
+    if(t.role==='device'||t.role==='provkey')k.device='none';
+    if(t.role==='backup')k.backup='none';
+    if(t.role==='file'&&L.config==='one')L.config='none';
+  }
+  if(d.kind==='t')o.hit.forEach((h,i)=>{if(h&&!R.stolen.includes(i))R.stolen.push(i)});
+  const own=!custodial(L),left=L.keys.filter(k=>k.device!=='none'||k.backup!=='none').length;
+  R.over=o.bad?{verdict:o.verdict}
+    :own&&R.stolen.length>=L.m?{verdict:'Coins stolen',text:'Added to what was taken before, thieves now hold enough to spend.'}
+    :own&&left<L.m?{verdict:'Coins lost',text:'Too little is left to spend the coins.'}:null;
+  if(!R.over)R.n++;
+}
+function disaster(w,id){
+  if(w==='today')throwDisaster(id);
   else{S.dis2=runDisaster([S.base,S.mine],id,S.dis2&&S.dis2.id);const t=S.tally;t.n++;if(!S.dis2.res[0].bad)t.a++;if(!S.dis2.res[1].bad)t.b++}
 }
 document.addEventListener('change',ev=>{

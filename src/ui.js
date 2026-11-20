@@ -7,12 +7,6 @@ reset();
 const $=id=>document.getElementById(id);
 const STEPS=['Start','Today','Build','Use it','Stress test'];
 const SHARE_URL='https://rolznz.github.io/bitcoin-self-custody-simulator/';
-// A random disaster for the map: one that can actually reach the current setup (the rest can still be picked from the
-// list), and never the same one twice running.
-function onMapPick(){
-  const all=disasterList([S.base]).map(x=>x[1]),can=all.filter(e=>touches(S.base,e)),from=(can.length?can:all).filter(e=>!S.dis||e.id!==S.dis.id);
-  return (from.length?from:all)[Math.floor(Math.random()*(from.length||all.length))].id;
-}
 const btc=s=>(s/SATS).toFixed(4).replace(/\.?0+$/,'')+' BTC';
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -173,29 +167,45 @@ function setupList(s){
 function startFrom(){
   return `<div class="rowb"><span class="hint">Start from</span>${[['hot','Phone wallet'],['laptop','Laptop wallet'],['typical','Hardware wallet'],['exchange','Exchange'],['fintech','Payment app'],['bank','Bank or broker'],['etf','ETF'],['m23','2-of-3 on your own'],['prov','2-of-3 with a provider'],['prov5','3-of-5 with a provider']].map(([p,l])=>`<button class="btn ghost small" data-act="preset" data-w="base" data-p="${p}">${l}</button>`).join('')}</div>`;
 }
-function screenToday(){
+let buildSeen=null; // the new setup's scores as last drawn on the Build screen, to notice when a change moves them
+function screenMap(which){
   // The map shows the setup. Its two buttons open the disaster panel and the edit form, each in a dialog (see render).
   // The map fills the screen. A chip in one corner gives the two risks in a word each and opens the full scoreboard.
   const tool=(attrs,on,icon,name,short)=>`<button class="maptool" ${attrs}${on==null?'':` aria-pressed="${on}"`} aria-label="${name}" title="${name}"><span aria-hidden="true">${icon}</span>${short}</button>`;
-  const intro=S.mapIntro==='run',sc=scoreOf(S.base),word={low:'Low',mid:'Medium',high:'High'};
+  const intro=which==='base'&&S.mapIntro==='run',sc=scoreOf(S[which]),word={low:'Low',mid:'Medium',high:'High'};
   const risk=(name,v)=>`<span><i style="background:${riskColor(v)}"></i>${name} <b>${word[level(v)]}</b></span>`;
   // A disaster that can be shown on the map plays there, and its result is a bar over the map instead of a dialog.
-  const d=S.mapDis,o=d&&d.res[0];
-  const fx=d?{ev:d.ev,kind:d.kind,hit:o.hit,rhit:o.rhit,bad:o.bad,dead:o.dead,icon:d.icon}:null;
-  const result=fx?`<div class="mapresult ${o.bad?'bad':'ok'}" role="status"><b>${d.icon} ${d.label}</b><span>${o.text}</span><span class="st lv-${o.bad?'high':'low'}">${o.verdict}</span>
-      <div class="rowb"><button class="btn small" data-act="mapAnother">🎲 Another</button><button class="btn small ghost" data-act="simPick">Pick one</button><button class="btn small ghost" data-act="mapDisDone">Done</button></div></div>`:'';
-  return `<h2 class="sr">Your setup today</h2>
-  <div class="mapcard${intro?' mapintro':''}">${SetupMap.svg(S.base,fx)}${result}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
-    <button class="mapscore" data-act="scores" aria-label="Theft risk ${word[level(sc.theft)]}, loss risk ${word[level(sc.loss)]}. Open the scoreboard">${risk('Theft risk',sc.theft)}${risk('Loss risk',sc.loss)}</button>
-    <div class="maptools">${tool('data-act="help"',S.helpOpen,'❓','Help','Help')}${tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster')}${tool('data-act="editBase"',S.editBase,'✏️','Edit current setup','Edit current setup')}<button class="maptool next" data-act="go" data-to="2"><span aria-hidden="true">🚀</span>Improve it →</button></div></div>`;
+  // Disasters stack up until the coins are gone or the player resets (see throwDisaster).
+  const R=S.run,d=R&&S.mapDis,o=d&&d.res[0],over=R&&R.over;
+  const fx=d?fxOf(d,R):null;
+  const result=fx?`<div class="mapresult ${over?'bad':'ok'}" role="status"><b>${d.icon} ${d.label}</b>${tagline(d.id)?`<i class="tagline">${tagline(d.id)}</i>`:''}<span>${o.text}${over&&over.text?' '+over.text:''}</span>
+      <span class="rowb"><span class="st lv-${over?'high':'low'}">${over?over.verdict:'Coins safe'}</span><span class="runs">${over?(R.n?`after surviving ${R.n}`:'at the first disaster'):`Survived ${R.n} in a row`}</span></span>
+      <div class="rowb">${over?'<button class="btn small" data-act="mapDisDone">↺ Reset and try again</button><button class="btn small ghost" data-act="simPick">Pick one</button>':'<button class="btn small" data-act="mapAnother">🎲 Another</button><button class="btn small ghost" data-act="simPick">Pick one</button><button class="btn small ghost" data-act="mapDisDone">↺ Reset</button>'}</div></div>`:'';
+  // The Build screen is the same map showing the new setup. Its chip compares each risk with the current setup's, and
+  // while no disaster is playing it offers the model's next recommended changes as cards that apply with one tap.
+  const build=which==='mine',was=build?scoreOf(S.base):null;
+  // On the Build screen the chip has two rows, Before and Now, each with its own coloured dots. When a change moves the
+  // scores, the Now row plays from the old values to the new ones for about three seconds (see .chg in the CSS).
+  if(build){
+    if(buildSeen&&(buildSeen.theft!==sc.theft||buildSeen.loss!==sc.loss))S.chipAnim={from:buildSeen,until:Date.now()+3200};
+    buildSeen={theft:sc.theft,loss:sc.loss};
+  }
+  const moving=build&&S.chipAnim&&Date.now()<S.chipAnim.until?S.chipAnim.from:null;
+  const cell=(name,v,from)=>from!=null&&from!==v
+    ?`<span class="chg"><i style="background:${riskColor(v)};--a:${riskColor(from)};--b:${riskColor(v)}"></i>${name} <b class="swap"><em>${word[level(from)]} ${from}</em><em>${word[level(v)]} ${v}</em></b></span>`
+    :`<span><i style="background:${riskColor(v)}"></i>${name} <b>${word[level(v)]} ${v}</b></span>`;
+  const chip=build?`<small>Before</small>${cell('Theft',was.theft)}${cell('Loss',was.loss)}<small>Now</small>${cell('Theft',sc.theft,moving&&moving.theft)}${cell('Loss',sc.loss,moving&&moving.loss)}`
+    :risk('Theft risk',sc.theft)+risk('Loss risk',sc.loss);
+  const tips=build&&!fx?bestChanges(S.mine,true):null;
+  const tip=(k,title,x)=>x?`<button class="mapcardtip" data-act="mapApply" data-k="${k}"><small>${title}</small><b>${x.do}</b><span>Theft ${x.from.theft} → ${x.to.theft} · Loss ${x.from.loss} → ${x.to.loss}</span></button>`:'';
+  const cards=tips?`<div class="mapcards">${tip('small','💡 A small step',tips.small)}${tip('big','🏗️ A big step',tips.big)}${!tips.small&&!tips.big?'<div class="mapcardtip done"><b>Nothing more to suggest.</b><span>From here, every change trades one risk for another.</span></div>':''}</div>`:'';
+  return `<h2 class="sr">${build?'Build your new setup':'Your setup today'}</h2>
+  <div class="mapcard${intro?' mapintro':''}${result||cards?' lift':''}">${SetupMap.svg(S[which],fx)}<span class="maplabel">${build?'Your new setup':'Your current setup'}</span>${result}${cards}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
+    <button class="mapscore${build?' rows':''}${moving?' changing':''}" data-act="scores" aria-label="${build?`Before: theft risk ${was.theft}, loss risk ${was.loss}. Now: theft risk ${sc.theft}, loss risk ${sc.loss}`:`Theft risk ${word[level(sc.theft)]}, loss risk ${word[level(sc.loss)]}`}. Open the scoreboard">${chip}</button>
+    <div class="maptools">${tool('data-act="help"',S.helpOpen,'❓','Help','Help')}${tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster')}${tool('data-act="editBase"',S.editBase,'✏️',build?'Edit new setup':'Edit current setup',build?'Edit new setup':'Edit current setup')}<button class="maptool next" data-act="go" data-to="${build?3:2}"><span aria-hidden="true">${build?'🧪':'🚀'}</span>${build?'Try using it →':'Improve it →'}</button></div></div>`;
 }
-function screenBuild(){
-  return `<h2>Build your new setup</h2>
-  <p class="lede">Anything goes. Change things and watch the scores move.</p>
-  <div><button class="btn small outline" data-act="rec">Get a recommendation</button></div>
-  ${editor('mine')}
-  <div><button class="btn" data-act="go" data-to="3">Try using it</button></div>`;
-}
+function screenToday(){return screenMap('base')}
+function screenBuild(){return screenMap('mine')}
 function signPanel(){
   const tx=S.w.tx,st=S.mine,usable=st.keys.filter(k=>k.device!=='none'||k.backup!=='none').length;
   const slots=Array.from({length:st.m},(_,j)=>tx.sigs[j]===undefined?'<span class="slot"></span>':`<span class="tok" style="--kc:var(--k${tx.sigs[j]})">${LETTERS[tx.sigs[j]]}</span>`).join('');
@@ -359,24 +369,26 @@ function render(){
   document.body.classList.toggle('landing',S.step===0);
   $('reset').hidden=S.step===0;
   $('score').innerHTML=scoreboard(R);
-  // the disaster dialog, opened by the fire button on the map
+  // The map is the Today screen (the current setup) and the Build screen (the new one). Its dialogs work on whichever is showing.
+  const onMap=S.step===1||S.step===2,mw=S.step===2?'mine':'base';
+  // the disaster dialog: the list to pick from
   const sim=$('sim');
-  if(S.simBase&&S.step===1){
-    sim.innerHTML=`<div class="simbody">${disasterCard('today',[S.base],S.dis,'What could go wrong?','')}</div>`;
+  if(S.simBase&&onMap){
+    sim.innerHTML=`<div class="simbody">${disasterCard('today',[S[mw]],S.dis,'What could go wrong?','')}</div>`;
     if(!sim.open)sim.showModal();
     sim.scrollTop=0;
   }else if(sim.open)sim.close();
   // the edit dialog, opened by the pencil button on the map. It is redrawn on every change, so keep its scroll position.
   const ed=$('edit');
-  if(S.editBase&&S.step===1){
+  if(S.editBase&&onMap){
     const y=ed.scrollTop;
-    ed.innerHTML=`<div class="simbody"><div class="simhead"><span class="emo" aria-hidden="true">✏️</span><h3>Edit current setup</h3><button class="simx" data-act="editBase" aria-label="Close">×</button></div>${editor('base')}<div><button class="btn" data-act="editBase">Done</button></div></div>`;
+    ed.innerHTML=`<div class="simbody"><div class="simhead"><span class="emo" aria-hidden="true">✏️</span><h3>${mw==='mine'?'Edit new setup':'Edit current setup'}</h3><button class="simx" data-act="editBase" aria-label="Close">×</button></div>${editor(mw)}<div><button class="btn" data-act="editBase">Done</button></div></div>`;
     if(!ed.open)ed.showModal();
     ed.scrollTop=y;
   }else if(ed.open)ed.close();
   // the full scoreboard, opened from the chip on the map
   const sb=$('scores');
-  if(S.scoresOpen&&S.step===1){
+  if(S.scoresOpen&&onMap){
     sb.innerHTML=`<div class="simbody"><div class="simhead"><span class="emo" aria-hidden="true">📊</span><h3>Scoreboard</h3><button class="simx" data-act="scores" aria-label="Close">×</button></div><div class="score scorefull">${scoreboard(R)}</div>
       <div><button class="btn small ghost" data-act="scoresMore" aria-expanded="${!!S.scoresMore}">${S.scoresMore?'Hide details':'See more details'}</button></div>
       ${S.scoresMore?`<div class="scoremore">${howHTML()}</div>`:''}</div>`;
@@ -384,7 +396,7 @@ function render(){
   }else if(sb.open)sb.close();
   // help, opened from the map: everything the footer says on the other screens
   const hp=$('help');
-  if(S.helpOpen&&S.step===1){
+  if(S.helpOpen&&onMap){
     hp.innerHTML=`<div class="simbody"><div class="simhead"><span class="emo" aria-hidden="true">❓</span><h3>Help</h3><button class="simx" data-act="help" aria-label="Close">×</button></div>
       <p>Pretend coins only. Scores are rough estimates, not advice.</p>
       <p><b>Never enter your seed or passphrase into any website.</b> This simulator will never ask for them.</p>
@@ -392,7 +404,7 @@ function render(){
       ${S.helpMore?`<div class="scoremore">${perfectHTML()}</div>`:''}</div>`;
     if(!hp.open)hp.showModal();
   }else if(hp.open)hp.close();
-  document.body.classList.toggle('mapscreen',S.step===1);
+  document.body.classList.toggle('mapscreen',onMap);
   if(S.step===1&&S.mapIntro==='run')paintMapIntro(false); // the map was just redrawn mid-introduction: put it back as it was
   if(act&&$(act))$(act).focus();
 }
@@ -402,7 +414,8 @@ function go(to){
   if(firstMap){mapIntroSeen=true;S.mapIntro='run';mapBeat=-1}
   if(to===0&&S.step!==0)startIntro(); // coming back to the first screen replays the car's entrance
   if(to!==1&&S.mapIntro==='run')S.mapIntro='done'; // leaving the map (by "Improve it", say) ends its introduction
-  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.helpOpen=false;S.mapDis=null;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
+  buildSeen=null;S.chipAnim=null; // arriving on the Build screen never animates the scores; only changes made there do
+  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.helpOpen=false;S.mapDis=S.run=null;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
   if(firstMap)runMapIntro();
 }
 /* ---------- map introduction ---------- */
@@ -528,16 +541,23 @@ document.addEventListener('click',ev=>{
       st.tested=false;if(s==='mine')S.w.report=null}}
   if(a==='go'){if(b.classList.contains('cta')&&driveOff(()=>go(+b.dataset.to)))return;return go(+b.dataset.to)}
   if(a==='reset'){reset();startIntro();return go(0)} // "Start over" replays the car's entrance as well
-  if(a==='editBase')S.editBase=!S.editBase;
+  if(a==='editBase'){ // editing the setup ends any run of disasters. On the Build screen the form starts from the setup as it stands.
+    S.editBase=!S.editBase;
+    if(S.editBase){S.mapDis=S.run=null;if(S.step===2)S.picked.mine=true}
+  }
   // "Try a disaster" always throws a random one onto the map. Choosing a particular one comes afterwards, from the result.
-  if(a==='simBase'||a==='mapAnother')disaster('today',onMapPick());
+  if(a==='simBase'||a==='mapAnother')throwDisaster(null);
   if(a==='simPick'){S.simBase=true;S.simList=true}
   if(a==='simClose')S.simBase=false;
-  if(a==='mapDisDone'){S.mapDis=null;render();if(S.mapIntro==='run')nextMapBeat();return} // during the onboarding, Done also moves on
+  if(a==='mapDisDone'){S.mapDis=S.run=null;render();if(S.mapIntro==='run')nextMapBeat();return} // Reset: the map as it was. During the onboarding it also moves on.
   if(a==='help'){S.helpOpen=!S.helpOpen;S.helpMore=false}
   if(a==='helpMore')S.helpMore=!S.helpMore;
   if(a==='scores'){S.scoresOpen=!S.scoresOpen;S.scoresMore=false}
-  if(a==='scoresMore'){S.scoresMore=!S.scoresMore;S.how='base'} // the explanation opens further down the same dialog
+  if(a==='scoresMore'){S.scoresMore=!S.scoresMore;S.how=S.step===2?'mine':'base'} // the explanation opens further down the same dialog
+  if(a==='mapApply'){ // a recommendation card on the Build map: apply it, and any run of disasters starts afresh
+    const t=bestChanges(S.mine,true)[b.dataset.k];
+    if(t){S.mine=clone(t.setup);S.picked.mine=true;S.w.report=null;changed('mine');S.mapDis=S.run=null}
+  }
   if(a==='share'){ // copy the link; where the page isn't allowed to, the link is still there to copy by hand
     try{navigator.clipboard.writeText(SHARE_URL).then(()=>{S.shared=true;render()},()=>{})}catch(e){}
     return;
@@ -577,11 +597,57 @@ document.addEventListener('click',ev=>{
   if((a==='buy'||a==='testOut')&&$('sign'))$('sign').scrollIntoView({block:'nearest'});
 });
 function changed(which){S.dis2=null;S.tally={n:0,a:0,b:0};if(which==='base')S.dis=null}
-function disaster(w,id){
-  if(w==='today'){
-    // Every disaster plays on the map, so the dialog (which is only the list to pick from) closes.
-    S.dis=S.mapDis=runDisaster([S.base],id,S.dis&&S.dis.id);S.simBase=false;
+/* ---------- disaster taglines ---------- */
+// One line under each disaster's name on the map, mostly borrowed from memes. They are jokes about the event,
+// never advice. Brand and supply-chain events have an id per brand, so those match on the start of the id.
+const TAGLINE={
+  t_home:'They even took the kitchen sink.',t_office:'The cleaner found something interesting.',t_rel:'“I was just looking for the Wi-Fi password.”',t_friend:'“I was just looking for the Wi-Fi password.”',
+  t_bank:'An inside job.',t_carry:'Yoink.',t_hot:'You downloaded more RAM.',t_cloud:'hunter2 was not a strong password.',
+  t_duress:'The $5 wrench attack.',t_border:'Papers, please.',t_phish:'Your wallet urgently needs to be “validated”.',t_lapse:'You had one job.',
+  t_guess:'correct horse battery staple',t_app:'It’s not a bug, it’s a feature.',t_brand:'It’s not a bug, it’s a feature.',t_supply:'It fell off the back of a truck.',
+  t_prov:'“We take your security very seriously.”',t_provapp:'Automatic updates: what could go wrong?',t_prov2:'“We take your security very seriously.”',
+  c_acct:'New phone, who dis?',c_hack:'“We take your security very seriously.”',c_freeze:'Withdrawals are temporarily paused.',c_frozen:'Computer says no.',c_rules:'It’s for your own protection.',
+  l_dev:'Have you tried turning it off and on again?',l_home:'This is fine.',l_office:'It was in the box marked “misc”.',l_rel:'It did not spark joy.',l_friend:'Dude, where’s my seed?',
+  l_bank:'Sorry, we’re closed.',l_carry:'It’s in your other trousers. It is not in your other trousers.',l_cloud:'Forgot your password? So did we.',
+  l_prov:'It’s not you, it’s us.',l_prov2:'It’s not you, it’s us.',c_bust:'Assets are fine.',l_gov:'“We’re from the government and we’re here to help.”',l_bug:'Works on my machine.',
+  l_time:'One does not simply remember twelve words.',
+};
+const tagline=id=>TAGLINE[id]||TAGLINE[Object.keys(TAGLINE).find(k=>id.startsWith(k))]||'';
+/* ---------- a run of disasters on the map ---------- */
+// Disasters compound. S.run keeps: a working copy of the setup ("live") with whatever was destroyed or carried off
+// removed, so the model judges each new disaster against what is actually left; which keys thieves hold so far; what
+// became of each thing on the map; and how many disasters the setup has survived. A run ends when the coins are gone.
+const mapSetup=()=>S.step===2&&S.mine?S.mine:S.base;
+const fxOf=(d,R)=>{const o=d.res[0];return {ev:d.ev,kind:d.kind,hit:o.hit,rhit:o.rhit,bad:o.bad,dead:o.dead,icon:d.icon,prior:R.fates}};
+function throwDisaster(id){
+  if(!S.run||S.run.over)S.run={live:clone(mapSetup()),fates:{},now:{},stolen:[],n:0,over:null};
+  const R=S.run,L=R.live;
+  Object.assign(R.fates,R.now);R.now={}; // the previous disaster's damage is now part of the scenery
+  if(!id){ // random: one that can still reach something, and not the same one twice running
+    const all=disasterList([L]).map(x=>x[1]),can=all.filter(e=>touches(L,e)),from=(can.length?can:all).filter(e=>!S.dis||e.id!==S.dis.id),pool=from.length?from:all;
+    id=pool[Math.floor(Math.random()*pool.length)].id;
   }
+  const d=S.dis=S.mapDis=runDisaster([L],id),o=d.res[0];
+  S.simBase=false; // the dialog is only the list to pick from
+  SetupMap.svg(mapSetup(),fxOf(d,R)); // a dry run of the drawing, to learn what this disaster does to each thing
+  for(const t of SetupMap.things()){
+    if(!t.fresh||t.fate==='safe')continue;
+    R.now[t.id]=t.fate;
+    const k=t.k==='R'?L.rkey:L.keys[t.k];
+    if(t.fate==='hacked'||!k&&t.role!=='file')continue; // hacked things are still there; the thief holding the key is counted below
+    if(t.role==='device'||t.role==='provkey')k.device='none';
+    if(t.role==='backup')k.backup='none';
+    if(t.role==='file'&&L.config==='one')L.config='none';
+  }
+  if(d.kind==='t')o.hit.forEach((h,i)=>{if(h&&!R.stolen.includes(i))R.stolen.push(i)});
+  const own=!custodial(L),left=L.keys.filter(k=>k.device!=='none'||k.backup!=='none').length;
+  R.over=o.bad?{verdict:o.verdict}
+    :own&&R.stolen.length>=L.m?{verdict:'Coins stolen',text:'Added to what was taken before, thieves now hold enough to spend.'}
+    :own&&left<L.m?{verdict:'Coins lost',text:'Too little is left to spend the coins.'}:null;
+  if(!R.over)R.n++;
+}
+function disaster(w,id){
+  if(w==='today')throwDisaster(id);
   else{S.dis2=runDisaster([S.base,S.mine],id,S.dis2&&S.dis2.id);const t=S.tally;t.n++;if(!S.dis2.res[0].bad)t.a++;if(!S.dis2.res[1].bad)t.b++}
 }
 document.addEventListener('change',ev=>{

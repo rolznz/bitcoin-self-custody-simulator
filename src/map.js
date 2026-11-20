@@ -61,8 +61,17 @@ const SetupMap=(()=>{
      or none, if the disaster never came near it. The rules follow the model's own event flags, so a new event of an
      existing kind needs nothing here. */
   let FX=null;
+  /* Disasters compound: what earlier ones destroyed or carried off stays that way. FX.prior holds those fates by thing.
+     A thing already gone can't be struck again; anything else can. fate() gives [fate, fresh]: fresh means the disaster
+     playing now did it, so it animates; the rest is drawn as it was left. */
+  const tid=t=>`${t.role||t.t}:${t.k==null?'':t.k}:${t.loc||''}`;
   function fate(t){
-    if(!FX)return '';
+    const prior=FX&&FX.prior&&FX.prior[tid(t)];
+    if(prior==='gone'||prior==='taken')return [prior,false];
+    const f=FX&&FX.ev?strike(t):'';
+    return f?[f,true]:[prior||'',false];
+  }
+  function strike(t){
     const e=FX.ev,theft=FX.kind==='t',k=t.key,hit=t.k==='R'?!!FX.rhit:t.k!=null&&!!FX.hit[t.k];
     const hacked=hit?'hacked':'safe',lost=hit?'gone':'safe';
     if(e.duress||e.border)return e.places.includes(t.loc)&&t.k!=null?(hit?(e.border?'hacked':'taken'):'safe'):''; // forced: what you have on you or at home
@@ -93,10 +102,10 @@ const SetupMap=(()=>{
   const FXMARK={gone:['#EF5350','<path d="M-5 -5L5 5M5 -5L-5 5" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>'],hacked:['#EF5350','<path d="M0 -7v7" stroke="#fff" stroke-width="3.8" stroke-linecap="round"/><circle cy="6" r="2.2" fill="#fff"/>'],safe:['#17A865','<path d="M-6 0l4 4l7 -8" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>']};
   function token(x,y,t,s=1){
     REG.push(t);
-    const f=fate(t);t.fate=f;t.x=x;t.y=y;
-    const mark=FXMARK[f]?`<g class="fxmark" transform="translate(0 -24)"><circle r="13" fill="${FXMARK[f][0]}" stroke="#fff" stroke-width="2.5"/>${FXMARK[f][1]}</g>`:'';
+    const [f,fresh]=fate(t);t.fate=f;t.fresh=fresh;t.id=tid(t);t.x=x;t.y=y;
+    const mark=FXMARK[f]?`<g class="fxmark${fresh?'':' was'}" transform="translate(0 -24)"><circle r="13" fill="${FXMARK[f][0]}" stroke="#fff" stroke-width="2.5"/>${FXMARK[f][1]}</g>`:'';
     const badge=t.k==null?'':`<circle cx="17" cy="-46" r="10" fill="${keyColor(t.k)}" stroke="#fff" stroke-width="2"/><text x="17" y="-42" text-anchor="middle" font-size="11" font-weight="800">${keyName(t.k)}</text>`;
-    return `<g class="maptap" data-i="${REG.length-1}" transform="translate(${x.toFixed(1)} ${y}) scale(${s})"><title>${NAMES[t.t]}</title><g class="mapstep" data-step="t${REG.length-1}"><ellipse rx="20" ry="6" fill="#000" opacity=".16"/><g class="mapfate ${f?'fate-'+f:''}"><g class="mappulse" style="--t:${-(REG.length%6)*.4}s">${TOK[t.t]}${badge}${MARK[t.mark]||''}</g></g>${mark}</g></g>`;
+    return `<g class="maptap" data-i="${REG.length-1}" transform="translate(${x.toFixed(1)} ${y}) scale(${s})"><title>${NAMES[t.t]}</title><g class="mapstep" data-step="t${REG.length-1}"><ellipse rx="20" ry="6" fill="#000" opacity=".16"/><g class="mapfate ${f?'fate-'+f:''}${fresh?'':' was'}"><g class="mappulse" style="--t:${-(REG.length%6)*.4}s">${TOK[t.t]}${badge}${MARK[t.mark]||''}</g></g>${mark}</g></g>`;
   }
   const label=(x,y,text,dim)=>{const w=text.length*7.2+18;return `<g opacity="${dim?.6:1}"><rect x="${x-w/2}" y="${y-13}" width="${w}" height="20" rx="10" fill="#fff" opacity=".9"/><text x="${x}" y="${y+1.5}" text-anchor="middle" font-size="13" font-weight="700">${text}</text></g>`};
   // a row of tokens centred on x; they close up when there are many
@@ -133,6 +142,9 @@ const SetupMap=(()=>{
     return d;
   }
 
+  // Places (and you) can be clicked too. They open a card with nothing but a name and a joke: see SPOT_JOKES.
+  // The attributes go on the place's group; a <title> can't, so the name is the label for screen readers.
+  const spot=(id,name)=>{REG.push({spot:id,name});return `class="maptap mapplace" data-i="${REG.length-1}" role="button" aria-label="${name}"`};
   // Every disaster is a target plus one of six effects. The target is where it strikes: a place, you, the cloud, the
   // company across the water, the things it reaches, or (for time passing) the whole island.
   function effectKind(){
@@ -149,7 +161,7 @@ const SetupMap=(()=>{
     if(e.prov||e.gov||(e.cust&&!e.login))return spots.company;
     if(e.login||e.phish)return you;
     if(e.id==='l_time')return {x:350,top:210,front:300};
-    const t=REG.find(t=>t.fate&&t.fate!=='safe')||REG.find(t=>t.fate); // strikes things directly: aim at the first one it reaches
+    const t=REG.find(t=>t.fresh&&t.fate!=='safe')||REG.find(t=>t.fresh); // strikes things directly: aim at the first one it reaches
     return t?{x:t.x,top:t.y-112,front:t.y}:you;
   }
   // What happens there: the disaster's icon drops in, then the effect. Timing is in the CSS (.fx…): drop, effect, then the things react.
@@ -174,11 +186,12 @@ const SetupMap=(()=>{
       const items=S.places[id],b=building(p.x,p.y,p.b),y=b.front+38;
       spots[id]={x:p.x,top:b.top,front:b.front};
       if(items.length)paths+=`<path d="M${YOU.x} ${YOU.y-6}Q${(YOU.x+p.x)/2} ${Math.max(YOU.y,p.y)-10} ${p.x} ${p.y+34}" fill="none" stroke="#EAD9A8" stroke-width="9" stroke-linecap="round" opacity=".9"/>`;
-      B.push([p.y,`<g opacity="${items.length?1:.5}">${b.svg}</g>`]);
+      B.push([p.y,`<g ${spot(id,p.name)} opacity="${items.length?1:.5}">${b.svg}</g>`]);
       T.push(row(p.x,y,items,p.name)+label(p.x,y+(items.length?18:-22),p.name,!items.length));
     }
     // you: a game piece, holding what you carry
-    let you=`<g class="mapstep" data-step="you"><ellipse cx="${YOU.x}" cy="${YOU.y+2}" rx="24" ry="8" fill="#000" opacity=".18"/><path d="M${YOU.x-21} ${YOU.y}Q${YOU.x-22} ${YOU.y-34} ${YOU.x-9} ${YOU.y-52}H${YOU.x+9}Q${YOU.x+22} ${YOU.y-34} ${YOU.x+21} ${YOU.y}Z" fill="#5438F0"/><path d="M${YOU.x-21} ${YOU.y}Q${YOU.x-22} ${YOU.y-18} ${YOU.x-17} ${YOU.y-30}H${YOU.x+17}Q${YOU.x+22} ${YOU.y-18} ${YOU.x+21} ${YOU.y}Z" fill="#4329D6"/><circle cx="${YOU.x}" cy="${YOU.y-62}" r="16" fill="#5438F0"/><circle cx="${YOU.x-5}" cy="${YOU.y-66}" r="5" fill="#7C66FF"/>`;
+    REG.push({spot:'you'});
+    let you=`<g class="mapstep maptap" data-i="${REG.length-1}" data-step="you"><title>You</title><ellipse cx="${YOU.x}" cy="${YOU.y+2}" rx="24" ry="8" fill="#000" opacity=".18"/><path d="M${YOU.x-21} ${YOU.y}Q${YOU.x-22} ${YOU.y-34} ${YOU.x-9} ${YOU.y-52}H${YOU.x+9}Q${YOU.x+22} ${YOU.y-34} ${YOU.x+21} ${YOU.y}Z" fill="#5438F0"/><path d="M${YOU.x-21} ${YOU.y}Q${YOU.x-22} ${YOU.y-18} ${YOU.x-17} ${YOU.y-30}H${YOU.x+17}Q${YOU.x+22} ${YOU.y-18} ${YOU.x+21} ${YOU.y}Z" fill="#4329D6"/><circle cx="${YOU.x}" cy="${YOU.y-62}" r="16" fill="#5438F0"/><circle cx="${YOU.x-5}" cy="${YOU.y-66}" r="5" fill="#7C66FF"/>`;
     if(S.you.length)you+=`<path d="M${YOU.x+14} ${YOU.y-38}Q${YOU.x+26} ${YOU.y-36} ${YOU.x+34} ${YOU.y-22}" fill="none" stroke="#5438F0" stroke-width="8" stroke-linecap="round"/>`;
     you+=label(YOU.x,YOU.y+22,'You')+'</g>'+row(YOU.x+42+(S.you.length-1)*17,YOU.y+2,S.you,'With you',.85);
     if(S.head.length){ // thought bubble: closed until clicked
@@ -188,16 +201,16 @@ const SetupMap=(()=>{
     }
     // the company across the water, and the cloud: always drawn, faded when unused, like every other place
     const c=COMPANY,cb=building(c.x,c.y,c.b),co=S.company;spots.company={x:c.x,top:cb.top,front:cb.front};
-    const far=`<g opacity="${co?1:.5}"><ellipse cx="${c.x}" cy="${c.y+16}" rx="96" ry="48" fill="#1B8E77"/><ellipse cx="${c.x}" cy="${c.y+8}" rx="96" ry="48" fill="#E9DDB0"/><ellipse cx="${c.x}" cy="${c.y+6}" rx="88" ry="42" fill="#7ED6A0"/>${cb.svg}</g>`+
+    const far=`<g ${spot('company',co?co.name:'Exchange')} opacity="${co?1:.5}"><ellipse cx="${c.x}" cy="${c.y+16}" rx="96" ry="48" fill="#1B8E77"/><ellipse cx="${c.x}" cy="${c.y+8}" rx="96" ry="48" fill="#E9DDB0"/><ellipse cx="${c.x}" cy="${c.y+6}" rx="88" ry="42" fill="#7ED6A0"/>${cb.svg}</g>`+
       (co?row(c.x-58,c.y+52,co.items,co.name)+`<path d="M${YOU.x+70} ${YOU.y-50}Q520 60 ${c.x-96} ${c.y+30}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="3 9" stroke-linecap="round" opacity=".9"/>`:'')+
       label(c.x+4,c.y+62,co?co.name:'Exchange',!co);
-    const cloud=`<g opacity="${S.cloud.length?1:.5}"><ellipse cx="118" cy="150" rx="62" ry="12" fill="#000" opacity=".1"/><g fill="#fff"><rect x="50" y="64" width="150" height="40" rx="20"/><circle cx="92" cy="64" r="28"/><circle cx="140" cy="54" r="36"/></g></g>`+row(124,102,S.cloud,'Cloud',.8)+label(124,124,'Cloud',!S.cloud.length);
+    const cloud=`<g ${spot('cloud','Cloud')} opacity="${S.cloud.length?1:.5}"><ellipse cx="118" cy="150" rx="62" ry="12" fill="#000" opacity=".1"/><g fill="#fff"><rect x="50" y="64" width="150" height="40" rx="20"/><circle cx="92" cy="64" r="28"/><circle cx="140" cy="54" r="36"/></g></g>`+row(124,102,S.cloud,'Cloud',.8)+label(124,124,'Cloud',!S.cloud.length);
     B.sort((a,b)=>a[0]-b[0]);
     return `<svg class="map" viewBox="0 0 800 560" role="img" aria-label="A map of this setup: where each device and backup is kept">
       <defs><linearGradient id="map-grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C6F06A"/><stop offset="1" stop-color="#5FCF8A"/></linearGradient></defs>
       <path d="M40 60h30M720 300h36M700 480h44M30 470h28M610 30h24M22 250h20M560 520h30M330 36h30" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".55"/>
       <ellipse cx="350" cy="320" rx="322" ry="204" fill="#1B8E77"/><ellipse cx="350" cy="306" rx="322" ry="204" fill="#E9DDB0"/><ellipse cx="350" cy="302" rx="308" ry="192" fill="url(#map-grass)"/>
-      ${far}<g class="mapstep" data-step="end">${paths}</g>${B.map(b=>b[1]).join('')}${T.join('')}${you}${cloud}${FX?effects(target(spots)):''}
+      ${far}<g class="mapstep" data-step="end">${paths}</g>${B.map(b=>b[1]).join('')}${T.join('')}${you}${cloud}${FX&&FX.ev?effects(target(spots)):''}
     </svg>`;
   }
 
@@ -232,6 +245,7 @@ const SetupMap=(()=>{
   const kb=k=>k==null?'':`<b class="mapkb" style="background:${keyColor(k)}" title="Key ${keyName(k)}">${keyName(k)}</b>`;
   function card(o){
     const joke=text=>text?`<p class="mapjoke">${text}</p>`:'';
+    if(o.spot)return `<h3>${SPOT_NAMES[o.spot]||o.name}</h3>`+joke(any(SPOT_JOKES[o.spot]));
     if(o.head)return `<h3>Memorized</h3>`+o.head.map(l=>`<div class="maprow"><span>${kb(l.k)}${l.label}</span><span${l.secret?` data-secret="${l.secret}"`:''}>${l.value}</span></div>`).join('')+(o.head.some(l=>l.secret)?'<button class="btn small ghost" data-mapshow>Show it</button>':'')+joke('Also currently thinking about: '+any(THOUGHTS));
     const head=`<h3>${NAMES[o.t]} ${kb(o.k)}</h3>${o.place?`<p>${o.place}</p>`:''}`;
     const list=(cls,num)=>`<div class="${cls}">${WORDS.map((w,i)=>`<div>${num?`<small>${i+1}. </small>`:''}${w}</div>`).join('')}</div>`;
@@ -255,6 +269,18 @@ const SetupMap=(()=>{
     login:['Two-factor code sent to a phone number you had in 2016.'],
     key:['They promise they haven’t looked.'],
   };
+  // The places themselves, and you. Purely for life: a name and one of a few lines, different each time.
+  const SPOT_NAMES={home:'Your home',relative:'Your relative’s place',office:'Your office',friend:'Your friend’s place',bank:'The bank',cloud:'The cloud',you:'You'};
+  const SPOT_JOKES={
+    home:['Home sweet home. The dishes can wait.','There’s a drawer in here full of cables you will never use.','The Wi-Fi password is on the fridge.'],
+    relative:['Your grandma just made freshly baked cookies 😋','They still ask when you’ll get a real job.','Someone in here is forwarding chain emails.'],
+    office:['This meeting could have been an email.','The printer is jammed. It has always been jammed.','Somebody hit “reply all”.'],
+    friend:['They still owe you for that pizza in 2019.','You helped them move. Twice.','Their couch has seen things.'],
+    bank:['Free pens. Chained to the desk.','Please take a number.','Your call is important to us.'],
+    cloud:['Storage almost full. Upgrade now?','Syncing… since 2019.','There is no cloud. It’s just someone else’s computer.'],
+    company:['Wen moon?','Number go up.','Support will reply within 3 to 5 business years.'],
+    you:['This is you. Looking good.','You, slightly idealised.','Reminder: drink some water.'],
+  };
   const PLACE_JOKES={bank:'Opening hours: never when you need it.',relative:'They think it’s a recipe.',friend:'They promised not to peek.',office:'In the drawer under the stapler.',cloud:'The cloud: just someone else’s computer.'};
   document.addEventListener('click',ev=>{
     // The card is a real dialog, so the dimmed backdrop covers the whole page. Esc, the button or a click outside closes it.
@@ -263,5 +289,7 @@ const SetupMap=(()=>{
     if(ev.target===dl||ev.target.closest('[data-mapclose]')){dl.close();return}
     if(tap){dl.innerHTML=`<div class="mappop">${card(REG[+tap.dataset.i])}<button class="btn small" data-mapclose>Close</button></div>`;dl.showModal()}
   });
-  return {svg,beats}; // beats() describes the map drawn by the latest svg() call
+  // beats() and things() describe the map drawn by the latest svg() call. things() lists what is on it and what became of each.
+  const things=()=>REG.filter(t=>t.t).map(t=>({id:t.id,role:t.role,k:t.k,fate:t.fate,fresh:t.fresh}));
+  return {svg,beats,things};
 })();

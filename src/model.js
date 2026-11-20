@@ -307,7 +307,7 @@ function outcome(s,kind,e,r){
     if(e.takes&&!bad&&allKeys(s).some(k=>real(k)&&e.places.includes(k.dloc))){
       const L=outcome(s,'l',{id:'l_stolen',places:e.places},Object.assign({},r,{k:r.b,kr:r.bk,c:r.bc}));
       if(L.bad){bad=gone=true;text+=L.why?` But ${L.why}, so the coins are lost.${L.tip}`:' But you had no working way to recover, so the coins are lost.'}
-      else text+=s.n===1&&!TL(s)?` ${backupName(s.keys[0],true)} brings the key back.`:' You can still recover your coins.';
+      else text+=s.n===1&&!TL(s)?` ${backupName(s.keys[0],true)} can bring the key back.`:' You can still recover your coins.';
     }
     if(!bad&&!rhit&&!touches(s,e))text=untouched(e);
   }else{
@@ -330,7 +330,7 @@ function outcome(s,kind,e,r){
       const one=own.length===1,cnt=(n,w)=>n===1?(one?'your ':'a ')+w:`${n} ${w}s`;
       if(dG&&bG)text=`You lost ${cnt(dG,'device')} and ${cnt(bG,'backup')}, but every key can still be recovered. Replace what was lost soon.`;
       else if(bG)text=`You lost ${cnt(bG,'backup')}, but ${one?'the key is still on your device':'the keys are still on your devices'}. Make a new backup soon.`;
-      else if(dG)text=`You lost ${cnt(dG,'device')}, but ${dG===1?backupName(own.find(k=>real(k)&&gone(k.dloc)))+' brings the key back':'the backups bring the keys back'}.`;
+      else if(dG)text=`You lost ${cnt(dG,'device')}, but ${dG===1?backupName(own.find(k=>real(k)&&gone(k.dloc)))+' can bring the key back':'the backups can bring the keys back'}.`;
     }
     if(e.dev&&ev.dead&&!TL(s)){const i=s.keys.indexOf(ev.dead),nm=s.n>1?`Key ${LETTERS[i]}’s device`:'Your device';
       text=bad?(s.n===1?'Your device died, and there was no working backup.':left<s.m?`${nm} died with no working backup, and that left too few keys.`:`${nm} died with no working backup, and without the wallet file you can’t use the keys that are left.`):hit[i]?`${nm} died with no working backup, but you can still spend with the other keys.`:`${nm} died, but its backup brought the key back.`}
@@ -354,7 +354,7 @@ function outcome(s,kind,e,r){
 // Names a key's backup exactly, so a result can say which thing saved you: "your paper recovery phrase backup at home".
 function backupName(k,capital){
   const at=p=>p==='bank'?' in the bank box':p==='carry'?' in your pocket':' at '+PLAIN[p];
-  const n={paper:'your paper recovery phrase backup'+at(k.bloc),metal:'your steel recovery phrase backup'+at(k.bloc),memory:'the recovery phrase you memorized',cloud:'your recovery phrase backup in the cloud'}[k.backup]||'your backup';
+  const n={paper:'your recovery phrase, written on paper'+at(k.bloc)+',',metal:'your recovery phrase, stamped in steel'+at(k.bloc)+',',memory:'the recovery phrase you memorized',cloud:'your recovery phrase backup in the cloud'}[k.backup]||'your backup';
   return capital?n[0].toUpperCase()+n.slice(1):n;
 }
 function runDisaster(setups,id,lastId){

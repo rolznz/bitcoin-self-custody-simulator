@@ -385,6 +385,14 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
 .mappop h3{font-size:1.1rem}.mappop p{margin:0;color:var(--muted);font-size:.92rem}
 .mappop button{justify-self:start}
 .mappop .mapjoke{font-style:italic}
+/* who you play as: something they really said, then the faces to pick from */
+.mapquote{margin:0;padding:10px 14px;border-radius:12px;background:var(--soft);font-weight:700;line-height:1.35}
+.mapquote cite{display:block;margin-top:4px;font-style:normal;font-weight:500;font-size:.82rem;color:var(--muted)}
+.mapwho{display:flex;flex-wrap:wrap;gap:2px}
+.mappop .mapface{padding:1px;border:2px solid transparent;border-radius:14px;background:none;cursor:pointer;line-height:0}
+.mapface img{height:35px;width:auto;display:block}
+.mapface:hover{background:var(--soft)}
+.mapface[aria-pressed="true"]{border-color:#F7931A;background:var(--soft)}
 .mapkb{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;font-size:.72rem;font-weight:800;color:#1B1840;margin:0 6px 0 0;vertical-align:1px}
 .mappop h3 .mapkb{margin:0 0 0 4px}
 .maprow{display:flex;justify-content:space-between;align-items:center;gap:14px;font-weight:600}

@@ -142,6 +142,66 @@ const SetupMap=(()=>{
     return d;
   }
 
+  /* Who you play as: a photo of a well-known bitcoiner's head, cut out like a sticker, on a small drawn body.
+     Purely for fun: it changes nothing in the model. "quote" is something the person really said or wrote and is shown
+     in quotation marks under their name, so never invent or reword one. "jokes" are ours, about the character, and
+     are never put in their mouth. head: [file, width of the picture when it is 168 tall]. */
+  const CHARS={
+    satoshi:{name:'Satoshi Nakamoto',by:'Satoshi Nakamoto, 2010',head:['img/head-satoshi.webp',145],skin:'#D9A07A',
+      quote:'If you don’t believe me or don’t get it, I don’t have time to try to convince you, sorry.',
+      jokes:['Nobody knows who you are. Some days that includes you.','Last seen online in 2011. Nobody has dared to change the password.']},
+    hal:{name:'Hal Finney',by:'Hal Finney, 2009',head:['img/head-hal.webp',140],skin:'#E0A98A',
+      quote:'Running bitcoin',
+      jokes:['Running bitcoin. Also just running.','Received the very first bitcoin transaction. Never bragged about it.']},
+    adam:{name:'Adam Back',by:'Adam Back, on his Twitter profile',head:['img/head-adam.webp',133],skin:'#E2B79E',
+      quote:'Bitcoin is Hashcash extended with inflation control.',
+      jokes:['Invented proof-of-work to stop spam. Still gets spam.','Gets asked whether he is Satoshi about once a day.']},
+    saylor:{name:'Michael Saylor',by:'Michael Saylor',head:['img/head-saylor.webp',118],skin:'#D8A88C',
+      quote:'There is no second best.',
+      jokes:['Has never sold. Has also never blinked.','Currently working out what this island costs in bitcoin.']},
+    jack:{name:'Jack Dorsey',by:'Jack Dorsey, 2021',head:['img/head-jack.webp',102],skin:'#D6A283',
+      quote:'Bitcoin changes absolutely everything.',
+      jokes:['The beard is on its own block height.','Sent from a silent retreat.']},
+    andreas:{name:'Andreas M. Antonopoulos',by:'Andreas M. Antonopoulos',head:['img/head-andreas.webp',131],skin:'#DDB093',up:1,
+      quote:'Not your keys, not your coins.',
+      jokes:['Has already explained bitcoin to everyone on this island. Twice.','Can explain this whole map using only pizza.']},
+    breedlove:{name:'Robert Breedlove',by:'Robert Breedlove',head:['img/head-breedlove.webp',128],skin:'#D2A078',
+      quote:'Bitcoin is the most superior monetary technology that has ever existed.',
+      jokes:['Was offered a shirt. Declined.','Asks “what is money?” between push-ups.']},
+    saifedean:{name:'Saifedean Ammous',by:'Saifedean Ammous, The Bitcoin Standard',head:['img/head-saifedean.webp',126],skin:'#C99A78',
+      quote:'Bitcoin is the hardest money ever invented.',
+      jokes:['On a strict diet of steak and hard money.','Low time preference. Will wait as long as it takes for you to read the book.']},
+  };
+  let WHO='satoshi';
+  /* The figure, feet at (0,0), about 103 tall. Every body is the same few parts in different clothes. */
+  function figure(id,carry){
+    const c=CHARS[id],k=c.skin,[file,w168]=c.head;
+    const legs=(col,shoe,bare)=>`<g fill="${bare?k:col}"><rect x="-11" y="-22" width="9" height="20" rx="3"/><rect x="2" y="-22" width="9" height="20" rx="3"/></g>${bare?`<path d="M-13 -25H13L12 -12H1L0 -16L-1 -12H-12Z" fill="${col}"/>`:''}<g fill="${shoe}"><ellipse cx="-7.5" cy="-1.5" rx="7" ry="3.6"/><ellipse cx="7.5" cy="-1.5" rx="7" ry="3.6"/></g>`;
+    // arms: skin all the way, with a sleeve over the whole arm or only the top of it. The right one reaches out when carrying.
+    const L=c.up?['M-15 -42Q-27 -42 -29 -55',-29,-57,'M-15 -42Q-22 -43 -25 -47']:['M-15 -42Q-22 -34 -20 -24',-20,-22,'M-15 -42Q-19 -39 -20 -35'];
+    const R=carry?['M14 -41Q26 -38 34 -24',34,-22,'M14 -41Q20 -41 24 -37']:['M15 -42Q22 -34 20 -24',20,-22,'M15 -42Q19 -39 20 -35'];
+    const arm=(a,sleeve,short,wide)=>`<path d="${a[0]}" fill="none" stroke="${short?k:sleeve}" stroke-width="${wide||7}" stroke-linecap="round"/>${short&&sleeve?`<path d="${a[3]}" fill="none" stroke="${sleeve}" stroke-width="${(wide||7)+1}" stroke-linecap="round"/>`:''}<circle cx="${a[1]}" cy="${a[2]}" r="3.8" fill="${k}"/>`;
+    const arms=(sleeve,short,wide)=>arm(L,sleeve,short,wide)+arm(R,sleeve,short,wide);
+    const torso=fill=>`<path d="M-15 -46Q-17 -46 -17 -42L-13 -18H13L17 -42Q17 -46 15 -46Z" fill="${fill}"/>`;
+    const suit=(jacket,shirt,tie,len)=>arms(jacket)+torso(jacket)+`<path d="M-6 -46L0 -33L6 -46Z" fill="${shirt}"/><path d="M-1.8 -45h3.6l1.5 ${len-3}L0 ${-45+len}l-3.3 -3z" fill="${tie}"/><path d="M-6 -46L0 -33L6 -46M0 -33V-18" fill="none" stroke="#000" stroke-opacity=".22" stroke-width="1.2"/>`;
+    const body={
+      satoshi:()=>legs('#5A5F6B','#2B2B33')+suit('#8C8577','#E4ECF2','#3D4A5C',12),
+      saylor:()=>legs('#1E2740','#111')+suit('#1E2740','#fff','#F7931A',19),
+      hal:()=>legs('#1F2A55','#fff',1)+arms('',1)+torso('#D8343B')+`<rect x="-7.5" y="-40" width="15" height="11" rx="1.5" fill="#fff"/><text x="0" y="-31.6" text-anchor="middle" font-size="8" font-weight="800" fill="#1B1840">09</text>`,
+      adam:()=>legs('#3B4A6B','#2B2B33')+arms('#23232B',1)+torso('#23232B')+`<text x="0" y="-30" text-anchor="middle" font-size="7" font-weight="700" font-family="monospace" fill="#7CFFB2">0000</text>`,
+      jack:()=>`<defs><radialGradient id="map-tiedye" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#FFE14D"/><stop offset=".3" stop-color="#FF7A59"/><stop offset=".55" stop-color="#E85D9A"/><stop offset=".8" stop-color="#7C66FF"/><stop offset="1" stop-color="#3DC8E8"/></radialGradient></defs>`+legs('#23232B','#B98A55')+arms('#7C66FF',1)+torso('url(#map-tiedye)'),
+      andreas:()=>`<defs><pattern id="map-plaid" width="7" height="7" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="#CFE2F3"/><path d="M0 2H7M2 0V7" stroke="#4F7FB5" stroke-width="1.6"/><path d="M0 5.5H7M5.5 0V7" stroke="#fff" stroke-width=".8"/></pattern></defs>`+legs('#8B7B5A','#5B4632')+arms('#9DBFE0')+torso('url(#map-plaid)')+`<path d="M-4 -46L0 -40L4 -46Z" fill="${k}"/><path d="M0 -40V-18" stroke="#4F7FB5" stroke-width="1"/>`,
+      // no shirt: wide shoulders, big arms, and a six-pack drawn the way a child would
+      breedlove:()=>legs('#23232B','#2B2B33',1)+arms('',1,10)+`<circle cx="-21" cy="-37" r="6.5" fill="${k}"/><circle cx="${carry?22:21}" cy="-37" r="6.5" fill="${k}"/><path d="M-21 -46Q-24 -46 -23 -40L-12 -20H12L23 -40Q24 -46 21 -46Z" fill="${k}"/><g fill="none" stroke="#9A6B45" stroke-width="1.3" stroke-linecap="round"><path d="M-14 -40Q-7 -33 -1 -39M1 -39Q7 -33 14 -40"/><path d="M-22 -40Q-25 -37 -23 -33M22 -40Q25 -37 23 -33" opacity=".7"/></g><g fill="#fff" fill-opacity=".28" stroke="#9A6B45" stroke-width="1"><rect x="-6.5" y="-33.5" width="6" height="4" rx="1.6"/><rect x=".5" y="-33.5" width="6" height="4" rx="1.6"/><rect x="-6.5" y="-29" width="6" height="4" rx="1.6"/><rect x=".5" y="-29" width="6" height="4" rx="1.6"/><rect x="-6" y="-24.5" width="5.5" height="4" rx="1.6"/><rect x=".5" y="-24.5" width="5.5" height="4" rx="1.6"/></g><path d="M-8 -46Q0 -37 8 -46" fill="none" stroke="#D8DBE6" stroke-width="1.1"/>`,
+      // navy suit, white shirt, no tie, and a steak in his other hand
+      saifedean:()=>legs('#27406B','#2B2B33')+arms('#27406B')+torso('#27406B')+`<path d="M-6 -46L0 -34L6 -46Z" fill="#fff"/><path d="M-2.5 -46L0 -40L2.5 -46Z" fill="${k}"/><path d="M-6 -46L0 -34L6 -46M0 -34V-18" fill="none" stroke="#000" stroke-opacity=".22" stroke-width="1.2"/><g transform="translate(-23 -18) rotate(-20)"><path d="M-7 0Q-8 -6 -1 -6Q7 -7 7 -1Q7 5 1 5Q-6 6 -7 0Z" fill="#F1DCCB"/><path d="M-5.4 0Q-6 -4.6 -1 -4.6Q5.4 -5.4 5.4 -1Q5.4 3.6 1 3.6Q-4.8 4.4 -5.4 0Z" fill="#B5413A"/><circle cx="-1.6" cy="-.6" r="1.5" fill="#F1DCCB"/></g>`,
+    }[id]();
+    // the head: big, and overlapping the collar. Jack's is longer, so the beard runs down his shirt.
+    const hh=id==='jack'?70:60,hw=w168*hh/168,top=-103,x=-hw/2,s=hh/168;
+    const eye=(ex,ey)=>`<g transform="translate(${(x+ex*s).toFixed(1)} ${(top+ey*s).toFixed(1)})"><circle r="4.6" fill="#FF2A2A" opacity=".35"/><path d="M-9 0H9M0 -3.5V3.5" stroke="#FF4B4B" stroke-width="1.1" stroke-linecap="round"/><circle r="2.6" fill="#FF2A2A"/><circle r="1.1" fill="#FFE3E3"/></g>`;
+    return body+`<image href="${file}" x="${x.toFixed(1)}" y="${top}" width="${hw.toFixed(1)}" height="${hh}"/>`+(id==='saylor'?`<g class="maplaser">${eye(49,92)}${eye(78,92)}</g>`:'');
+  }
+
   // Places (and you) can be clicked too. They open a card with nothing but a name and a joke: see SPOT_JOKES.
   // The attributes go on the place's group; a <title> can't, so the name is the label for screen readers.
   const spot=(id,name)=>{REG.push({spot:id,name});return `class="maptap mapplace" data-i="${REG.length-1}" role="button" aria-label="${name}"`};
@@ -155,7 +215,7 @@ const SetupMap=(()=>{
     return e.cloud||e.prov||e.gov?'lock':'poof';                                                      // locked out; or it just stops existing
   }
   function target(spots){
-    const e=FX.ev,you={x:YOU.x,top:YOU.y-84,front:YOU.y-18,you:1};
+    const e=FX.ev,you={x:YOU.x,top:YOU.y-106,front:YOU.y-18,you:1};
     if(e.places&&e.places.length){const p=e.places.find(p=>p!=='carry'&&!e.duress);return p?spots[p]:you}
     if(e.cloud)return {x:124,top:20,front:104};
     if(e.prov||e.gov||(e.cust&&!e.login))return spots.company;
@@ -189,15 +249,14 @@ const SetupMap=(()=>{
       B.push([p.y,`<g ${spot(id,p.name)} opacity="${items.length?1:.5}">${b.svg}</g>`]);
       T.push(row(p.x,y,items,p.name)+label(p.x,y+(items.length?18:-22),p.name,!items.length));
     }
-    // you: a game piece, holding what you carry
+    // you: whoever you are playing as, holding what you carry
     REG.push({spot:'you'});
-    let you=`<g class="mapstep maptap" data-i="${REG.length-1}" data-step="you"><title>You</title><ellipse cx="${YOU.x}" cy="${YOU.y+2}" rx="24" ry="8" fill="#000" opacity=".18"/><path d="M${YOU.x-21} ${YOU.y}Q${YOU.x-22} ${YOU.y-34} ${YOU.x-9} ${YOU.y-52}H${YOU.x+9}Q${YOU.x+22} ${YOU.y-34} ${YOU.x+21} ${YOU.y}Z" fill="#5438F0"/><path d="M${YOU.x-21} ${YOU.y}Q${YOU.x-22} ${YOU.y-18} ${YOU.x-17} ${YOU.y-30}H${YOU.x+17}Q${YOU.x+22} ${YOU.y-18} ${YOU.x+21} ${YOU.y}Z" fill="#4329D6"/><circle cx="${YOU.x}" cy="${YOU.y-62}" r="16" fill="#5438F0"/><circle cx="${YOU.x-5}" cy="${YOU.y-66}" r="5" fill="#7C66FF"/>`;
-    if(S.you.length)you+=`<path d="M${YOU.x+14} ${YOU.y-38}Q${YOU.x+26} ${YOU.y-36} ${YOU.x+34} ${YOU.y-22}" fill="none" stroke="#5438F0" stroke-width="8" stroke-linecap="round"/>`;
+    let you=`<g class="mapstep maptap" data-i="${REG.length-1}" data-step="you"><title>You</title><ellipse cx="${YOU.x}" cy="${YOU.y+2}" rx="24" ry="8" fill="#000" opacity=".18"/><g class="mapchar" data-carry="${S.you.length?1:0}" transform="translate(${YOU.x} ${YOU.y})">${figure(WHO,S.you.length)}</g>`;
     you+=label(YOU.x,YOU.y+22,'You')+'</g>'+row(YOU.x+42+(S.you.length-1)*17,YOU.y+2,S.you,'With you',.85);
-    if(S.head.length){ // thought bubble: closed until clicked
+    if(S.head.length){ // thought bubble: closed until clicked. It floats up and to the right of the big head.
       REG.push({head:S.head});
-      you+=`<g class="maptap mapstep" data-step="head" data-i="${REG.length-1}"><title>Memorized</title><circle cx="${YOU.x+6}" cy="${YOU.y-86}" r="4" fill="#fff"/><circle cx="${YOU.x+2}" cy="${YOU.y-99}" r="6.5" fill="#fff"/>
-        <g class="mappulse"><rect x="${YOU.x-34}" y="${YOU.y-146}" width="68" height="38" rx="19" fill="#fff"/><g fill="#8E8AB8"><circle cx="${YOU.x-14}" cy="${YOU.y-127}" r="4.5"/><circle cx="${YOU.x}" cy="${YOU.y-127}" r="4.5"/><circle cx="${YOU.x+14}" cy="${YOU.y-127}" r="4.5"/></g></g></g>`;
+      you+=`<g transform="translate(28 -16)"><g class="maptap mapstep" data-step="head" data-i="${REG.length-1}"><title>Memorized</title><circle cx="${YOU.x+6}" cy="${YOU.y-86}" r="4" fill="#fff"/><circle cx="${YOU.x+2}" cy="${YOU.y-99}" r="6.5" fill="#fff"/>
+        <g class="mappulse"><rect x="${YOU.x-34}" y="${YOU.y-146}" width="68" height="38" rx="19" fill="#fff"/><g fill="#8E8AB8"><circle cx="${YOU.x-14}" cy="${YOU.y-127}" r="4.5"/><circle cx="${YOU.x}" cy="${YOU.y-127}" r="4.5"/><circle cx="${YOU.x+14}" cy="${YOU.y-127}" r="4.5"/></g></g></g></g>`;
     }
     // the company across the water, and the cloud: always drawn, faded when unused, like every other place
     const c=COMPANY,cb=building(c.x,c.y,c.b),co=S.company;spots.company={x:c.x,top:cb.top,front:cb.front};
@@ -221,7 +280,7 @@ const SetupMap=(()=>{
   const ORDER=['coins','phone','laptop','signer','key','login','paper','steel','note','file'];
   function beats(){
     const things=REG.map((t,i)=>({t,i})).filter(x=>x.t.t).sort((a,b)=>ORDER.indexOf(a.t.t)-ORDER.indexOf(b.t.t));
-    const out=[{steps:['you'],text:'This is you.'}];
+    const out=[{steps:['you'],text:'This is you. Tap yourself to be someone else.'}];
     if(things.length>3)out.push({steps:things.map(x=>'t'+x.i),text:'Let’s say this is your setup.'});
     else things.forEach((x,n)=>out.push({steps:['t'+x.i],text:(n?'And ':'Let’s say ')+SAY[x.t.t]+(AT[x.t.place]||'')+'.'}));
     // What is memorized arrives as the thought bubble. An unlock PIN belongs with its device, so the bubble comes
@@ -245,6 +304,12 @@ const SetupMap=(()=>{
   const kb=k=>k==null?'':`<b class="mapkb" style="background:${keyColor(k)}" title="Key ${keyName(k)}">${keyName(k)}</b>`;
   function card(o){
     const joke=text=>text?`<p class="mapjoke">${text}</p>`:'';
+    if(o.spot==='you'){
+      // You: who you are playing as, something they really said, one of our lines about them, and the others to pick from.
+      const c=CHARS[WHO];
+      return `<h3>You, as ${c.name}</h3><blockquote class="mapquote">“${c.quote}”<cite>${c.by}</cite></blockquote>`+joke(any(c.jokes))+
+        `<div class="mapwho" role="group" aria-label="Play as someone else">${Object.keys(CHARS).map(id=>`<button type="button" class="mapface" data-who="${id}" aria-pressed="${id===WHO}" aria-label="${CHARS[id].name}" title="${CHARS[id].name}"><img src="${CHARS[id].head[0]}" alt=""></button>`).join('')}</div>`;
+    }
     if(o.spot)return `<h3>${SPOT_NAMES[o.spot]||o.name}</h3>`+joke(any(SPOT_JOKES[o.spot]));
     // Everything memorized is hidden behind dots. Clicking the dots shows that one; clicking again hides it.
     if(o.head)return `<h3>Memorized</h3>`+o.head.map(l=>`<div class="maprow"><span>${kb(l.k)}${l.label}</span><button type="button" class="mapsecret" data-secret="${l.secret}" data-mask="${'•'.repeat(l.dots)}" aria-label="Show or hide">${'•'.repeat(l.dots)}</button></div>`).join('')+joke('Also currently thinking about: '+any(THOUGHTS));
@@ -271,7 +336,7 @@ const SetupMap=(()=>{
     key:['They promise they haven’t looked.'],
   };
   // The places themselves, and you. Purely for life: a name and one of a few lines, different each time.
-  const SPOT_NAMES={home:'Your home',relative:'Your relative’s place',office:'Your office',friend:'Your friend’s place',bank:'The bank',cloud:'The cloud',you:'You'};
+  const SPOT_NAMES={home:'Your home',relative:'Your relative’s place',office:'Your office',friend:'Your friend’s place',bank:'The bank',cloud:'The cloud'};
   const SPOT_JOKES={
     home:['Home sweet home. The dishes can wait.','There’s a drawer in here full of cables you will never use.','The Wi-Fi password is on the fridge.'],
     relative:['Your grandma just made freshly baked cookies 😋','They still ask when you’ll get a real job.','Someone in here is forwarding chain emails.'],
@@ -280,15 +345,17 @@ const SetupMap=(()=>{
     bank:['Free pens. Chained to the desk.','Please take a number.','Your call is important to us.'],
     cloud:['Storage almost full. Upgrade now?','Syncing… since 2019.','There is no cloud. It’s just someone else’s computer.'],
     company:['Wen moon?','Number go up.','Support will reply within 3 to 5 business years.'],
-    you:['This is you. Looking good.','You, slightly idealised.','Reminder: drink some water.'],
   };
   const PLACE_JOKES={bank:'Opening hours: never when you need it.',relative:'They think it’s a recipe.',friend:'They promised not to peek.',office:'In the drawer under the stapler.',cloud:'The cloud: just someone else’s computer.'};
   document.addEventListener('click',ev=>{
     // The card is a real dialog, so the dimmed backdrop covers the whole page. Esc, the button or a click outside closes it.
-    const dl=document.getElementById('mapitem'),tap=ev.target.closest('.maptap'),secret=ev.target.closest('.mapsecret');
+    const dl=document.getElementById('mapitem'),tap=ev.target.closest('.maptap'),secret=ev.target.closest('.mapsecret'),who=ev.target.closest('[data-who]');
+    const show=o=>{dl.innerHTML=`<div class="mappop">${card(o)}<button class="btn small" data-mapclose>Close</button></div>`};
     if(secret){const shown=secret.classList.toggle('shown');secret.textContent=shown?secret.dataset.secret:secret.dataset.mask;return}
+    // Picking someone else redraws the figure on every map on the page, and the card, without closing it.
+    if(who){WHO=who.dataset.who;document.querySelectorAll('.mapchar').forEach(g=>{g.innerHTML=figure(WHO,g.dataset.carry==='1')});show({spot:'you'});dl.querySelector('[aria-pressed="true"]').focus();return}
     if(ev.target===dl||ev.target.closest('[data-mapclose]')){dl.close();return}
-    if(tap){dl.innerHTML=`<div class="mappop">${card(REG[+tap.dataset.i])}<button class="btn small" data-mapclose>Close</button></div>`;dl.showModal()}
+    if(tap){show(REG[+tap.dataset.i]);dl.showModal()}
   });
   // beats() and things() describe the map drawn by the latest svg() call. things() lists what is on it and what became of each.
   const things=()=>REG.filter(t=>t.t).map(t=>({id:t.id,role:t.role,k:t.k,fate:t.fate,fresh:t.fresh}));

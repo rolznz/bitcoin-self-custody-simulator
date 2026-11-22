@@ -300,10 +300,11 @@ const SetupMap=(()=>{
       const device=out.findIndex(b=>b.steps.length===1&&REG[+b.steps[0].slice(1)]&&['phone','laptop','signer'].includes(REG[+b.steps[0].slice(1)].t));
       if(pin&&device>0)out.splice(device+1,0,beat);else out.push(beat);
     }
-    // the last three are about buttons on the screen, not things on the map; "point" is what the caption's line leads to
+    // the last four are about what is on the screen around the map, not things on it; "point" is what the caption's arrow leads to
     out.push({steps:[],point:'[data-act="simBase"]',text:'🔥 Press “Try a disaster” to see what could go wrong.'});
     out.push({steps:[],point:'[data-act="editBase"]',text:'✏️ You can edit your current setup at any time.'});
     out.push({steps:[],point:'.maptool.next',text:'🚀 When you’re ready, press “Improve it” to build a better one.'});
+    out.push({steps:[],point:'.mapscore',text:'📊 This is how risky your current setup is. Build a new one and you can compare the two.'});
     return out;
   }
 

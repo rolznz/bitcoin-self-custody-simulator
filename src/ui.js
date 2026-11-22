@@ -169,9 +169,22 @@ function screenMap(which){
   // Disasters stack up until the coins are gone or the player resets (see throwDisaster).
   const R=S.run,d=R&&S.mapDis,o=d&&d.res[0],over=R&&R.over;
   const fx=d?fxOf(d,R):null;
-  const result=fx?`<div class="mapresult ${over?'bad':'ok'}" role="status"><b>${d.icon} ${d.label}</b>${tagline(d.id)?`<i class="tagline">${tagline(d.id)}</i>`:''}<span>${o.text}${over&&over.text?' '+over.text:''}</span>
-      <span class="rowb"><span class="st lv-${over?'high':'low'}">${over?over.verdict:'Coins safe'}</span><span class="runs">${over?(R.n?`after surviving ${R.n}`:'at the first disaster'):`Survived ${R.n} in a row`}</span></span>
-      <div class="rowb">${over?'<button class="btn small" data-act="mapDisDone">↺ Reset and try again</button><button class="btn small ghost" data-act="simPick">Pick one</button>':'<button class="btn small" data-act="mapAnother">🎲 Another</button><button class="btn small ghost" data-act="simPick">Pick one</button><button class="btn small ghost" data-act="mapDisDone">↺ Reset</button>'}</div></div>`:'';
+  // The card is a sticker like the map's buttons: the disaster's emoji in a badge on its corner, and the verdict stamped
+  // on. When the coins are gone and there is an answer, it can turn over ("How could I have stopped it?") to show the
+  // hand-written solution for this kind of disaster: a low-effort one, and an alternative or a bigger step (stoppers()
+  // in model.js). The × in its corner closes it and puts the map back as it was, which ends a run of disasters too.
+  // Turning it over is done in the page, without a redraw, so the disaster on the map doesn't play again. On the Build
+  // screen the change can be made there and then.
+  const fixes=fx&&over?stoppers(S[which],d.ev,d.kind,which==='mine'):[];
+  const btn=(act,text,cls)=>`<button type="button" class="mrbtn${cls?' '+cls:''}" data-act="${act}">${text}</button>`;
+  const fixrow=(x,i)=>`<div class="mrdo">${x.how==='big'?'<small>A bigger step</small>':i?'<small>Or</small>':''}<strong>${x.do}</strong><span>${x.why}</span>${which!=='mine'?'':x.later?'<span>You can do that in the next step, “Try using it”.</span>':`<button type="button" class="mrbtn main" data-act="mapStop" data-i="${i}">Do it</button>`}</div>`;
+  const result=fx?`<div class="mapresult ${over?'bad':'ok'}" role="status"><span class="mrbadge" aria-hidden="true">${d.icon}</span><button type="button" class="mrx" data-act="mapDisDone" aria-label="Close" title="Close">×</button>
+      <div class="mrface"><b>${d.label}</b>${tagline(d.id)?`<i class="tagline">${tagline(d.id)}</i>`:''}
+        <div class="mrbody"><span>${o.text}${over&&over.text?' '+over.text:''}${R.n?` <small class="runs">${over?`You had survived ${R.n}.`:`Survived ${R.n} in a row.`}</small>`:''}</span><span class="mrstamp">${over?over.verdict:'Coins safe'}</span></div>
+        ${over?(fixes.length?`<div class="mrbtns">${btn('mapWhy','💡 How could I have stopped it?','main')}</div>`:''):`<div class="mrbtns">${btn('mapAnother','🎲 Another','main')+btn('simPick','Choose one…')}</div>`}</div>
+      ${fixes.length?`<div class="mrfix"><b>💡 How to stop it</b>
+        ${fixes[0].how==='big'?'<div class="mrdo"><span>There is no quick fix for this one.</span></div>':''}${fixes.map(fixrow).join('')}
+        <div class="mrbtns">${btn('mapWhy','← Back')}</div></div>`:''}</div>`:'';
   // The Build screen is the same map showing the new setup. Its chip compares each risk with the current setup's, and
   // while no disaster is playing it offers the model's next recommended changes as cards that apply with one tap.
   const build=which==='mine',was=build?scoreOf(S.base):null;
@@ -320,7 +333,7 @@ function howHTML(){
     <div><h3>Control</h3>
       <p>Control is about whose coins they are. In an ETF you hold shares, not bitcoin. On an exchange, in an app or at a bank, a company holds the keys. With a provider you share them. In self custody only your keys can move them. The theft and loss scores don’t capture this, so it’s shown separately.</p></div>
     <div><h3>Setup and spending effort</h3>
-      <p>Setup effort is the one-time work: how many keys, places, backups and secrets you have to arrange. Spending effort is the work every time you send: how many signers you need, where they are and how they connect. Receiving is always easy, because you only share an address.</p></div>
+      <p>Setup effort is the one-time work: how many keys, places, backups and secrets you have to arrange, and any hardware signer you have to buy and learn. Spending effort is the work every time you send: how many signers you need, where they are and how they connect. Receiving is always easy, because you only share an address.</p></div>
     <div><h3>How the scores work</h3>
       <p>We keep a list of things that can go wrong over ten years, each with a rough chance of happening. For each one we work out the chance your setup loses the coins. Added up and put on a 0 to 100 scale, that is your score. Lower is better.</p>
       <p class="hint" style="margin-top:6px">The chances are our estimates, so trust the comparison between setups more than the exact numbers.</p></div>
@@ -491,23 +504,34 @@ function paintMapIntro(arriving){
     const c=card.getBoundingClientRect(),t=target.getBoundingClientRect(),k=cap.getBoundingClientRect(),tx=t.left+t.width/2;
     // up to a thing on the map from the top of the caption, or down to a button from the bottom of it
     const below=t.top>=k.bottom,x1=Math.max(k.left+24,Math.min(k.right-24,below?tx:k.left+k.width/2))-c.left,y1=(below?k.bottom:k.top)-c.top;
-    const x2=tx-c.left,y2=(below?t.top-5:Math.min(t.top+t.height/2,k.top-6))-c.top;
-    line.innerHTML=`<line pathLength="1" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><circle cx="${x2}" cy="${y2}" r="7"/>`;
+    const x2=(below?Math.max(t.left+24,Math.min(t.right-24,x1+c.left)):tx)-c.left, // a wide thing off to one side is met at its near end
+      y2=(below?t.top-7:Math.min(t.top+t.height/2,k.top-6))-c.top;
+    // the landing's pen arrow: it leaves the caption straight up or down and bends over to the thing
+    line.innerHTML=`<path pathLength="1" d="${penArrow([x1,y1],[x1,y1+(y2-y1)*.6],[x2,y2])}"/>`;
   },b.point||!arriving?80:520);
   // A click continues, unless it is on something that has already arrived: a thing opens its card, a button does its job.
   // The arrow on the left of the caption goes back one step.
   if(!card.dataset.intro){card.dataset.intro=1;card.addEventListener('click',ev=>{
     if(ev.target.closest('.mapback'))return prevMapBeat();
-    if(!ev.target.closest('.maptap,.maptool,.mapresult'))nextMapBeat();
+    if(S.mapIntro!=='run')return; // the introduction is over, but this card has not been redrawn since
+    const used=ev.target.closest('.maptap,.maptool,.mapscore');
+    if(used){ // remember whether this is what the caption on screen is about; see mapBeatUsed
+      const x=SetupMap.beats()[mapBeat],own=[...x.steps.map(s=>`[data-step="${s}"]`),x.point].filter(Boolean).join(',');
+      mapBeatUsed=used.matches(own)||used.querySelector(own)?mapBeat:-1;
+    }else if(!ev.target.closest('.mapresult'))nextMapBeat();
   })}
 }
 function prevMapBeat(){
   if(S.mapIntro!=='run'||mapBeat<1)return;
   mapBeat--;render(); // redrawing clears whatever the later step had brought in; render() then repaints up to this step
 }
-// Things and buttons can be used as soon as their caption has introduced them. One rule for all of them: closing the
-// dialog that opened moves the introduction on, the same as a click on the map would.
-for(const id of ['sim','edit','mapitem'])$(id).addEventListener('close',()=>{if(S.mapIntro==='run'&&S.step===1)nextMapBeat()});
+// Things and buttons can be used as soon as their caption has introduced them. One rule for all of them: being done
+// with the thing the caption is about (closing its dialog, resetting its disaster) moves the introduction on, the same
+// as a click on the map would. Going back to something introduced earlier does not: changing who you are for fun while
+// a later caption is showing leaves that caption where it is. mapBeatUsed is the step whose own thing was last used.
+let mapBeatUsed=-1;
+const usedMapBeat=()=>{if(S.mapIntro==='run'&&S.step===1&&mapBeatUsed===mapBeat)nextMapBeat()};
+for(const id of ['sim','edit','mapitem','scores'])$(id).addEventListener('close',usedMapBeat);
 function resize(st,n){
   n=Math.max(1,Math.min(5,n));
   while(st.keys.length<n)st.keys.push(newKey());
@@ -591,11 +615,16 @@ document.addEventListener('click',ev=>{
   if(a==='simBase'||a==='mapAnother')throwDisaster(null);
   if(a==='simPick'){S.simBase=true;S.simList=true}
   if(a==='simClose')S.simBase=false;
-  if(a==='mapDisDone'){S.mapDis=S.run=null;render();if(S.mapIntro==='run')nextMapBeat();return} // Reset: the map as it was. During the onboarding it also moves on.
+  if(a==='mapDisDone'){S.mapDis=S.run=null;render();usedMapBeat();return} // Reset: the map as it was. During the onboarding it also moves on, if the caption was about disasters.
   if(a==='help'){S.helpOpen=!S.helpOpen;S.helpMore=false}
   if(a==='helpMore')S.helpMore=!S.helpMore;
   if(a==='scores'){S.scoresOpen=!S.scoresOpen;S.scoresMore=false}
   if(a==='scoresMore'){S.scoresMore=!S.scoresMore;S.how=S.step===2?'mine':'base'} // the explanation opens further down the same dialog
+  if(a==='mapWhy'){b.closest('.mapresult').classList.toggle('why');return} // turn the result card over; no redraw, so the disaster doesn't replay
+  if(a==='mapStop'){ // "Do it" on the turned-over card, on the Build map: make the change that would have stopped this disaster
+    const t=S.mapDis&&stoppers(S.mine,S.mapDis.ev,S.mapDis.kind,true)[+b.dataset.i];
+    if(t){S.mine=clone(t.setup);S.picked.mine=true;S.w.report=null;changed('mine');S.mapDis=S.run=null}
+  }
   if(a==='mapApply'){ // a recommendation card on the Build map: apply it, and any run of disasters starts afresh
     const t=bestChanges(S.mine,true)[b.dataset.k];
     if(t){S.mine=clone(t.setup);S.picked.mine=true;S.w.report=null;changed('mine');S.mapDis=S.run=null}
@@ -646,7 +675,7 @@ function changed(which){if(which==='base')S.dis=null}
 // never advice. Brand and supply-chain events have an id per brand, so those match on the start of the id.
 const TAGLINE={
   t_home:'They even took the kitchen sink.',t_office:'The cleaner found something interesting.',t_rel:'“I was just looking for the Wi-Fi password.”',t_friend:'“I was just looking for the Wi-Fi password.”',
-  t_bank:'An inside job.',t_carry:'Yoink.',t_hot:'You downloaded more RAM.',t_cloud:'hunter2 was not a strong password.',
+  t_bank:'An inside job.',t_carry:'Yoink.',t_hot:'You installed a fake wallet app.',t_cloud:'They said it would show up as ******* if you typed it.',
   t_border:'Papers, please.',t_phish:'Your wallet urgently needs to be “validated”.',t_lapse:'You had one job.',
   t_guess:'correct horse battery staple',t_app:'It’s not a bug, it’s a feature.',t_brand:'It’s not a bug, it’s a feature.',t_supply:'It fell off the back of a truck.',
   t_prov:'“We take your security very seriously.”',t_provapp:'Automatic updates: what could go wrong?',t_prov2:'“We take your security very seriously.”',
@@ -667,11 +696,16 @@ function throwDisaster(id){
   if(!S.run||S.run.over)S.run={live:clone(mapSetup()),fates:{},now:{},stolen:[],n:0,over:null};
   const R=S.run,L=R.live;
   Object.assign(R.fates,R.now);R.now={}; // the previous disaster's damage is now part of the scenery
+  // The very first one is always malware, so everyone (and every demo) opens on the same story, and on the one that is
+  // the main reason for a cold wallet: a key on an online phone or laptop can be taken from afar. Only if the setup has
+  // such a key; otherwise malware would be a non-event and the first one is random too.
+  const first=!S.thrown&&!custodial(L)&&allKeys(L).some(hot);S.thrown=true;
+  const sure=!id&&first;if(sure)id='t_hot'; // and it always gets through: a first disaster that misses would teach nothing
   if(!id){ // random: one that can still reach something, and not the same one twice running
     const all=disasterList([L]).map(x=>x[1]),can=all.filter(e=>touches(L,e)),from=(can.length?can:all).filter(e=>!S.dis||e.id!==S.dis.id),pool=from.length?from:all;
     id=pool[Math.floor(Math.random()*pool.length)].id;
   }
-  const d=S.dis=S.mapDis=runDisaster([L],id),o=d.res[0];
+  const d=S.dis=S.mapDis=runDisaster([L],id,null,sure),o=d.res[0];
   S.simBase=false; // the dialog is only the list to pick from
   SetupMap.svg(mapSetup(),fxOf(d,R)); // a dry run of the drawing, to learn what this disaster does to each thing
   for(const t of SetupMap.things()){
@@ -832,9 +866,15 @@ const NOTES=[['You',452,226,-6,[486,214],[516,202],[540,226]],
   ['The bank',352,424,3,[332,434],[312,440],[292,456],1],
   ['A friend’s place',1010,462,-3,[1052,474],[1078,478],[1098,498],1],
   ['The exchange',952,356,4,[914,368],[890,366],[872,384],1]];
+// penArrow() is the one arrow used for pointing at things, here and in the map's introduction: a curve from a to c that
+// bends toward b, with an open head at c. A very short arrow gets a smaller head.
+function penArrow(a,b,c){
+  const n=v=>(+v).toFixed(1),ang=Math.atan2(c[1]-b[1],c[0]-b[0]),h=Math.min(13,Math.hypot(c[0]-a[0],c[1]-a[1])*.45);
+  const tip=d=>`${n(c[0]-h*Math.cos(ang+d))} ${n(c[1]-h*Math.sin(ang+d))}`;
+  return `M${n(a[0])} ${n(a[1])}Q${n(b[0])} ${n(b[1])} ${n(c[0])} ${n(c[1])}M${tip(.5)}L${n(c[0])} ${n(c[1])}L${tip(-.5)}`;
+}
 $('sc-notes').innerHTML=NOTES.map(([t,x,y,r,a,b,c,wide])=>{
-  const ang=Math.atan2(c[1]-b[1],c[0]-b[0]),tip=d=>`${(c[0]-13*Math.cos(ang+d)).toFixed(1)} ${(c[1]-13*Math.sin(ang+d)).toFixed(1)}`;
-  return `<g class="sc-note"${wide?' data-wide="1"':''}><path pathLength="1" d="M${a[0]} ${a[1]}Q${b[0]} ${b[1]} ${c[0]} ${c[1]}M${tip(.5)}L${c[0]} ${c[1]}L${tip(-.5)}"/><text x="${x}" y="${y}" text-anchor="middle" transform="rotate(${r} ${x} ${y})">${t}</text></g>`}).join('');
+  return `<g class="sc-note"${wide?' data-wide="1"':''}><path pathLength="1" d="${penArrow(a,b,c)}"/><text x="${x}" y="${y}" text-anchor="middle" transform="rotate(${r} ${x} ${y})">${t}</text></g>`}).join('');
 let noteTimer=0,noteI=-1;
 function nextNote(){
   const c=document.body.classList,all=[...document.querySelectorAll('#scene .sc-note')];

@@ -41,7 +41,7 @@ const CONNS={usb:'USB cable',qr:'QR code (camera)',sd:'Memory card'};
 const NETS={online:'Online',offline:'Always offline'};
 
 const THEFT=[
-  {id:'t_home',label:'Burglary at home',w:.05,places:['home']},
+  {id:'t_home',label:'Burglary while you’re away',w:.05,places:['home']},
   {id:'t_office',label:'Theft at the office',w:.04,places:['office']},
   {id:'t_rel',label:'Someone snoops at your relative’s place',w:.04,places:['relative']},
   {id:'t_friend',label:'Someone snoops at your friend’s place',w:.04,places:['friend']},
@@ -84,6 +84,10 @@ const LOSS=[
 const TIME={id:'l_time',label:'Ten quiet years: things break, fade, get forgotten',places:[]};
 
 function elabel(e,setups){
+  if(e.hot){ // name the device when the setups only have one kind: a phone wallet is not threatened by malware "on your computer"
+    const u=[...new Set(setups.filter(s=>s&&!custodial(s)).flatMap(s=>s.keys).filter(soft).map(k=>k.device))];
+    return u.length===1?(u[0]==='phone'?'Malware on your phone':'Malware on your computer'):e.label;
+  }
   if(!e.labels)return e.label;
   const u=[...new Set(setups.filter(s=>s&&custodial(s)).map(s=>s.type))];
   return u.length===1?e.labels[u[0]]:u.length>1?e.multi:e.label;
@@ -224,7 +228,8 @@ function setupEffort(s){
     if(k.backup==='metal'||k.backup==='memory')x+=.25;
     if(k.pass!=='none')x+=.5;
     if(k.ent==='dice'||k.ent==='diceonly')x+=.5;
-    if(k.device==='hw'&&k.brand==='D')x+=.5;
+    if(k.device==='hw')x+=.5; // a signer has to be paid for, waited for and learned; a phone or laptop you already have
+    if(k.device==='hw'&&k.brand==='D')x+=.5; // and one you build yourself is more work again
     if(soft(k)&&k.net==='offline')x+=.25;
   });
   const raw=Math.max(0,own-1)*.75+Math.max(0,places.size-1)*.4+x+(TL(s)?.5:0)+((s.m<s.n||TL(s))&&s.config!=='none'?.25:0);
@@ -358,10 +363,12 @@ function backupName(k,capital){
   const n={paper:'your recovery phrase, written on paper'+at(k.bloc)+',',metal:'your recovery phrase, stamped in steel'+at(k.bloc)+',',memory:'the recovery phrase you memorized',cloud:'your recovery phrase backup in the cloud'}[k.backup]||'your backup';
   return capital?n[0].toUpperCase()+n.slice(1):n;
 }
-function runDisaster(setups,id,lastId){
+// "sure" plays the disaster with the worst luck on every roll: whatever it can do to the setup, it does.
+function runDisaster(setups,id,lastId,sure){
   const list=disasterList(setups);let pick=list.find(x=>x[1].id===id);
   if(!pick)do{pick=list[Math.floor(Math.random()*list.length)]}while(list.length>1&&pick[1].id===lastId);
-  const kind=pick[0],e=pick[1],r={k:[0,0,0,0,0].map(()=>Math.random()),c:Math.random(),p:Math.random(),p2:Math.random(),kr:Math.random(),l:Math.random(),d:Math.random(),b:[0,0,0,0,0].map(()=>Math.random()),bk:Math.random(),bc:Math.random()};
+  const R=sure?()=>0:Math.random;
+  const kind=pick[0],e=pick[1],r={k:[0,0,0,0,0].map(R),c:R(),p:R(),p2:R(),kr:R(),l:R(),d:R(),b:[0,0,0,0,0].map(R),bk:R(),bc:R()};
   return{id:e.id,ev:e,icon:e.supply?'🚚':e.brand?'🐞':ICON[e.id],label:elabel(e,setups),kind,res:setups.map(s=>outcome(s,kind,e,r))};
 }
 function scoreOf(s){return risk(s,brandEvents([s]))}
@@ -536,12 +543,12 @@ function cands(s,build){
   const ck=(build?'b':'a')+JSON.stringify(s);if(_cc.has(ck))return _cc.get(ck);
   const cur=scoreOf(s),low=[],high=[];
   const ev=(act,why,mod,tag)=>{const t=clone(s);mod(t);const a=scoreOf(t);return{do:act,why,mod,tag,to:a,setup:t,gain:(cur.theft-a.theft)+(cur.loss-a.loss),worse:Math.max(a.theft-cur.theft,a.loss-cur.loss),eff:(a.setup+a.spend)-(cur.setup+cur.spend)}};
-  const L=(act,why,mod,tag)=>low.push(ev(act,why,mod,tag)),H=(act,why,mod)=>{high.push(ev(act,why,mod));return high[high.length-1]};
+  const L=(act,why,mod,tag)=>low.push(ev(act,why,mod,tag)),H=(act,why,mod,tag)=>{high.push(ev(act,why,mod,tag));return high[high.length-1]};
   if(custodial(s)){
     if((s.login||'sms')!=='app')L('Protect your login with an authenticator, passkey or security key.','A stolen password or a SIM swap is no longer enough to get in.',t=>{t.login='app'},'login');
     if(s.wd!=='on')L('Turn on an address allowlist or a waiting period for withdrawals.','A thief inside your account can’t send the coins somewhere new straight away.',t=>{t.wd='on'},'wd');
     const c=H({exchange:'Get your own wallet and move the coins to it.',fintech:'Get your own wallet and move the coins to it.',bank:'Get your own wallet and move the coins to it. If the bank won’t let you withdraw, sell and rebuy elsewhere.',etf:'Sell the shares, buy bitcoin, and hold it in your own wallet.'}[s.type],
-      'The coins become yours: no company can freeze, seize or lose them. How safe they are then is up to you.',t=>{Object.assign(t,newSetup())});
+      'The coins become yours: no company can freeze, seize or lose them. How safe they are then is up to you.',t=>{Object.assign(t,newSetup())},'own');
     c.always=true;c.plain=true;
   }else{
     const PL=['office','bank','relative','friend','home'],one=s.n===1;
@@ -572,14 +579,14 @@ function cands(s,build){
     if(!s.tested&&!build)L('Practice a recovery.','It proves your backups work before you need them.',t=>{t.tested=true},'tested');
     if(one&&!isProv(s.keys[0]))H('Go to 2-of-3, with the keys and backups in three different places.','No single break-in, fire, bad device or phishing page is enough.',t=>{
       const B=newKey(),C=newKey();Object.assign(B,{dloc:'office',bloc:'bank',brand:'B'});Object.assign(C,{dloc:'relative',bloc:'relative',brand:'C'});
-      t.keys=[t.keys[0],B,C];t.n=3;t.m=2;t.config='all'});
+      t.keys=[t.keys[0],B,C];t.n=3;t.m=2;t.config='all'},'multi');
     if(s.n>1){
       const own=s.keys.map((k,i)=>i).filter(i=>!isProv(s.keys[i])),P=['home','office','relative','bank','friend'],off=s.m===s.n?1:0;
       const spread=t=>own.forEach((i,j)=>{const k=t.keys[i];if(real(k)&&k.dloc!=='carry')k.dloc=P[j%5];if(k.backup==='paper'||k.backup==='metal')k.bloc=P[(j+off)%Math.min(5,Math.max(own.length,2))]});
       const brands=t=>{let c=0;own.forEach(i=>{const k=t.keys[i];if(k.device==='hw'&&k.brand!=='D')k.brand=['A','B','C'][c++%3]})};
       const file=t=>{if(t.m<t.n||TL(t))t.config='all'};
-      H('Spread the keys out, so each key and its backup sit somewhere different.','No single break-in or fire can take two keys.',spread);
-      H('Use a different brand for each hardware signer.','One brand’s bug or tampered batch can only hit one key.',brands);
+      H('Spread the keys out, so each key and its backup sit somewhere different.','No single break-in or fire can take two keys.',spread,'spread');
+      H('Use a different brand for each hardware signer.','One brand’s bug or tampered batch can only hit one key.',brands,'brands');
       H('Spread the keys out, mix brands and back up the wallet file.','No single break-in, fire or bad device is enough.',t=>{spread(t);brands(t);file(t)});
       if(s.m===s.n&&s.n<5)H(`Add a key, so you need ${s.m} of ${s.n+1}.`,'You can then lose a key and still spend.',t=>{t.keys.push(newKey());t.n++});
     }
@@ -594,8 +601,58 @@ function cands(s,build){
     }
   }
   const hi=high.find(x=>x.always)||high.filter(x=>x.gain>=3&&x.worse<=3).sort((a,b)=>b.gain-a.gain||a.eff-b.eff)[0];
-  const out={cur,lo:lo||null,hi:hi||null};
+  const out={cur,lo:lo||null,hi:hi||null,all:[...low,...high]};
   if(_cc.size>400)_cc.clear();_cc.set(ck,out);return out;
+}
+/* "How could I have stopped it?" The answers are written by hand, one kind of disaster at a time, the way someone who
+   knows this would give them: a low-effort change that really solves it ("low"), and where there is one an alternative
+   ("alt") or a bigger step ("big"). Nothing is searched for. A change that merely dodges the disaster in the scores is
+   not a solution: keeping the seed at the office "stops" a burglary at home, and only moves the theft. The scores are
+   used for one thing, to leave out an answer the setup already has or that would not have made this disaster any less
+   likely. A disaster with no entry here has no answer, and the card then doesn't offer one.
+   Returns at most two: the low-effort one, then the alternative or bigger step. */
+function stoppers(s,e,kind,build){
+  const P=t=>kind==='t'?theftP(t,e):lossP(t,e),now=P(s),cust=custodial(s),one=!cust&&s.n===1;
+  const mine=t=>t.keys.filter(k=>!isProv(k)),at=p=>(e.places||[]).includes(p),written=k=>k.backup==='paper'||k.backup==='metal';
+  const dev=k=>k.device==='hw'?'signer':k.device;
+  // keys(): an answer about some of the keys. "pick" says which, "change" what happens to each; with none to change there is no answer.
+  const keys=(how,text,why,pick,change)=>{const was=mine(s).filter(pick);if(!was.length)return null;const t=clone(s);mine(t).filter(pick).forEach(change);return{how,do:typeof text==='function'?text(was):text,why,setup:t}};
+  // whole(): an answer about the setup as a whole. step(): one of the big steps the recommendations already know.
+  const whole=(how,text,why,change,later)=>{const t=clone(s);change(t);return{how,do:text,why,setup:t,later:!!later}};
+  const step=(how,tag)=>{const x=cands(s,build).all.find(c=>c.tag===tag);return x?{how,do:x.do,why:x.why,setup:x.setup}:null};
+  const multi=()=>step('big',one?'multi':'spread');
+  const home=(how,why)=>keys(how,one?'Keep your key on a signing device at home.':'Keep those keys on signing devices at home.',why,k=>real(k)&&k.dloc==='carry',k=>{if(soft(k))k.device='hw';k.dloc='home'});
+  let a=[];
+  if(cust)a=e.login?[whole('low','Protect your login with an authenticator or passkey, and turn on a withdrawal allowlist.','A stolen password or a SIM swap is no longer enough to get in, and a thief who does get in can’t send the coins somewhere new.',t=>{t.login='app';t.wd='on'}),step('big','own')]
+    :[step('low','own')];
+  else if(e.hot)a=[
+    keys('low',ks=>one?`Move your wallet from the ${ks[0].device} to a hardware signer.`:'Move every key on a phone or laptop to a hardware signer.','Malware on a phone or computer can no longer reach the key.',hot,k=>{k.device='hw';k.dloc='home'}),
+    keys('alt',ks=>ks.length===1?`Keep the ${ks[0].device} always offline.`:'Keep those phones and laptops always offline.','Malware can’t reach a device that never connects.',hot,k=>{k.net='offline'})];
+  else if(e.phish)a=[multi()];
+  else if(e.app||e.guess||(e.brand&&!e.supply&&!e.bugloss))a=[
+    keys('low',one?'Make the seed yourself, with dice rolls or coin flips.':'Make those seeds yourself, with dice rolls or coin flips.',e.guess?'Words people pick get guessed. Dice and coins can’t be.':'The seed no longer depends on how good the app’s or device’s random numbers are.',
+      k=>k.ent!=='diceonly'&&(e.app?soft(k):e.guess?k.ent==='words':k.device==='hw'&&k.brand===e.brand),k=>{k.ent='diceonly'}),
+    step('big',one?'multi':'brands')];
+  else if(e.cloud)a=[keys('low',one?'Keep your seed on paper, not in the cloud.':'Keep those seeds on paper, not in the cloud.',kind==='t'?'A hacked account can no longer hand over the seed.':'A locked account can no longer take the backup with it.',k=>k.backup==='cloud',k=>{k.backup='paper';k.bloc='home'})];
+  else if(e.border)a=[home('low','You can’t be made to unlock what you don’t have with you.')];
+  else if(e.id==='t_carry')a=[
+    keys('low',ks=>ks.length===1?`Set a strong PIN on your ${dev(ks[0])}.`:'Set a strong PIN on every device you carry.','A thief who gets the device is very unlikely to guess it.',k=>real(k)&&k.dloc==='carry'&&k.pin!=='strong',k=>{k.pin='strong'}),
+    home('big','What stays at home can’t be taken from your bag or pocket.')];
+  else if(e.id==='l_carry')a=[home('low','Nothing with a key on it leaves the house, so there is nothing to lose while you’re out.')];
+  else if(kind==='t'&&e.places)a=[ // something was taken from a place: a seed that is useless on its own, or keys that are never together
+    keys('low',ks=>ks.every(k=>k.pass!=='none')?'Make your passphrase a strong one.':one?'Add a strong passphrase to your seed, and memorize it.':'Add a strong, memorized passphrase to each key kept there.','A thief who finds the seed still can’t spend without the passphrase.',
+      k=>(k.pass==='none'||k.pstr!=='strong')&&((real(k)&&at(k.dloc))||(written(k)&&at(k.bloc))),k=>{if(k.pass==='none')k.pass='memory';k.pstr='strong'}),
+    multi()];
+  else if(e.fire)a=[
+    keys('low',one?'Switch your seed backup to a metal plate.':'Switch the paper backups kept there to metal plates.','Metal survives fire and water far better than paper.',k=>k.backup==='paper'&&at(k.bloc),k=>{k.backup='metal'}),
+    keys('big',one?'Keep the seed backup somewhere else than the device, like a bank box.':'Keep those seed backups somewhere else than their devices, like a bank box.','One fire can no longer take the device and its backup together.',k=>written(k)&&at(k.bloc)&&real(k)&&k.dloc===k.bloc,k=>{k.bloc='bank'})];
+  else if(e.dev)a=[
+    keys('low',one?'Write your seed down on paper as a backup.':'Write down a paper backup for every key.','If the device dies, the backup brings the key back.',k=>k.backup==='none',k=>{k.backup='paper';k.bloc='home'}),
+    (s.m<s.n||TL(s))&&s.config==='none'?whole('low','Back up the wallet file with every seed backup.','If a key goes missing, you need that file to use the rest.',t=>{t.config='all'}):null,
+    s.tested?null:whole('low','Practise recovering from your backup.','It proves the backup works before you need it.',t=>{t.tested=true},build),
+    multi()];
+  const ok=a.filter(Boolean).filter(x=>P(x.setup)<now),first=ok.find(x=>x.how==='low')||ok[0];
+  return first?[first,ok.find(x=>x!==first&&x.how!=='low')].filter(Boolean):[];
 }
 function potential(s,full){
   const ck=(full?'f':'l')+JSON.stringify(s);if(_pc.has(ck))return _pc.get(ck);

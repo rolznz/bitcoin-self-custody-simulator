@@ -304,7 +304,9 @@ body.mapscreen::before{background:#7EC8FF}
 @keyframes chgdot{from{background:var(--a);transform:scale(1)}50%{transform:scale(1.9)}to{background:var(--b);transform:scale(1)}}
 @keyframes chgglow{0%,100%{box-shadow:0 4px 0 #1B1840}12%,70%{box-shadow:0 4px 0 #1B1840,0 0 0 7px #FFD84D}}
 @media (prefers-reduced-motion:reduce){.chg .swap em,.chg i,.mapscore.changing{animation:none}}
-.mapintro .mapscore{opacity:0;pointer-events:none}.mapfresh .mapscore{animation:mapin .5s both}
+.mapintro .mapscore{opacity:0;pointer-events:none}.mapfresh .mapscore:not(.in){animation:mapin .5s both}
+.mapintro .mapscore.in{opacity:1;pointer-events:auto} /* the introduction's last caption brings it in. It fades in where it stands, so the caption's arrow can be aimed at it straight away */
+.mapintro .mapscore{transition:opacity .3s}
 @media (max-width:760px){
   .mapcard{min-height:520px}
   .map{inset:4px 0 132px;height:calc(100% - 136px)}
@@ -342,11 +344,7 @@ body.mapscreen::before{background:#7EC8FF}
 .mapintro .maptool.in{pointer-events:auto} /* once its caption has introduced it, a button works */
 body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.mapresult) .mapcap,.mapcard:has(.mapresult) .mapline{visibility:hidden} /* a dialog, or a disaster playing on the map, has the player's full attention */
 .mapline{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-.mapline line{stroke:#fff;stroke-width:5;stroke-linecap:round;opacity:.6;stroke-dasharray:1;animation:mapline .25s ease-out both}
-.mapline circle{fill:#fff;opacity:.6;animation:mapcap0 .2s .2s both}
-@keyframes mapline{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
-@keyframes mapcap0{from{opacity:0}to{opacity:.6}}
-.mapintro .mapstep.in{opacity:1;animation:mapin .5s both}
+.mapline path{animation:sc-draw .4s ease-out both} /* the pen arrow itself is styled with the landing's, under .sc-notes */.mapintro .mapstep.in{opacity:1;animation:mapin .5s both}
 .mapintro .mapstep.in.was{animation:none} /* already there before a redraw: no second entrance */
 .mapfresh .maptool{animation:mapin .5s both}.mapfresh .maptool+.maptool{animation-delay:.12s}
 .mapcap{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);max-width:calc(100% - 24px);background:#1B1840;color:#fff;font-family:var(--display);font-weight:700;font-size:1.15rem;padding:10px 18px;border-radius:16px;border:0;text-align:center;opacity:0;cursor:pointer}
@@ -371,6 +369,7 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
   .mapcard{min-height:560px}
   .mapcap{bottom:14px;font-size:1rem;width:calc(100% - 24px)}
   .mapcap.up{bottom:158px}
+  .mapcard:has(.mapscore.in) .mapcap.up{bottom:204px} /* the risk chip sits above the buttons here, so its caption goes above the chip */
 }
 @keyframes mapin{0%{opacity:0;transform:translateY(-34px) scale(.6)}60%{opacity:1;transform:translateY(3px) scale(1.06)}100%{opacity:1;transform:none}}
 @keyframes mapcap{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%)}}
@@ -424,8 +423,6 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
 .fate-gone.was{filter:grayscale(1) brightness(.3);opacity:.45;transform:scale(.82) rotate(-6deg)}
 .fate-taken.was{opacity:.12;transform:translate(34px,-10px) scale(.45)}
 .fate-hacked.was{filter:saturate(.5) brightness(.85)}
-.mapresult .runs{font-weight:700;font-size:.9rem}
-.mapresult .tagline{color:#5A5688;font-size:.9rem;margin-top:-6px}
 /* which setup this map is, and (on the Build screen) the next recommended changes as tappable cards */
 .maplabel{position:absolute;left:14px;top:10px;background:#1B1840;color:#fff;font-family:var(--display);font-weight:700;font-size:.95rem;padding:6px 14px;border-radius:14px}
 .mapintro .maplabel{opacity:0}
@@ -450,10 +447,33 @@ button.mapcardtip:active{transform:translateY(3px);box-shadow:0 1px 0 #1B1840}
   .mapcard.lift{min-height:680px}
   .mapcard.lift .map{inset:44px 0 356px;height:calc(100% - 400px)}
 }
-.mapresult{position:absolute;right:14px;bottom:80px;width:min(360px,calc(100% - 28px));background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:18px;box-shadow:0 5px 0 #1B1840;padding:14px 16px;display:grid;gap:8px;animation:fxbar .35s 2.1s both} /* bottom left, over open sea, clear of the figure */
-.mapresult b{font-family:var(--display);font-size:1.1rem}
-.mapresult .st{justify-self:start}
-.mapresult.bad{background:#FDE7E7}.mapresult.ok{background:#E3F6EA}
+/* The result of a disaster: a sticker like the map's buttons. The disaster's emoji is a badge on the corner, the verdict
+   is stamped on, and when the coins are gone the card turns over to show how it could have been stopped (.why). */
+.mapresult{position:absolute;right:14px;bottom:80px;width:min(380px,calc(100% - 28px));background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:22px;box-shadow:0 6px 0 #1B1840;padding:16px 16px 14px;animation:fxbar .45s 2.1s cubic-bezier(.3,1.5,.5,1) both}
+.mrbadge{position:absolute;left:-16px;top:-22px;width:58px;height:58px;border-radius:50%;border:3px solid #1B1840;box-shadow:0 4px 0 #1B1840;display:grid;place-items:center;font-size:1.9rem;line-height:1;transform:rotate(-8deg)}
+.mapresult.bad .mrbadge{background:#FFB3A7}.mapresult.ok .mrbadge{background:#A9EBC0}
+.mrx{position:absolute;right:10px;top:10px;width:34px;height:34px;border-radius:50%;border:2.5px solid #1B1840;background:#fff;color:#1B1840;box-shadow:0 3px 0 #1B1840;font:700 1.3rem/1 var(--body);display:grid;place-items:center;padding:0 0 2px;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.mrx:hover{transform:translateY(-1px);box-shadow:0 4px 0 #1B1840}.mrx:active{transform:translateY(3px);box-shadow:0 0 0 #1B1840}
+.mrface>b,.mrface>.tagline,.mrfix>b{padding-right:36px} /* clear of the × */
+.mrface,.mrfix{display:grid;gap:8px}
+.mrfix,.mapresult.why .mrface{display:none}.mapresult.why .mrfix{display:grid;animation:mrturn .3s cubic-bezier(.3,1.5,.5,1) both}
+.mapresult b{font-family:var(--display);font-size:1.25rem;line-height:1.1;padding-left:38px}
+.mapresult .tagline{color:#5A5688;font-size:.9rem;margin-top:-4px;padding-left:38px}
+.mrbody{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:2px}
+.mrbody>span:first-child{line-height:1.35}
+.mapresult .runs{display:block;color:#5A5688;font-weight:700;font-size:.84rem;margin-top:2px}
+.mrstamp{flex:none;font-family:var(--display);font-weight:800;font-size:1.02rem;line-height:1;text-transform:uppercase;letter-spacing:.06em;text-align:center;max-width:6.5em;padding:7px 9px;border:3px solid;border-radius:9px;transform:rotate(-9deg);animation:mrstamp .3s 2.6s cubic-bezier(.2,1.2,.4,1) both}
+.mapresult.bad .mrstamp{color:#D7263D;background:#FFF1F1}.mapresult.ok .mrstamp{color:#12924F;background:#EEFBF3}
+.mrbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.mrbtn{border:2.5px solid #1B1840;border-radius:99px;background:#fff;color:#1B1840;box-shadow:0 3px 0 #1B1840;font:700 .9rem/1 var(--body);padding:8px 13px;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.mrbtn.main{background:#FFD84D}
+.mrbtn:hover{transform:translateY(-1px);box-shadow:0 4px 0 #1B1840}.mrbtn:active{transform:translateY(3px);box-shadow:0 0 0 #1B1840}
+.mrdo{display:grid;gap:3px;justify-items:start}
+.mrdo strong{font-size:1rem;line-height:1.25}.mrdo span{color:#5A5688;font-size:.88rem;line-height:1.3}
+.mrdo small{font-weight:800;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#5A5688;margin-top:4px}
+.mrdo .mrbtn{margin-top:4px}
+@keyframes mrstamp{from{opacity:0;transform:rotate(-20deg) scale(2.6)}to{opacity:1;transform:rotate(-9deg) scale(1)}}
+@keyframes mrturn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
 @media (max-width:760px){.mapresult{bottom:196px;left:10px;right:10px;width:auto}}
 @keyframes fxbar{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes fxdrop{from{transform:translateY(-340px);opacity:0}30%{opacity:1}to{transform:none;opacity:1}}
@@ -472,7 +492,7 @@ button.mapcardtip:active{transform:translateY(3px);box-shadow:0 1px 0 #1B1840}
 /* reduced motion: no movement, just the end state (what was hit, marked, and the result) */
 @media (prefers-reduced-motion:reduce){
   .fxdrop,.fxthief,.fxbolt,.fxsmoke,.fxpoof{display:none}
-  .fxfire,.fxflame,.fxlock,.fxtime,.fxhand,.fxmark,.mapresult,.fate-gone,.fate-taken,.fate-safe,.fate-hacked{animation:none!important;opacity:1}
+  .fxfire,.fxflame,.fxlock,.fxtime,.fxhand,.fxmark,.mapresult,.mrstamp,.fate-gone,.fate-taken,.fate-safe,.fate-hacked{animation:none!important;opacity:1}
   .fate-gone{filter:grayscale(1) brightness(.3);opacity:.45}.fate-taken{opacity:.15}.fate-hacked{filter:saturate(.5) brightness(.85)}
 }
 /* ---------- landing scene ---------- */
@@ -526,7 +546,7 @@ body.landing{overflow-x:clip;background:linear-gradient(var(--sky),var(--sky2) 6
 #scene .sc-notes{z-index:4}
 .sc-note{opacity:0;transition:opacity .3s}.sc-note.on{opacity:1}
 .intro .sc-note,.leaving .sc-note{opacity:0}
-.sc-notes path{fill:none;stroke:#F47B20;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:0}
+.sc-notes path,.mapline path{fill:none;stroke:#F47B20;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:0}
 .sc-notes text{font:800 25px var(--display);fill:#1B1840;stroke:#fff;stroke-width:7px;stroke-linejoin:round;paint-order:stroke}
 /* the speech bubble grows up and to the right from beside the driver's head */
 #sc-say{position:absolute;z-index:4;left:calc(50% + var(--s,1)*46px);bottom:calc(var(--s,1)*404px);max-width:min(250px,calc(50vw - var(--s,1)*46px - 10px));padding:9px 13px;background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:18px;box-shadow:3px 4px 0 #1B1840;font:700 .9rem/1.25 var(--body);transform-origin:0 100%}
@@ -730,7 +750,7 @@ const CONNS={usb:'USB cable',qr:'QR code (camera)',sd:'Memory card'};
 const NETS={online:'Online',offline:'Always offline'};
 
 const THEFT=[
-  {id:'t_home',label:'Burglary at home',w:.05,places:['home']},
+  {id:'t_home',label:'Burglary while you’re away',w:.05,places:['home']},
   {id:'t_office',label:'Theft at the office',w:.04,places:['office']},
   {id:'t_rel',label:'Someone snoops at your relative’s place',w:.04,places:['relative']},
   {id:'t_friend',label:'Someone snoops at your friend’s place',w:.04,places:['friend']},
@@ -773,6 +793,10 @@ const LOSS=[
 const TIME={id:'l_time',label:'Ten quiet years: things break, fade, get forgotten',places:[]};
 
 function elabel(e,setups){
+  if(e.hot){ // name the device when the setups only have one kind: a phone wallet is not threatened by malware "on your computer"
+    const u=[...new Set(setups.filter(s=>s&&!custodial(s)).flatMap(s=>s.keys).filter(soft).map(k=>k.device))];
+    return u.length===1?(u[0]==='phone'?'Malware on your phone':'Malware on your computer'):e.label;
+  }
   if(!e.labels)return e.label;
   const u=[...new Set(setups.filter(s=>s&&custodial(s)).map(s=>s.type))];
   return u.length===1?e.labels[u[0]]:u.length>1?e.multi:e.label;
@@ -913,7 +937,8 @@ function setupEffort(s){
     if(k.backup==='metal'||k.backup==='memory')x+=.25;
     if(k.pass!=='none')x+=.5;
     if(k.ent==='dice'||k.ent==='diceonly')x+=.5;
-    if(k.device==='hw'&&k.brand==='D')x+=.5;
+    if(k.device==='hw')x+=.5; // a signer has to be paid for, waited for and learned; a phone or laptop you already have
+    if(k.device==='hw'&&k.brand==='D')x+=.5; // and one you build yourself is more work again
     if(soft(k)&&k.net==='offline')x+=.25;
   });
   const raw=Math.max(0,own-1)*.75+Math.max(0,places.size-1)*.4+x+(TL(s)?.5:0)+((s.m<s.n||TL(s))&&s.config!=='none'?.25:0);
@@ -1047,10 +1072,12 @@ function backupName(k,capital){
   const n={paper:'your recovery phrase, written on paper'+at(k.bloc)+',',metal:'your recovery phrase, stamped in steel'+at(k.bloc)+',',memory:'the recovery phrase you memorized',cloud:'your recovery phrase backup in the cloud'}[k.backup]||'your backup';
   return capital?n[0].toUpperCase()+n.slice(1):n;
 }
-function runDisaster(setups,id,lastId){
+// "sure" plays the disaster with the worst luck on every roll: whatever it can do to the setup, it does.
+function runDisaster(setups,id,lastId,sure){
   const list=disasterList(setups);let pick=list.find(x=>x[1].id===id);
   if(!pick)do{pick=list[Math.floor(Math.random()*list.length)]}while(list.length>1&&pick[1].id===lastId);
-  const kind=pick[0],e=pick[1],r={k:[0,0,0,0,0].map(()=>Math.random()),c:Math.random(),p:Math.random(),p2:Math.random(),kr:Math.random(),l:Math.random(),d:Math.random(),b:[0,0,0,0,0].map(()=>Math.random()),bk:Math.random(),bc:Math.random()};
+  const R=sure?()=>0:Math.random;
+  const kind=pick[0],e=pick[1],r={k:[0,0,0,0,0].map(R),c:R(),p:R(),p2:R(),kr:R(),l:R(),d:R(),b:[0,0,0,0,0].map(R),bk:R(),bc:R()};
   return{id:e.id,ev:e,icon:e.supply?'🚚':e.brand?'🐞':ICON[e.id],label:elabel(e,setups),kind,res:setups.map(s=>outcome(s,kind,e,r))};
 }
 function scoreOf(s){return risk(s,brandEvents([s]))}
@@ -1225,12 +1252,12 @@ function cands(s,build){
   const ck=(build?'b':'a')+JSON.stringify(s);if(_cc.has(ck))return _cc.get(ck);
   const cur=scoreOf(s),low=[],high=[];
   const ev=(act,why,mod,tag)=>{const t=clone(s);mod(t);const a=scoreOf(t);return{do:act,why,mod,tag,to:a,setup:t,gain:(cur.theft-a.theft)+(cur.loss-a.loss),worse:Math.max(a.theft-cur.theft,a.loss-cur.loss),eff:(a.setup+a.spend)-(cur.setup+cur.spend)}};
-  const L=(act,why,mod,tag)=>low.push(ev(act,why,mod,tag)),H=(act,why,mod)=>{high.push(ev(act,why,mod));return high[high.length-1]};
+  const L=(act,why,mod,tag)=>low.push(ev(act,why,mod,tag)),H=(act,why,mod,tag)=>{high.push(ev(act,why,mod,tag));return high[high.length-1]};
   if(custodial(s)){
     if((s.login||'sms')!=='app')L('Protect your login with an authenticator, passkey or security key.','A stolen password or a SIM swap is no longer enough to get in.',t=>{t.login='app'},'login');
     if(s.wd!=='on')L('Turn on an address allowlist or a waiting period for withdrawals.','A thief inside your account can’t send the coins somewhere new straight away.',t=>{t.wd='on'},'wd');
     const c=H({exchange:'Get your own wallet and move the coins to it.',fintech:'Get your own wallet and move the coins to it.',bank:'Get your own wallet and move the coins to it. If the bank won’t let you withdraw, sell and rebuy elsewhere.',etf:'Sell the shares, buy bitcoin, and hold it in your own wallet.'}[s.type],
-      'The coins become yours: no company can freeze, seize or lose them. How safe they are then is up to you.',t=>{Object.assign(t,newSetup())});
+      'The coins become yours: no company can freeze, seize or lose them. How safe they are then is up to you.',t=>{Object.assign(t,newSetup())},'own');
     c.always=true;c.plain=true;
   }else{
     const PL=['office','bank','relative','friend','home'],one=s.n===1;
@@ -1261,14 +1288,14 @@ function cands(s,build){
     if(!s.tested&&!build)L('Practice a recovery.','It proves your backups work before you need them.',t=>{t.tested=true},'tested');
     if(one&&!isProv(s.keys[0]))H('Go to 2-of-3, with the keys and backups in three different places.','No single break-in, fire, bad device or phishing page is enough.',t=>{
       const B=newKey(),C=newKey();Object.assign(B,{dloc:'office',bloc:'bank',brand:'B'});Object.assign(C,{dloc:'relative',bloc:'relative',brand:'C'});
-      t.keys=[t.keys[0],B,C];t.n=3;t.m=2;t.config='all'});
+      t.keys=[t.keys[0],B,C];t.n=3;t.m=2;t.config='all'},'multi');
     if(s.n>1){
       const own=s.keys.map((k,i)=>i).filter(i=>!isProv(s.keys[i])),P=['home','office','relative','bank','friend'],off=s.m===s.n?1:0;
       const spread=t=>own.forEach((i,j)=>{const k=t.keys[i];if(real(k)&&k.dloc!=='carry')k.dloc=P[j%5];if(k.backup==='paper'||k.backup==='metal')k.bloc=P[(j+off)%Math.min(5,Math.max(own.length,2))]});
       const brands=t=>{let c=0;own.forEach(i=>{const k=t.keys[i];if(k.device==='hw'&&k.brand!=='D')k.brand=['A','B','C'][c++%3]})};
       const file=t=>{if(t.m<t.n||TL(t))t.config='all'};
-      H('Spread the keys out, so each key and its backup sit somewhere different.','No single break-in or fire can take two keys.',spread);
-      H('Use a different brand for each hardware signer.','One brand’s bug or tampered batch can only hit one key.',brands);
+      H('Spread the keys out, so each key and its backup sit somewhere different.','No single break-in or fire can take two keys.',spread,'spread');
+      H('Use a different brand for each hardware signer.','One brand’s bug or tampered batch can only hit one key.',brands,'brands');
       H('Spread the keys out, mix brands and back up the wallet file.','No single break-in, fire or bad device is enough.',t=>{spread(t);brands(t);file(t)});
       if(s.m===s.n&&s.n<5)H(`Add a key, so you need ${s.m} of ${s.n+1}.`,'You can then lose a key and still spend.',t=>{t.keys.push(newKey());t.n++});
     }
@@ -1283,8 +1310,58 @@ function cands(s,build){
     }
   }
   const hi=high.find(x=>x.always)||high.filter(x=>x.gain>=3&&x.worse<=3).sort((a,b)=>b.gain-a.gain||a.eff-b.eff)[0];
-  const out={cur,lo:lo||null,hi:hi||null};
+  const out={cur,lo:lo||null,hi:hi||null,all:[...low,...high]};
   if(_cc.size>400)_cc.clear();_cc.set(ck,out);return out;
+}
+/* "How could I have stopped it?" The answers are written by hand, one kind of disaster at a time, the way someone who
+   knows this would give them: a low-effort change that really solves it ("low"), and where there is one an alternative
+   ("alt") or a bigger step ("big"). Nothing is searched for. A change that merely dodges the disaster in the scores is
+   not a solution: keeping the seed at the office "stops" a burglary at home, and only moves the theft. The scores are
+   used for one thing, to leave out an answer the setup already has or that would not have made this disaster any less
+   likely. A disaster with no entry here has no answer, and the card then doesn't offer one.
+   Returns at most two: the low-effort one, then the alternative or bigger step. */
+function stoppers(s,e,kind,build){
+  const P=t=>kind==='t'?theftP(t,e):lossP(t,e),now=P(s),cust=custodial(s),one=!cust&&s.n===1;
+  const mine=t=>t.keys.filter(k=>!isProv(k)),at=p=>(e.places||[]).includes(p),written=k=>k.backup==='paper'||k.backup==='metal';
+  const dev=k=>k.device==='hw'?'signer':k.device;
+  // keys(): an answer about some of the keys. "pick" says which, "change" what happens to each; with none to change there is no answer.
+  const keys=(how,text,why,pick,change)=>{const was=mine(s).filter(pick);if(!was.length)return null;const t=clone(s);mine(t).filter(pick).forEach(change);return{how,do:typeof text==='function'?text(was):text,why,setup:t}};
+  // whole(): an answer about the setup as a whole. step(): one of the big steps the recommendations already know.
+  const whole=(how,text,why,change,later)=>{const t=clone(s);change(t);return{how,do:text,why,setup:t,later:!!later}};
+  const step=(how,tag)=>{const x=cands(s,build).all.find(c=>c.tag===tag);return x?{how,do:x.do,why:x.why,setup:x.setup}:null};
+  const multi=()=>step('big',one?'multi':'spread');
+  const home=(how,why)=>keys(how,one?'Keep your key on a signing device at home.':'Keep those keys on signing devices at home.',why,k=>real(k)&&k.dloc==='carry',k=>{if(soft(k))k.device='hw';k.dloc='home'});
+  let a=[];
+  if(cust)a=e.login?[whole('low','Protect your login with an authenticator or passkey, and turn on a withdrawal allowlist.','A stolen password or a SIM swap is no longer enough to get in, and a thief who does get in can’t send the coins somewhere new.',t=>{t.login='app';t.wd='on'}),step('big','own')]
+    :[step('low','own')];
+  else if(e.hot)a=[
+    keys('low',ks=>one?`Move your wallet from the ${ks[0].device} to a hardware signer.`:'Move every key on a phone or laptop to a hardware signer.','Malware on a phone or computer can no longer reach the key.',hot,k=>{k.device='hw';k.dloc='home'}),
+    keys('alt',ks=>ks.length===1?`Keep the ${ks[0].device} always offline.`:'Keep those phones and laptops always offline.','Malware can’t reach a device that never connects.',hot,k=>{k.net='offline'})];
+  else if(e.phish)a=[multi()];
+  else if(e.app||e.guess||(e.brand&&!e.supply&&!e.bugloss))a=[
+    keys('low',one?'Make the seed yourself, with dice rolls or coin flips.':'Make those seeds yourself, with dice rolls or coin flips.',e.guess?'Words people pick get guessed. Dice and coins can’t be.':'The seed no longer depends on how good the app’s or device’s random numbers are.',
+      k=>k.ent!=='diceonly'&&(e.app?soft(k):e.guess?k.ent==='words':k.device==='hw'&&k.brand===e.brand),k=>{k.ent='diceonly'}),
+    step('big',one?'multi':'brands')];
+  else if(e.cloud)a=[keys('low',one?'Keep your seed on paper, not in the cloud.':'Keep those seeds on paper, not in the cloud.',kind==='t'?'A hacked account can no longer hand over the seed.':'A locked account can no longer take the backup with it.',k=>k.backup==='cloud',k=>{k.backup='paper';k.bloc='home'})];
+  else if(e.border)a=[home('low','You can’t be made to unlock what you don’t have with you.')];
+  else if(e.id==='t_carry')a=[
+    keys('low',ks=>ks.length===1?`Set a strong PIN on your ${dev(ks[0])}.`:'Set a strong PIN on every device you carry.','A thief who gets the device is very unlikely to guess it.',k=>real(k)&&k.dloc==='carry'&&k.pin!=='strong',k=>{k.pin='strong'}),
+    home('big','What stays at home can’t be taken from your bag or pocket.')];
+  else if(e.id==='l_carry')a=[home('low','Nothing with a key on it leaves the house, so there is nothing to lose while you’re out.')];
+  else if(kind==='t'&&e.places)a=[ // something was taken from a place: a seed that is useless on its own, or keys that are never together
+    keys('low',ks=>ks.every(k=>k.pass!=='none')?'Make your passphrase a strong one.':one?'Add a strong passphrase to your seed, and memorize it.':'Add a strong, memorized passphrase to each key kept there.','A thief who finds the seed still can’t spend without the passphrase.',
+      k=>(k.pass==='none'||k.pstr!=='strong')&&((real(k)&&at(k.dloc))||(written(k)&&at(k.bloc))),k=>{if(k.pass==='none')k.pass='memory';k.pstr='strong'}),
+    multi()];
+  else if(e.fire)a=[
+    keys('low',one?'Switch your seed backup to a metal plate.':'Switch the paper backups kept there to metal plates.','Metal survives fire and water far better than paper.',k=>k.backup==='paper'&&at(k.bloc),k=>{k.backup='metal'}),
+    keys('big',one?'Keep the seed backup somewhere else than the device, like a bank box.':'Keep those seed backups somewhere else than their devices, like a bank box.','One fire can no longer take the device and its backup together.',k=>written(k)&&at(k.bloc)&&real(k)&&k.dloc===k.bloc,k=>{k.bloc='bank'})];
+  else if(e.dev)a=[
+    keys('low',one?'Write your seed down on paper as a backup.':'Write down a paper backup for every key.','If the device dies, the backup brings the key back.',k=>k.backup==='none',k=>{k.backup='paper';k.bloc='home'}),
+    (s.m<s.n||TL(s))&&s.config==='none'?whole('low','Back up the wallet file with every seed backup.','If a key goes missing, you need that file to use the rest.',t=>{t.config='all'}):null,
+    s.tested?null:whole('low','Practise recovering from your backup.','It proves the backup works before you need it.',t=>{t.tested=true},build),
+    multi()];
+  const ok=a.filter(Boolean).filter(x=>P(x.setup)<now),first=ok.find(x=>x.how==='low')||ok[0];
+  return first?[first,ok.find(x=>x!==first&&x.how!=='low')].filter(Boolean):[];
 }
 function potential(s,full){
   const ck=(full?'f':'l')+JSON.stringify(s);if(_pc.has(ck))return _pc.get(ck);
@@ -1610,10 +1687,11 @@ const SetupMap=(()=>{
       const device=out.findIndex(b=>b.steps.length===1&&REG[+b.steps[0].slice(1)]&&['phone','laptop','signer'].includes(REG[+b.steps[0].slice(1)].t));
       if(pin&&device>0)out.splice(device+1,0,beat);else out.push(beat);
     }
-    // the last three are about buttons on the screen, not things on the map; "point" is what the caption's line leads to
+    // the last four are about what is on the screen around the map, not things on it; "point" is what the caption's arrow leads to
     out.push({steps:[],point:'[data-act="simBase"]',text:'🔥 Press “Try a disaster” to see what could go wrong.'});
     out.push({steps:[],point:'[data-act="editBase"]',text:'✏️ You can edit your current setup at any time.'});
     out.push({steps:[],point:'.maptool.next',text:'🚀 When you’re ready, press “Improve it” to build a better one.'});
+    out.push({steps:[],point:'.mapscore',text:'📊 This is how risky your current setup is. Build a new one and you can compare the two.'});
     return out;
   }
 
@@ -1850,9 +1928,22 @@ function screenMap(which){
   // Disasters stack up until the coins are gone or the player resets (see throwDisaster).
   const R=S.run,d=R&&S.mapDis,o=d&&d.res[0],over=R&&R.over;
   const fx=d?fxOf(d,R):null;
-  const result=fx?`<div class="mapresult ${over?'bad':'ok'}" role="status"><b>${d.icon} ${d.label}</b>${tagline(d.id)?`<i class="tagline">${tagline(d.id)}</i>`:''}<span>${o.text}${over&&over.text?' '+over.text:''}</span>
-      <span class="rowb"><span class="st lv-${over?'high':'low'}">${over?over.verdict:'Coins safe'}</span><span class="runs">${over?(R.n?`after surviving ${R.n}`:'at the first disaster'):`Survived ${R.n} in a row`}</span></span>
-      <div class="rowb">${over?'<button class="btn small" data-act="mapDisDone">↺ Reset and try again</button><button class="btn small ghost" data-act="simPick">Pick one</button>':'<button class="btn small" data-act="mapAnother">🎲 Another</button><button class="btn small ghost" data-act="simPick">Pick one</button><button class="btn small ghost" data-act="mapDisDone">↺ Reset</button>'}</div></div>`:'';
+  // The card is a sticker like the map's buttons: the disaster's emoji in a badge on its corner, and the verdict stamped
+  // on. When the coins are gone and there is an answer, it can turn over ("How could I have stopped it?") to show the
+  // hand-written solution for this kind of disaster: a low-effort one, and an alternative or a bigger step (stoppers()
+  // in model.js). The × in its corner closes it and puts the map back as it was, which ends a run of disasters too.
+  // Turning it over is done in the page, without a redraw, so the disaster on the map doesn't play again. On the Build
+  // screen the change can be made there and then.
+  const fixes=fx&&over?stoppers(S[which],d.ev,d.kind,which==='mine'):[];
+  const btn=(act,text,cls)=>`<button type="button" class="mrbtn${cls?' '+cls:''}" data-act="${act}">${text}</button>`;
+  const fixrow=(x,i)=>`<div class="mrdo">${x.how==='big'?'<small>A bigger step</small>':i?'<small>Or</small>':''}<strong>${x.do}</strong><span>${x.why}</span>${which!=='mine'?'':x.later?'<span>You can do that in the next step, “Try using it”.</span>':`<button type="button" class="mrbtn main" data-act="mapStop" data-i="${i}">Do it</button>`}</div>`;
+  const result=fx?`<div class="mapresult ${over?'bad':'ok'}" role="status"><span class="mrbadge" aria-hidden="true">${d.icon}</span><button type="button" class="mrx" data-act="mapDisDone" aria-label="Close" title="Close">×</button>
+      <div class="mrface"><b>${d.label}</b>${tagline(d.id)?`<i class="tagline">${tagline(d.id)}</i>`:''}
+        <div class="mrbody"><span>${o.text}${over&&over.text?' '+over.text:''}${R.n?` <small class="runs">${over?`You had survived ${R.n}.`:`Survived ${R.n} in a row.`}</small>`:''}</span><span class="mrstamp">${over?over.verdict:'Coins safe'}</span></div>
+        ${over?(fixes.length?`<div class="mrbtns">${btn('mapWhy','💡 How could I have stopped it?','main')}</div>`:''):`<div class="mrbtns">${btn('mapAnother','🎲 Another','main')+btn('simPick','Choose one…')}</div>`}</div>
+      ${fixes.length?`<div class="mrfix"><b>💡 How to stop it</b>
+        ${fixes[0].how==='big'?'<div class="mrdo"><span>There is no quick fix for this one.</span></div>':''}${fixes.map(fixrow).join('')}
+        <div class="mrbtns">${btn('mapWhy','← Back')}</div></div>`:''}</div>`:'';
   // The Build screen is the same map showing the new setup. Its chip compares each risk with the current setup's, and
   // while no disaster is playing it offers the model's next recommended changes as cards that apply with one tap.
   const build=which==='mine',was=build?scoreOf(S.base):null;
@@ -2001,7 +2092,7 @@ function howHTML(){
     <div><h3>Control</h3>
       <p>Control is about whose coins they are. In an ETF you hold shares, not bitcoin. On an exchange, in an app or at a bank, a company holds the keys. With a provider you share them. In self custody only your keys can move them. The theft and loss scores don’t capture this, so it’s shown separately.</p></div>
     <div><h3>Setup and spending effort</h3>
-      <p>Setup effort is the one-time work: how many keys, places, backups and secrets you have to arrange. Spending effort is the work every time you send: how many signers you need, where they are and how they connect. Receiving is always easy, because you only share an address.</p></div>
+      <p>Setup effort is the one-time work: how many keys, places, backups and secrets you have to arrange, and any hardware signer you have to buy and learn. Spending effort is the work every time you send: how many signers you need, where they are and how they connect. Receiving is always easy, because you only share an address.</p></div>
     <div><h3>How the scores work</h3>
       <p>We keep a list of things that can go wrong over ten years, each with a rough chance of happening. For each one we work out the chance your setup loses the coins. Added up and put on a 0 to 100 scale, that is your score. Lower is better.</p>
       <p class="hint" style="margin-top:6px">The chances are our estimates, so trust the comparison between setups more than the exact numbers.</p></div>
@@ -2172,23 +2263,34 @@ function paintMapIntro(arriving){
     const c=card.getBoundingClientRect(),t=target.getBoundingClientRect(),k=cap.getBoundingClientRect(),tx=t.left+t.width/2;
     // up to a thing on the map from the top of the caption, or down to a button from the bottom of it
     const below=t.top>=k.bottom,x1=Math.max(k.left+24,Math.min(k.right-24,below?tx:k.left+k.width/2))-c.left,y1=(below?k.bottom:k.top)-c.top;
-    const x2=tx-c.left,y2=(below?t.top-5:Math.min(t.top+t.height/2,k.top-6))-c.top;
-    line.innerHTML=`<line pathLength="1" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><circle cx="${x2}" cy="${y2}" r="7"/>`;
+    const x2=(below?Math.max(t.left+24,Math.min(t.right-24,x1+c.left)):tx)-c.left, // a wide thing off to one side is met at its near end
+      y2=(below?t.top-7:Math.min(t.top+t.height/2,k.top-6))-c.top;
+    // the landing's pen arrow: it leaves the caption straight up or down and bends over to the thing
+    line.innerHTML=`<path pathLength="1" d="${penArrow([x1,y1],[x1,y1+(y2-y1)*.6],[x2,y2])}"/>`;
   },b.point||!arriving?80:520);
   // A click continues, unless it is on something that has already arrived: a thing opens its card, a button does its job.
   // The arrow on the left of the caption goes back one step.
   if(!card.dataset.intro){card.dataset.intro=1;card.addEventListener('click',ev=>{
     if(ev.target.closest('.mapback'))return prevMapBeat();
-    if(!ev.target.closest('.maptap,.maptool,.mapresult'))nextMapBeat();
+    if(S.mapIntro!=='run')return; // the introduction is over, but this card has not been redrawn since
+    const used=ev.target.closest('.maptap,.maptool,.mapscore');
+    if(used){ // remember whether this is what the caption on screen is about; see mapBeatUsed
+      const x=SetupMap.beats()[mapBeat],own=[...x.steps.map(s=>`[data-step="${s}"]`),x.point].filter(Boolean).join(',');
+      mapBeatUsed=used.matches(own)||used.querySelector(own)?mapBeat:-1;
+    }else if(!ev.target.closest('.mapresult'))nextMapBeat();
   })}
 }
 function prevMapBeat(){
   if(S.mapIntro!=='run'||mapBeat<1)return;
   mapBeat--;render(); // redrawing clears whatever the later step had brought in; render() then repaints up to this step
 }
-// Things and buttons can be used as soon as their caption has introduced them. One rule for all of them: closing the
-// dialog that opened moves the introduction on, the same as a click on the map would.
-for(const id of ['sim','edit','mapitem'])$(id).addEventListener('close',()=>{if(S.mapIntro==='run'&&S.step===1)nextMapBeat()});
+// Things and buttons can be used as soon as their caption has introduced them. One rule for all of them: being done
+// with the thing the caption is about (closing its dialog, resetting its disaster) moves the introduction on, the same
+// as a click on the map would. Going back to something introduced earlier does not: changing who you are for fun while
+// a later caption is showing leaves that caption where it is. mapBeatUsed is the step whose own thing was last used.
+let mapBeatUsed=-1;
+const usedMapBeat=()=>{if(S.mapIntro==='run'&&S.step===1&&mapBeatUsed===mapBeat)nextMapBeat()};
+for(const id of ['sim','edit','mapitem','scores'])$(id).addEventListener('close',usedMapBeat);
 function resize(st,n){
   n=Math.max(1,Math.min(5,n));
   while(st.keys.length<n)st.keys.push(newKey());
@@ -2272,11 +2374,16 @@ document.addEventListener('click',ev=>{
   if(a==='simBase'||a==='mapAnother')throwDisaster(null);
   if(a==='simPick'){S.simBase=true;S.simList=true}
   if(a==='simClose')S.simBase=false;
-  if(a==='mapDisDone'){S.mapDis=S.run=null;render();if(S.mapIntro==='run')nextMapBeat();return} // Reset: the map as it was. During the onboarding it also moves on.
+  if(a==='mapDisDone'){S.mapDis=S.run=null;render();usedMapBeat();return} // Reset: the map as it was. During the onboarding it also moves on, if the caption was about disasters.
   if(a==='help'){S.helpOpen=!S.helpOpen;S.helpMore=false}
   if(a==='helpMore')S.helpMore=!S.helpMore;
   if(a==='scores'){S.scoresOpen=!S.scoresOpen;S.scoresMore=false}
   if(a==='scoresMore'){S.scoresMore=!S.scoresMore;S.how=S.step===2?'mine':'base'} // the explanation opens further down the same dialog
+  if(a==='mapWhy'){b.closest('.mapresult').classList.toggle('why');return} // turn the result card over; no redraw, so the disaster doesn't replay
+  if(a==='mapStop'){ // "Do it" on the turned-over card, on the Build map: make the change that would have stopped this disaster
+    const t=S.mapDis&&stoppers(S.mine,S.mapDis.ev,S.mapDis.kind,true)[+b.dataset.i];
+    if(t){S.mine=clone(t.setup);S.picked.mine=true;S.w.report=null;changed('mine');S.mapDis=S.run=null}
+  }
   if(a==='mapApply'){ // a recommendation card on the Build map: apply it, and any run of disasters starts afresh
     const t=bestChanges(S.mine,true)[b.dataset.k];
     if(t){S.mine=clone(t.setup);S.picked.mine=true;S.w.report=null;changed('mine');S.mapDis=S.run=null}
@@ -2327,7 +2434,7 @@ function changed(which){if(which==='base')S.dis=null}
 // never advice. Brand and supply-chain events have an id per brand, so those match on the start of the id.
 const TAGLINE={
   t_home:'They even took the kitchen sink.',t_office:'The cleaner found something interesting.',t_rel:'“I was just looking for the Wi-Fi password.”',t_friend:'“I was just looking for the Wi-Fi password.”',
-  t_bank:'An inside job.',t_carry:'Yoink.',t_hot:'You downloaded more RAM.',t_cloud:'hunter2 was not a strong password.',
+  t_bank:'An inside job.',t_carry:'Yoink.',t_hot:'You installed a fake wallet app.',t_cloud:'They said it would show up as ******* if you typed it.',
   t_border:'Papers, please.',t_phish:'Your wallet urgently needs to be “validated”.',t_lapse:'You had one job.',
   t_guess:'correct horse battery staple',t_app:'It’s not a bug, it’s a feature.',t_brand:'It’s not a bug, it’s a feature.',t_supply:'It fell off the back of a truck.',
   t_prov:'“We take your security very seriously.”',t_provapp:'Automatic updates: what could go wrong?',t_prov2:'“We take your security very seriously.”',
@@ -2348,11 +2455,16 @@ function throwDisaster(id){
   if(!S.run||S.run.over)S.run={live:clone(mapSetup()),fates:{},now:{},stolen:[],n:0,over:null};
   const R=S.run,L=R.live;
   Object.assign(R.fates,R.now);R.now={}; // the previous disaster's damage is now part of the scenery
+  // The very first one is always malware, so everyone (and every demo) opens on the same story, and on the one that is
+  // the main reason for a cold wallet: a key on an online phone or laptop can be taken from afar. Only if the setup has
+  // such a key; otherwise malware would be a non-event and the first one is random too.
+  const first=!S.thrown&&!custodial(L)&&allKeys(L).some(hot);S.thrown=true;
+  const sure=!id&&first;if(sure)id='t_hot'; // and it always gets through: a first disaster that misses would teach nothing
   if(!id){ // random: one that can still reach something, and not the same one twice running
     const all=disasterList([L]).map(x=>x[1]),can=all.filter(e=>touches(L,e)),from=(can.length?can:all).filter(e=>!S.dis||e.id!==S.dis.id),pool=from.length?from:all;
     id=pool[Math.floor(Math.random()*pool.length)].id;
   }
-  const d=S.dis=S.mapDis=runDisaster([L],id),o=d.res[0];
+  const d=S.dis=S.mapDis=runDisaster([L],id,null,sure),o=d.res[0];
   S.simBase=false; // the dialog is only the list to pick from
   SetupMap.svg(mapSetup(),fxOf(d,R)); // a dry run of the drawing, to learn what this disaster does to each thing
   for(const t of SetupMap.things()){
@@ -2513,9 +2625,15 @@ const NOTES=[['You',452,226,-6,[486,214],[516,202],[540,226]],
   ['The bank',352,424,3,[332,434],[312,440],[292,456],1],
   ['A friend’s place',1010,462,-3,[1052,474],[1078,478],[1098,498],1],
   ['The exchange',952,356,4,[914,368],[890,366],[872,384],1]];
+// penArrow() is the one arrow used for pointing at things, here and in the map's introduction: a curve from a to c that
+// bends toward b, with an open head at c. A very short arrow gets a smaller head.
+function penArrow(a,b,c){
+  const n=v=>(+v).toFixed(1),ang=Math.atan2(c[1]-b[1],c[0]-b[0]),h=Math.min(13,Math.hypot(c[0]-a[0],c[1]-a[1])*.45);
+  const tip=d=>`${n(c[0]-h*Math.cos(ang+d))} ${n(c[1]-h*Math.sin(ang+d))}`;
+  return `M${n(a[0])} ${n(a[1])}Q${n(b[0])} ${n(b[1])} ${n(c[0])} ${n(c[1])}M${tip(.5)}L${n(c[0])} ${n(c[1])}L${tip(-.5)}`;
+}
 $('sc-notes').innerHTML=NOTES.map(([t,x,y,r,a,b,c,wide])=>{
-  const ang=Math.atan2(c[1]-b[1],c[0]-b[0]),tip=d=>`${(c[0]-13*Math.cos(ang+d)).toFixed(1)} ${(c[1]-13*Math.sin(ang+d)).toFixed(1)}`;
-  return `<g class="sc-note"${wide?' data-wide="1"':''}><path pathLength="1" d="M${a[0]} ${a[1]}Q${b[0]} ${b[1]} ${c[0]} ${c[1]}M${tip(.5)}L${c[0]} ${c[1]}L${tip(-.5)}"/><text x="${x}" y="${y}" text-anchor="middle" transform="rotate(${r} ${x} ${y})">${t}</text></g>`}).join('');
+  return `<g class="sc-note"${wide?' data-wide="1"':''}><path pathLength="1" d="${penArrow(a,b,c)}"/><text x="${x}" y="${y}" text-anchor="middle" transform="rotate(${r} ${x} ${y})">${t}</text></g>`}).join('');
 let noteTimer=0,noteI=-1;
 function nextNote(){
   const c=document.body.classList,all=[...document.querySelectorAll('#scene .sc-note')];

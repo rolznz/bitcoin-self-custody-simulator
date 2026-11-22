@@ -297,7 +297,9 @@ body.mapscreen::before{background:#7EC8FF}
 @keyframes chgdot{from{background:var(--a);transform:scale(1)}50%{transform:scale(1.9)}to{background:var(--b);transform:scale(1)}}
 @keyframes chgglow{0%,100%{box-shadow:0 4px 0 #1B1840}12%,70%{box-shadow:0 4px 0 #1B1840,0 0 0 7px #FFD84D}}
 @media (prefers-reduced-motion:reduce){.chg .swap em,.chg i,.mapscore.changing{animation:none}}
-.mapintro .mapscore{opacity:0;pointer-events:none}.mapfresh .mapscore{animation:mapin .5s both}
+.mapintro .mapscore{opacity:0;pointer-events:none}.mapfresh .mapscore:not(.in){animation:mapin .5s both}
+.mapintro .mapscore.in{opacity:1;pointer-events:auto} /* the introduction's last caption brings it in. It fades in where it stands, so the caption's arrow can be aimed at it straight away */
+.mapintro .mapscore{transition:opacity .3s}
 @media (max-width:760px){
   .mapcard{min-height:520px}
   .map{inset:4px 0 132px;height:calc(100% - 136px)}
@@ -335,11 +337,7 @@ body.mapscreen::before{background:#7EC8FF}
 .mapintro .maptool.in{pointer-events:auto} /* once its caption has introduced it, a button works */
 body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.mapresult) .mapcap,.mapcard:has(.mapresult) .mapline{visibility:hidden} /* a dialog, or a disaster playing on the map, has the player's full attention */
 .mapline{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-.mapline line{stroke:#fff;stroke-width:5;stroke-linecap:round;opacity:.6;stroke-dasharray:1;animation:mapline .25s ease-out both}
-.mapline circle{fill:#fff;opacity:.6;animation:mapcap0 .2s .2s both}
-@keyframes mapline{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
-@keyframes mapcap0{from{opacity:0}to{opacity:.6}}
-.mapintro .mapstep.in{opacity:1;animation:mapin .5s both}
+.mapline path{animation:sc-draw .4s ease-out both} /* the pen arrow itself is styled with the landing's, under .sc-notes */.mapintro .mapstep.in{opacity:1;animation:mapin .5s both}
 .mapintro .mapstep.in.was{animation:none} /* already there before a redraw: no second entrance */
 .mapfresh .maptool{animation:mapin .5s both}.mapfresh .maptool+.maptool{animation-delay:.12s}
 .mapcap{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);max-width:calc(100% - 24px);background:#1B1840;color:#fff;font-family:var(--display);font-weight:700;font-size:1.15rem;padding:10px 18px;border-radius:16px;border:0;text-align:center;opacity:0;cursor:pointer}
@@ -364,6 +362,7 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
   .mapcard{min-height:560px}
   .mapcap{bottom:14px;font-size:1rem;width:calc(100% - 24px)}
   .mapcap.up{bottom:158px}
+  .mapcard:has(.mapscore.in) .mapcap.up{bottom:204px} /* the risk chip sits above the buttons here, so its caption goes above the chip */
 }
 @keyframes mapin{0%{opacity:0;transform:translateY(-34px) scale(.6)}60%{opacity:1;transform:translateY(3px) scale(1.06)}100%{opacity:1;transform:none}}
 @keyframes mapcap{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%)}}
@@ -417,8 +416,6 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
 .fate-gone.was{filter:grayscale(1) brightness(.3);opacity:.45;transform:scale(.82) rotate(-6deg)}
 .fate-taken.was{opacity:.12;transform:translate(34px,-10px) scale(.45)}
 .fate-hacked.was{filter:saturate(.5) brightness(.85)}
-.mapresult .runs{font-weight:700;font-size:.9rem}
-.mapresult .tagline{color:#5A5688;font-size:.9rem;margin-top:-6px}
 /* which setup this map is, and (on the Build screen) the next recommended changes as tappable cards */
 .maplabel{position:absolute;left:14px;top:10px;background:#1B1840;color:#fff;font-family:var(--display);font-weight:700;font-size:.95rem;padding:6px 14px;border-radius:14px}
 .mapintro .maplabel{opacity:0}
@@ -443,10 +440,33 @@ button.mapcardtip:active{transform:translateY(3px);box-shadow:0 1px 0 #1B1840}
   .mapcard.lift{min-height:680px}
   .mapcard.lift .map{inset:44px 0 356px;height:calc(100% - 400px)}
 }
-.mapresult{position:absolute;right:14px;bottom:80px;width:min(360px,calc(100% - 28px));background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:18px;box-shadow:0 5px 0 #1B1840;padding:14px 16px;display:grid;gap:8px;animation:fxbar .35s 2.1s both} /* bottom left, over open sea, clear of the figure */
-.mapresult b{font-family:var(--display);font-size:1.1rem}
-.mapresult .st{justify-self:start}
-.mapresult.bad{background:#FDE7E7}.mapresult.ok{background:#E3F6EA}
+/* The result of a disaster: a sticker like the map's buttons. The disaster's emoji is a badge on the corner, the verdict
+   is stamped on, and when the coins are gone the card turns over to show how it could have been stopped (.why). */
+.mapresult{position:absolute;right:14px;bottom:80px;width:min(380px,calc(100% - 28px));background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:22px;box-shadow:0 6px 0 #1B1840;padding:16px 16px 14px;animation:fxbar .45s 2.1s cubic-bezier(.3,1.5,.5,1) both}
+.mrbadge{position:absolute;left:-16px;top:-22px;width:58px;height:58px;border-radius:50%;border:3px solid #1B1840;box-shadow:0 4px 0 #1B1840;display:grid;place-items:center;font-size:1.9rem;line-height:1;transform:rotate(-8deg)}
+.mapresult.bad .mrbadge{background:#FFB3A7}.mapresult.ok .mrbadge{background:#A9EBC0}
+.mrx{position:absolute;right:10px;top:10px;width:34px;height:34px;border-radius:50%;border:2.5px solid #1B1840;background:#fff;color:#1B1840;box-shadow:0 3px 0 #1B1840;font:700 1.3rem/1 var(--body);display:grid;place-items:center;padding:0 0 2px;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.mrx:hover{transform:translateY(-1px);box-shadow:0 4px 0 #1B1840}.mrx:active{transform:translateY(3px);box-shadow:0 0 0 #1B1840}
+.mrface>b,.mrface>.tagline,.mrfix>b{padding-right:36px} /* clear of the × */
+.mrface,.mrfix{display:grid;gap:8px}
+.mrfix,.mapresult.why .mrface{display:none}.mapresult.why .mrfix{display:grid;animation:mrturn .3s cubic-bezier(.3,1.5,.5,1) both}
+.mapresult b{font-family:var(--display);font-size:1.25rem;line-height:1.1;padding-left:38px}
+.mapresult .tagline{color:#5A5688;font-size:.9rem;margin-top:-4px;padding-left:38px}
+.mrbody{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:2px}
+.mrbody>span:first-child{line-height:1.35}
+.mapresult .runs{display:block;color:#5A5688;font-weight:700;font-size:.84rem;margin-top:2px}
+.mrstamp{flex:none;font-family:var(--display);font-weight:800;font-size:1.02rem;line-height:1;text-transform:uppercase;letter-spacing:.06em;text-align:center;max-width:6.5em;padding:7px 9px;border:3px solid;border-radius:9px;transform:rotate(-9deg);animation:mrstamp .3s 2.6s cubic-bezier(.2,1.2,.4,1) both}
+.mapresult.bad .mrstamp{color:#D7263D;background:#FFF1F1}.mapresult.ok .mrstamp{color:#12924F;background:#EEFBF3}
+.mrbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.mrbtn{border:2.5px solid #1B1840;border-radius:99px;background:#fff;color:#1B1840;box-shadow:0 3px 0 #1B1840;font:700 .9rem/1 var(--body);padding:8px 13px;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.mrbtn.main{background:#FFD84D}
+.mrbtn:hover{transform:translateY(-1px);box-shadow:0 4px 0 #1B1840}.mrbtn:active{transform:translateY(3px);box-shadow:0 0 0 #1B1840}
+.mrdo{display:grid;gap:3px;justify-items:start}
+.mrdo strong{font-size:1rem;line-height:1.25}.mrdo span{color:#5A5688;font-size:.88rem;line-height:1.3}
+.mrdo small{font-weight:800;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#5A5688;margin-top:4px}
+.mrdo .mrbtn{margin-top:4px}
+@keyframes mrstamp{from{opacity:0;transform:rotate(-20deg) scale(2.6)}to{opacity:1;transform:rotate(-9deg) scale(1)}}
+@keyframes mrturn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
 @media (max-width:760px){.mapresult{bottom:196px;left:10px;right:10px;width:auto}}
 @keyframes fxbar{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes fxdrop{from{transform:translateY(-340px);opacity:0}30%{opacity:1}to{transform:none;opacity:1}}
@@ -465,7 +485,7 @@ button.mapcardtip:active{transform:translateY(3px);box-shadow:0 1px 0 #1B1840}
 /* reduced motion: no movement, just the end state (what was hit, marked, and the result) */
 @media (prefers-reduced-motion:reduce){
   .fxdrop,.fxthief,.fxbolt,.fxsmoke,.fxpoof{display:none}
-  .fxfire,.fxflame,.fxlock,.fxtime,.fxhand,.fxmark,.mapresult,.fate-gone,.fate-taken,.fate-safe,.fate-hacked{animation:none!important;opacity:1}
+  .fxfire,.fxflame,.fxlock,.fxtime,.fxhand,.fxmark,.mapresult,.mrstamp,.fate-gone,.fate-taken,.fate-safe,.fate-hacked{animation:none!important;opacity:1}
   .fate-gone{filter:grayscale(1) brightness(.3);opacity:.45}.fate-taken{opacity:.15}.fate-hacked{filter:saturate(.5) brightness(.85)}
 }
 /* ---------- landing scene ---------- */
@@ -519,7 +539,7 @@ body.landing{overflow-x:clip;background:linear-gradient(var(--sky),var(--sky2) 6
 #scene .sc-notes{z-index:4}
 .sc-note{opacity:0;transition:opacity .3s}.sc-note.on{opacity:1}
 .intro .sc-note,.leaving .sc-note{opacity:0}
-.sc-notes path{fill:none;stroke:#F47B20;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:0}
+.sc-notes path,.mapline path{fill:none;stroke:#F47B20;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:0}
 .sc-notes text{font:800 25px var(--display);fill:#1B1840;stroke:#fff;stroke-width:7px;stroke-linejoin:round;paint-order:stroke}
 /* the speech bubble grows up and to the right from beside the driver's head */
 #sc-say{position:absolute;z-index:4;left:calc(50% + var(--s,1)*46px);bottom:calc(var(--s,1)*404px);max-width:min(250px,calc(50vw - var(--s,1)*46px - 10px));padding:9px 13px;background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:18px;box-shadow:3px 4px 0 #1B1840;font:700 .9rem/1.25 var(--body);transform-origin:0 100%}

@@ -60,6 +60,6 @@ As little as possible: the headline with a pen-drawn double underline under "tes
 
 Once the car has landed, short notes appear over the scene one at a time, in turn, so the screen never fills up with labels.
 
-- Pen arrows name what is there: "You", "Your home", "The bank", "A friend's place", "The exchange". They are the same orange stroke as the underline and draw themselves in. The list, with each one's position, is `NOTES` in `src/ui.js`.
+- Pen arrows name what is there: "You", "Your home", "The bank", "A friend's place", "The exchange". They are the same orange stroke as the underline and draw themselves in. The list, with each one's position, is `NOTES` in `src/ui.js`. The map's introduction points at things with the same arrow: both are drawn by `penArrow()` and share one style rule.
 - Then a speech bubble from the driver. It shows that character's `quote`, so it is always something the person really said. Never write a line for the bubble yourself.
 - On a narrow window the buildings at the sides are out of view, so only "You" and the speech bubble are shown.

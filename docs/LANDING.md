@@ -62,4 +62,4 @@ Once the car has landed, short notes appear over the scene one at a time, in tur
 
 - Pen arrows name what is there: "You", "Your home", "The bank", "A friend's place", "The exchange". They are the same orange stroke as the underline and draw themselves in. The list, with each one's position, is `NOTES` in `src/ui.js`. The map's introduction points at things with the same arrow: both are drawn by `penArrow()` and share one style rule.
 - Then a speech bubble from the driver. It shows that character's `quote`, so it is always something the person really said. Never write a line for the bubble yourself.
-- On a narrow window the buildings at the sides are out of view, so only "You" and the speech bubble are shown.
+- A narrow window (a phone held upright) shows only the middle of the drawing. There the scene is drawn smaller, so that at least 780 of its 1200 width is in view, and home, the bank and the friend's place move in to the roadside (`#scene.narrow` in `src/styles.css`). Their pen arrows are placed for the wide layout, so on a narrow window only "You" and the speech bubble are shown.

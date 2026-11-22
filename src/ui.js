@@ -411,28 +411,45 @@ function render(){
 }
 function go(to){
   if(to>1&&!S.mine)S.mine=clone(S.base);
-  const firstMap=to===1&&!mapIntroSeen&&!calm;
-  if(firstMap){mapIntroSeen=true;S.mapIntro='run';mapBeat=-1}
+  // The map's introduction plays every time you arrive from the first screen, not only the first time: going back to Start
+  // is starting again, so everything that happens the first time happens again, the fixed first disaster included.
+  const firstMap=to===1&&!calm&&(S.step===0||!mapIntroSeen);
+  if(firstMap){mapIntroSeen=true;S.mapIntro='run';mapBeat=-1;S.thrown=false}
   if(to===0&&S.step!==0)startIntro(); // coming back to the first screen replays the car's entrance
   if(to!==1&&S.mapIntro==='run')S.mapIntro='done'; // leaving the map (by "Improve it", say) ends its introduction
-  if(to!==1&&to!==2)setMapView(1,0,0); // the map keeps its zoom between Today and Build, and loses it anywhere else
+  const wasMap=S.step===1||S.step===2; // the map keeps its zoom between Today and Build, and starts afresh when you come to it from anywhere else
   buildSeen=null;S.chipAnim=null; // arriving on the Build screen never animates the scores; only changes made there do
   S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.helpOpen=false;S.mapDis=S.run=null;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
+  if((to===1||to===2)&&!wasMap)homeMapView();
   if(firstMap)runMapIntro();
 }
 /* ---------- map: zoom and drag ---------- */
 // Mouse: wheel to zoom, drag to move. Touch: drag to move, pinch to zoom. The view is kept as three CSS variables on
 // <body> rather than on the map, because the map is redrawn on every change of state and must come back as it was.
-// Nothing moves while the map's introduction is playing: there a click anywhere means "continue".
-const MV={k:1,x:0,y:0};
-function setMapView(k,x,y){
+// It works during the map's introduction too. There a click still means "continue", but a drag or a pinch is not a
+// click, and the caption's arrow is taken away while the map moves and drawn again once it has stopped.
+// "home" is the view the map starts in and "Reset view" returns to (see homeMapView).
+const MV={k:1,x:0,y:0,home:true};
+let mapArrowTimer=0;
+function setMapView(k,x,y,home){
   const m=document.querySelector('.map'),r=m?m.getBoundingClientRect():{width:800,height:560},w=r.width/MV.k,h=r.height/MV.k;
   k=Math.min(4,Math.max(1,k));
   const lx=w*((k-1)/2+.3),ly=h*((k-1)/2+.3); // it can be dragged about a third of the way off, never out of sight
-  Object.assign(MV,{k,x:Math.min(lx,Math.max(-lx,x)),y:Math.min(ly,Math.max(-ly,y))});
+  Object.assign(MV,{k,x:Math.min(lx,Math.max(-lx,x)),y:Math.min(ly,Math.max(-ly,y)),home:!!home});
   const st=document.body.style;st.setProperty('--mk',MV.k);st.setProperty('--mx',MV.x+'px');st.setProperty('--my',MV.y+'px');
-  document.body.classList.toggle('mapmoved',MV.k!==1||MV.x!==0||MV.y!==0);
+  document.body.classList.toggle('mapmoved',!MV.home);
+  if(S.mapIntro==='run'){const l=document.querySelector('.mapline');if(l)l.innerHTML='';clearTimeout(mapArrowTimer);mapArrowTimer=setTimeout(()=>aimMapArrow(0),250)}
 }
+// The whole island on a wide screen. A phone held upright is too narrow to show all of it at a size you can read, so
+// there the map starts closer in, on your home, you and most of the bank; the rest is a drag or a pinch away.
+const NEAR={k:1.78,x:286,y:360}; // how far in, and the point of the drawing (800 by 560) that sits in the middle
+function homeMapView(){
+  const m=document.querySelector('.map');
+  if(!m||!matchMedia('(max-width:760px)').matches)return setMapView(1,0,0,true);
+  const r=m.getBoundingClientRect(),u=Math.min(r.width/MV.k/800,r.height/MV.k/560); // how big one unit of the drawing is on screen, unzoomed
+  setMapView(NEAR.k,(400-NEAR.x)*u*NEAR.k,(280-NEAR.y)*u*NEAR.k,true);
+}
+addEventListener('resize',()=>{if(MV.home&&(S.step===1||S.step===2))homeMapView()});
 // Zoom to k keeping the point (px,py) of the window where it is. The map scales about its own middle.
 function zoomMapAt(px,py,k){
   const m=document.querySelector('.map');if(!m)return;
@@ -442,7 +459,7 @@ function zoomMapAt(px,py,k){
 }
 {
   const pts=new Map();let moved=false,pinch=0;
-  const onMap=ev=>{const t=ev.target;return t.closest&&t.closest('.mapcard')&&!t.closest('.mapintro,button,.mapcards,.mapresult,.mapscore,.mapcap')};
+  const onMap=ev=>{const t=ev.target;return t.closest&&t.closest('.mapcard')&&!t.closest('button,.mapcards,.mapresult,.mapscore,.mapcap')};
   document.addEventListener('wheel',ev=>{
     if(!onMap(ev))return;ev.preventDefault();
     zoomMapAt(ev.clientX,ev.clientY,MV.k*Math.exp(-ev.deltaY*(ev.ctrlKey?.01:.0015)));
@@ -471,7 +488,7 @@ function zoomMapAt(px,py,k){
   addEventListener('pointerup',up);addEventListener('pointercancel',up);
   // the click that ends a drag must not open whatever was under the pointer
   addEventListener('click',ev=>{if(moved){moved=false;ev.stopPropagation();ev.preventDefault()}},true);
-  document.addEventListener('click',ev=>{if(ev.target.closest('.mapreset'))setMapView(1,0,0)});
+  document.addEventListener('click',ev=>{if(ev.target.closest('.mapreset'))homeMapView()});
 }
 /* ---------- map introduction ---------- */
 // The first time the map is shown it builds itself: you, then each thing you own, with a caption for each.
@@ -496,19 +513,7 @@ function paintMapIntro(arriving){
   cap.innerHTML=`${mapBeat?'<button type="button" class="mapback" aria-label="Back">◂</button>':''}<span>${esc(b.text)}</span><button type="button" class="mapnext" aria-label="Continue">▸</button>`;
   cap.classList.toggle('up',!!b.point); // a caption about a button sits above the buttons, so its line can slant down to one
   cap.classList.remove('in');void cap.offsetWidth;cap.classList.add('in');
-  // a faint line from the caption to what it is talking about, drawn once that thing has landed
-  const target=card.querySelector(b.point||`[data-step="${b.steps[0]}"]`);
-  line.innerHTML='';
-  if(target)setTimeout(()=>{
-    if(mapBeat!==at||!line.isConnected)return;
-    const c=card.getBoundingClientRect(),t=target.getBoundingClientRect(),k=cap.getBoundingClientRect(),tx=t.left+t.width/2;
-    // up to a thing on the map from the top of the caption, or down to a button from the bottom of it
-    const below=t.top>=k.bottom,x1=Math.max(k.left+24,Math.min(k.right-24,below?tx:k.left+k.width/2))-c.left,y1=(below?k.bottom:k.top)-c.top;
-    const x2=(below?Math.max(t.left+24,Math.min(t.right-24,x1+c.left)):tx)-c.left, // a wide thing off to one side is met at its near end
-      y2=(below?t.top-7:Math.min(t.top+t.height/2,k.top-6))-c.top;
-    // the landing's pen arrow: it leaves the caption straight up or down and bends over to the thing
-    line.innerHTML=`<path pathLength="1" d="${penArrow([x1,y1],[x1,y1+(y2-y1)*.6],[x2,y2])}"/>`;
-  },b.point||!arriving?80:520);
+  aimMapArrow(b.point||!arriving?80:520); // drawn once the thing it points at has landed
   // A click continues, unless it is on something that has already arrived: a thing opens its card, a button does its job.
   // The arrow on the left of the caption goes back one step.
   if(!card.dataset.intro){card.dataset.intro=1;card.addEventListener('click',ev=>{
@@ -520,6 +525,31 @@ function paintMapIntro(arriving){
       mapBeatUsed=used.matches(own)||used.querySelector(own)?mapBeat:-1;
     }else if(!ev.target.closest('.mapresult'))nextMapBeat();
   })}
+}
+// The pen arrow from the caption to what it is talking about. Drawn afresh for each caption, and again whenever the map
+// has been dragged or zoomed, since the thing is then somewhere else on the screen.
+function aimMapArrow(delay){
+  const card=document.querySelector('.mapcard.mapintro'),at=mapBeat,b=SetupMap.beats()[at];if(!card||!b)return;
+  const cap=card.querySelector('.mapcap'),line=card.querySelector('.mapline'),target=card.querySelector(b.point||`[data-step="${b.steps[0]}"]`);
+  line.innerHTML='';
+  if(target)setTimeout(()=>{
+    if(mapBeat!==at||!line.isConnected)return;
+    const c=card.getBoundingClientRect(),t=target.getBoundingClientRect(),k=cap.getBoundingClientRect(),tx=t.left+t.width/2;
+    // up to a thing on the map from the top of the caption, or down to a button from the bottom of it
+    const below=t.top>=k.bottom,y1=(below?k.bottom:k.top)-c.top;let x1=Math.max(k.left+24,Math.min(k.right-24,below?tx:k.left+k.width/2));
+    // on its way down to a button the arrow must not run across another one (on a phone the buttons are in two rows):
+    // if it would, it leaves the caption from wherever along its edge the way down is clear
+    if(below){
+      const inWay=[...card.querySelectorAll('.maptool.in,.mapscore.in')].filter(e=>e!==target).map(e=>e.getBoundingClientRect()).filter(o=>o.top<t.top&&o.bottom>k.bottom);
+      const clear=x=>!inWay.some(o=>x>o.left-10&&x<o.right+10);
+      if(!clear(x1))for(let d=12;d<k.width;d+=12){const x=[x1+d,x1-d].find(x=>x>=k.left+24&&x<=k.right-24&&x>=t.left+24&&x<=t.right-24&&clear(x));if(x!=null){x1=x;break}}
+    }
+    x1-=c.left;
+    const x2=(below?Math.max(t.left+24,Math.min(t.right-24,x1+c.left)):tx)-c.left, // a wide thing off to one side is met at its near end
+      y2=(below?t.top-7:Math.min(t.top+t.height/2,k.top-6))-c.top;
+    // the landing's pen arrow: it leaves the caption straight up or down and bends over to the thing
+    line.innerHTML=penArrow([x1,y1],[x1,y1+(y2-y1)*.6],[x2,y2]);
+  },delay);
 }
 function prevMapBeat(){
   if(S.mapIntro!=='run'||mapBeat<1)return;
@@ -829,7 +859,7 @@ function seatDriver(){
 }
 // One unit of the drawing in pixels, so the car layer can match the painted scene at any window size.
 // "narrow" means the window shows too little of the drawing's width for the buildings at its sides to be in view.
-new ResizeObserver(([e])=>{const r=e.contentRect;if(!r.width)return;const s=Math.max(r.width/1200,r.height/450);e.target.style.setProperty('--s',s);e.target.classList.toggle('narrow',r.width/s<1100)}).observe($('scene'));
+new ResizeObserver(([e])=>{const r=e.contentRect;if(!r.width)return;const s=Math.max(r.width/1200,Math.min(r.height/450,r.width/780)); /* fill the height, but never so far in that less than 780 of the drawing's 1200 width shows: that is what it takes to see buildings on a phone */e.target.style.setProperty('--s',s);e.target.classList.toggle('narrow',r.width/s<1100)}).observe($('scene'));
 /* ---------- landing entrance ---------- */
 // The car jumps in once per page load. A click or tap skips to the end. Skipped entirely under reduced motion.
 const calm=matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -861,7 +891,9 @@ $('car3d').addEventListener('click',()=>{
 /* ---------- landing notes ---------- */
 // Pen arrows that name what is in the scene, and a speech bubble with something the driver really said. One shows at a
 // time, in turn, once the car has landed. [text, x, y, tilt, arrow from, bend, to, needs a wide window]
-const NOTES=[['You',452,226,-6,[486,214],[516,202],[540,226]],
+// "You" stands to the right of the driver: the headline and the lines under it are on the left, and on a short window
+// the driver's head comes up level with them.
+const NOTES=[['You',748,226,6,[714,214],[684,202],[660,226]],
   ['Your home',214,446,-4,[196,458],[176,476],[150,484],1],
   ['The bank',352,424,3,[332,434],[312,440],[292,456],1],
   ['A friend’s place',1010,462,-3,[1052,474],[1078,478],[1098,498],1],
@@ -871,10 +903,13 @@ const NOTES=[['You',452,226,-6,[486,214],[516,202],[540,226]],
 function penArrow(a,b,c){
   const n=v=>(+v).toFixed(1),ang=Math.atan2(c[1]-b[1],c[0]-b[0]),h=Math.min(13,Math.hypot(c[0]-a[0],c[1]-a[1])*.45);
   const tip=d=>`${n(c[0]-h*Math.cos(ang+d))} ${n(c[1]-h*Math.sin(ang+d))}`;
-  return `M${n(a[0])} ${n(a[1])}Q${n(b[0])} ${n(b[1])} ${n(c[0])} ${n(c[1])}M${tip(.5)}L${n(c[0])} ${n(c[1])}L${tip(-.5)}`;
+  // Two strokes, so that the line is drawn first and the head after it (.pen and .pen.head in the CSS). As one path they
+  // would both start at once, and the short head would be finished long before the line reached it.
+  const end=`${n(c[0])} ${n(c[1])}`;
+  return `<path class="pen" pathLength="1" d="M${n(a[0])} ${n(a[1])}Q${n(b[0])} ${n(b[1])} ${end}"/><path class="pen head" pathLength="1" d="M${end}L${tip(.5)}M${end}L${tip(-.5)}"/>`;
 }
 $('sc-notes').innerHTML=NOTES.map(([t,x,y,r,a,b,c,wide])=>{
-  return `<g class="sc-note"${wide?' data-wide="1"':''}><path pathLength="1" d="${penArrow(a,b,c)}"/><text x="${x}" y="${y}" text-anchor="middle" transform="rotate(${r} ${x} ${y})">${t}</text></g>`}).join('');
+  return `<g class="sc-note"${wide?' data-wide="1"':''}>${penArrow(a,b,c)}<text x="${x}" y="${y}" text-anchor="middle" transform="rotate(${r} ${x} ${y})">${t}</text></g>`}).join('');
 let noteTimer=0,noteI=-1;
 function nextNote(){
   const c=document.body.classList,all=[...document.querySelectorAll('#scene .sc-note')];

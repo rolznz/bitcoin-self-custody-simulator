@@ -12,7 +12,7 @@ It lets you experiment with a pretend setup, quickly, with no work and no money 
 
 - Start from what you have today, whether that is an exchange, an app, a bank, an ETF or your own keys.
 - Change one thing and see how the theft risk, loss risk, control and effort move.
-- Throw disasters at the old and the new setup and see which one holds up.
+- Throw disasters at the old setup and at the new one, and see what holds up.
 - Try spending from it, to feel what daily life with that setup is like.
 
 ## What you should leave with

@@ -145,9 +145,10 @@ const SetupMap=(()=>{
   /* Who you play as: a photo of a well-known bitcoiner's head, cut out like a sticker, on a small drawn body.
      Purely for fun: it changes nothing in the model. "quote" is something the person really said or wrote and is shown
      in quotation marks under their name, so never invent or reword one. "jokes" are ours, about the character, and
-     are never put in their mouth. head: [file, width of the picture when it is 168 tall]. */
+     are never put in their mouth. head: [file, width of the picture when it is 168 tall]. sleeve: the colour of a long
+     sleeve, for the arms on the landing's steering wheel; without one the arms are bare. */
   const CHARS={
-    satoshi:{name:'Satoshi Nakamoto',by:'Satoshi Nakamoto, 2010',head:['img/head-satoshi.webp',145],skin:'#D9A07A',
+    satoshi:{name:'Satoshi Nakamoto',by:'Satoshi Nakamoto, 2010',head:['img/head-satoshi.webp',145],skin:'#D9A07A',sleeve:'#8C8577',
       quote:'If you don’t believe me or don’t get it, I don’t have time to try to convince you, sorry.',
       jokes:['Nobody knows who you are. Some days that includes you.','Last seen online in 2011. Nobody has dared to change the password.']},
     hal:{name:'Hal Finney',by:'Hal Finney, 2009',head:['img/head-hal.webp',140],skin:'#E0A98A',
@@ -156,32 +157,33 @@ const SetupMap=(()=>{
     adam:{name:'Adam Back',by:'Adam Back, on his Twitter profile',head:['img/head-adam.webp',133],skin:'#E2B79E',
       quote:'Bitcoin is Hashcash extended with inflation control.',
       jokes:['Invented proof-of-work to stop spam. Still gets spam.','Gets asked whether he is Satoshi about once a day.']},
-    saylor:{name:'Michael Saylor',by:'Michael Saylor',head:['img/head-saylor.webp',118],skin:'#D8A88C',
+    saylor:{name:'Michael Saylor',by:'Michael Saylor',head:['img/head-saylor.webp',118],skin:'#D8A88C',sleeve:'#1E2740',
       quote:'There is no second best.',
       jokes:['Has never sold. Has also never blinked.','Currently working out what this island costs in bitcoin.']},
     jack:{name:'Jack Dorsey',by:'Jack Dorsey, 2021',head:['img/head-jack.webp',102],skin:'#D6A283',
       quote:'Bitcoin changes absolutely everything.',
       jokes:['The beard is on its own block height.','Sent from a silent retreat.']},
-    andreas:{name:'Andreas M. Antonopoulos',by:'Andreas M. Antonopoulos',head:['img/head-andreas.webp',131],skin:'#DDB093',up:1,
+    andreas:{name:'Andreas M. Antonopoulos',by:'Andreas M. Antonopoulos',head:['img/head-andreas.webp',131],skin:'#DDB093',sleeve:'#9DBFE0',up:1,
       quote:'Not your keys, not your coins.',
       jokes:['Has already explained bitcoin to everyone on this island. Twice.','Can explain this whole map using only pizza.']},
     breedlove:{name:'Robert Breedlove',by:'Robert Breedlove',head:['img/head-breedlove.webp',128],skin:'#D2A078',
       quote:'Bitcoin is the most superior monetary technology that has ever existed.',
       jokes:['Was offered a shirt. Declined.','Asks “what is money?” between push-ups.']},
-    saifedean:{name:'Saifedean Ammous',by:'Saifedean Ammous, The Bitcoin Standard',head:['img/head-saifedean.webp',126],skin:'#C99A78',
+    saifedean:{name:'Saifedean Ammous',by:'Saifedean Ammous, The Bitcoin Standard',head:['img/head-saifedean.webp',126],skin:'#C99A78',sleeve:'#27406B',
       quote:'Bitcoin is the hardest money ever invented.',
       jokes:['On a strict diet of steak and hard money.','Low time preference. Will wait as long as it takes for you to read the book.']},
   };
   let WHO='satoshi';
-  /* The figure, feet at (0,0), about 103 tall. Every body is the same few parts in different clothes. */
-  function figure(id,carry){
+  /* The figure, feet at (0,0), about 103 tall. Every body is the same few parts in different clothes.
+     bust: only the head and torso, for the driver's seat on the landing, where the car supplies the arms. */
+  function figure(id,carry,bust){
     const c=CHARS[id],k=c.skin,[file,w168]=c.head;
-    const legs=(col,shoe,bare)=>`<g fill="${bare?k:col}"><rect x="-11" y="-22" width="9" height="20" rx="3"/><rect x="2" y="-22" width="9" height="20" rx="3"/></g>${bare?`<path d="M-13 -25H13L12 -12H1L0 -16L-1 -12H-12Z" fill="${col}"/>`:''}<g fill="${shoe}"><ellipse cx="-7.5" cy="-1.5" rx="7" ry="3.6"/><ellipse cx="7.5" cy="-1.5" rx="7" ry="3.6"/></g>`;
+    const legs=bust?()=>'':(col,shoe,bare)=>`<g fill="${bare?k:col}"><rect x="-11" y="-22" width="9" height="20" rx="3"/><rect x="2" y="-22" width="9" height="20" rx="3"/></g>${bare?`<path d="M-13 -25H13L12 -12H1L0 -16L-1 -12H-12Z" fill="${col}"/>`:''}<g fill="${shoe}"><ellipse cx="-7.5" cy="-1.5" rx="7" ry="3.6"/><ellipse cx="7.5" cy="-1.5" rx="7" ry="3.6"/></g>`;
     // arms: skin all the way, with a sleeve over the whole arm or only the top of it. The right one reaches out when carrying.
     const L=c.up?['M-15 -42Q-27 -42 -29 -55',-29,-57,'M-15 -42Q-22 -43 -25 -47']:['M-15 -42Q-22 -34 -20 -24',-20,-22,'M-15 -42Q-19 -39 -20 -35'];
     const R=carry?['M14 -41Q26 -38 34 -24',34,-22,'M14 -41Q20 -41 24 -37']:['M15 -42Q22 -34 20 -24',20,-22,'M15 -42Q19 -39 20 -35'];
     const arm=(a,sleeve,short,wide)=>`<path d="${a[0]}" fill="none" stroke="${short?k:sleeve}" stroke-width="${wide||7}" stroke-linecap="round"/>${short&&sleeve?`<path d="${a[3]}" fill="none" stroke="${sleeve}" stroke-width="${(wide||7)+1}" stroke-linecap="round"/>`:''}<circle cx="${a[1]}" cy="${a[2]}" r="3.8" fill="${k}"/>`;
-    const arms=(sleeve,short,wide)=>arm(L,sleeve,short,wide)+arm(R,sleeve,short,wide);
+    const arms=bust?()=>'':(sleeve,short,wide)=>arm(L,sleeve,short,wide)+arm(R,sleeve,short,wide);
     const torso=fill=>`<path d="M-15 -46Q-17 -46 -17 -42L-13 -18H13L17 -42Q17 -46 15 -46Z" fill="${fill}"/>`;
     const suit=(jacket,shirt,tie,len)=>arms(jacket)+torso(jacket)+`<path d="M-6 -46L0 -33L6 -46Z" fill="${shirt}"/><path d="M-1.8 -45h3.6l1.5 ${len-3}L0 ${-45+len}l-3.3 -3z" fill="${tie}"/><path d="M-6 -46L0 -33L6 -46M0 -33V-18" fill="none" stroke="#000" stroke-opacity=".22" stroke-width="1.2"/>`;
     const body={
@@ -199,8 +201,14 @@ const SetupMap=(()=>{
     // the head: big, and overlapping the collar. Jack's is longer, so the beard runs down his shirt.
     const hh=id==='jack'?70:60,hw=w168*hh/168,top=-103,x=-hw/2,s=hh/168;
     const eye=(ex,ey)=>`<g transform="translate(${(x+ex*s).toFixed(1)} ${(top+ey*s).toFixed(1)})"><circle r="4.6" fill="#FF2A2A" opacity=".35"/><path d="M-9 0H9M0 -3.5V3.5" stroke="#FF4B4B" stroke-width="1.1" stroke-linecap="round"/><circle r="2.6" fill="#FF2A2A"/><circle r="1.1" fill="#FFE3E3"/></g>`;
-    return body+`<image href="${file}" x="${x.toFixed(1)}" y="${top}" width="${hw.toFixed(1)}" height="${hh}"/>`+(id==='saylor'?`<g class="maplaser">${eye(49,92)}${eye(78,92)}</g>`:'');
+    return body+`<g class="maphead"><image href="${file}" x="${x.toFixed(1)}" y="${top}" width="${hw.toFixed(1)}" height="${hh}"/>`+(id==='saylor'?`<g class="maplaser">${eye(49,92)}${eye(78,92)}</g>`:'')+'</g>';
   }
+  // Whoever you play as also drives the car on the landing: their head and shoulders, and the colours of their arms.
+  // The landing shows this same island from the road, so it borrows the buildings exactly as they are drawn here,
+  // each with the middle of its floor at (0,0). The company comes with the small island it stands on.
+  const islet=(x,y)=>`<ellipse cx="${x}" cy="${y+16}" rx="96" ry="48" fill="#1B8E77"/><ellipse cx="${x}" cy="${y+8}" rx="96" ry="48" fill="#E9DDB0"/><ellipse cx="${x}" cy="${y+6}" rx="88" ry="42" fill="#7ED6A0"/>`;
+  const landmark=id=>id==='company'?islet(0,0)+building(0,0,COMPANY.b).svg:building(0,0,SPOTS[id].b).svg;
+  const driver=()=>({svg:figure(WHO,0,1),sleeve:CHARS[WHO].sleeve||CHARS[WHO].skin,skin:CHARS[WHO].skin,quote:CHARS[WHO].quote});
 
   // Places (and you) can be clicked too. They open a card with nothing but a name and a joke: see SPOT_JOKES.
   // The attributes go on the place's group; a <title> can't, so the name is the label for screen readers.
@@ -260,7 +268,7 @@ const SetupMap=(()=>{
     }
     // the company across the water, and the cloud: always drawn, faded when unused, like every other place
     const c=COMPANY,cb=building(c.x,c.y,c.b),co=S.company;spots.company={x:c.x,top:cb.top,front:cb.front};
-    const far=`<g ${spot('company',co?co.name:'Exchange')} opacity="${co?1:.5}"><ellipse cx="${c.x}" cy="${c.y+16}" rx="96" ry="48" fill="#1B8E77"/><ellipse cx="${c.x}" cy="${c.y+8}" rx="96" ry="48" fill="#E9DDB0"/><ellipse cx="${c.x}" cy="${c.y+6}" rx="88" ry="42" fill="#7ED6A0"/>${cb.svg}</g>`+
+    const far=`<g ${spot('company',co?co.name:'Exchange')} opacity="${co?1:.5}">${islet(c.x,c.y)}${cb.svg}</g>`+
       (co?row(c.x-58,c.y+52,co.items,co.name)+`<path d="M${YOU.x+70} ${YOU.y-50}Q520 60 ${c.x-96} ${c.y+30}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="3 9" stroke-linecap="round" opacity=".9"/>`:'')+
       label(c.x+4,c.y+62,co?co.name:'Exchange',!co);
     const cloud=`<g ${spot('cloud','Cloud')} opacity="${S.cloud.length?1:.5}"><ellipse cx="118" cy="150" rx="62" ry="12" fill="#000" opacity=".1"/><g fill="#fff"><rect x="50" y="64" width="150" height="40" rx="20"/><circle cx="92" cy="64" r="28"/><circle cx="140" cy="54" r="36"/></g></g>`+row(124,102,S.cloud,'Cloud',.8)+label(124,124,'Cloud',!S.cloud.length);
@@ -359,5 +367,5 @@ const SetupMap=(()=>{
   });
   // beats() and things() describe the map drawn by the latest svg() call. things() lists what is on it and what became of each.
   const things=()=>REG.filter(t=>t.t).map(t=>({id:t.id,role:t.role,k:t.k,fate:t.fate,fresh:t.fresh}));
-  return {svg,beats,things};
+  return {svg,beats,things,driver,landmark};
 })();

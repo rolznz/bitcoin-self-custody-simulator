@@ -7,7 +7,7 @@ The app ships as one self-contained file, `index.html`, built from `src/`. See [
 - `src/index.html`: the page skeleton. It loads the files below, so it also runs as it is in a browser.
 - `src/styles.css`: all the CSS, including light and dark themes.
 - `src/model.js`: the model. Disasters and their chances, the theft and loss scoring, effort, control, and recommendations. It doesn't touch the DOM.
-- `src/map.js`: draws a setup as a map (you, five places, a cloud, a company) with the things you own on it. `SetupMap.svg(setup)` returns the picture. Cards opened from the map say what a thing is, never what could go wrong with it; risks are revealed by disasters.
+- `src/map.js`: draws a setup as a map (you, five places, a cloud, a company) with the things you own on it. `SetupMap.svg(setup)` returns the picture. The landing borrows its character and buildings through `SetupMap.driver()` and `SetupMap.landmark()`. The map can be zoomed and dragged; that is `setMapView` in `src/ui.js`. Cards opened from the map say what a thing is, never what could go wrong with it; risks are revealed by disasters.
 - `src/ui.js`: the five screens, the scoreboard, the panels and the click handling.
 - `src/img/`: the pictures, which the build embeds as base64. `head-*.webp` are the heads of the characters you can play as (`CHARS` in `src/map.js`). A character's `quote` must be something the person really said; our own jokes about them go in `jokes`. [docs/CHARACTERS.md](docs/CHARACTERS.md) explains how to add one, using `tools/head.py` to cut out the head.
 - `src/fonts/`: the two fonts, which the build embeds as base64.

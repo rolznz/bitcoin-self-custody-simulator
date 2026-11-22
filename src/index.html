@@ -20,7 +20,6 @@
     <svg viewBox="0 150 1200 450" preserveAspectRatio="xMidYMax slice">
       <defs>
         <linearGradient id="sc-gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--g1)"/><stop offset="1" style="stop-color:var(--g2)"/></linearGradient><linearGradient id="sc-gr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--road1)"/><stop offset="1" style="stop-color:var(--road2)"/></linearGradient><linearGradient id="sc-gs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sea1)"/><stop offset="1" style="stop-color:var(--sea2)"/></linearGradient>
-        
         <clipPath id="sc-cm"><path d="M620 600C700 470 860 432 1000 420S1200 402 1260 398V600Z"/></clipPath>
       </defs>
       <!-- sky: stars at night, the sun with its rays (the moon at night), clouds -->
@@ -33,9 +32,7 @@
         <circle r="96" fill="#fff" opacity=".28"/><circle r="64" fill="var(--sun)"/><circle class="sc-day" cx="-10" cy="-12" r="44" fill="#FFD95A"/>
       </g>
       <g class="sc-cloud" style="--d:46s;--x:34px"><g transform="translate(690 208) scale(1.05)"><g fill="var(--cloud)"><rect width="150" height="32" rx="16"/><circle cx="40" cy="0" r="26"/><circle cx="84" cy="-12" r="36"/><circle cx="120" cy="4" r="22"/></g><rect x="14" y="20" width="122" height="12" rx="6" fill="var(--cloud2)"/></g></g><g class="sc-cloud" style="--d:60s;--x:-28px"><g transform="translate(1030 196) scale(0.9)"><g fill="var(--cloud)"><rect width="150" height="32" rx="16"/><circle cx="40" cy="0" r="26"/><circle cx="84" cy="-12" r="36"/><circle cx="120" cy="4" r="22"/></g><rect x="14" y="20" width="122" height="12" rx="6" fill="var(--cloud2)"/></g></g><g class="sc-cloud" style="--d:38s;--x:22px"><g transform="translate(170 330) scale(0.6)"><g fill="var(--cloud)"><rect width="150" height="32" rx="16"/><circle cx="40" cy="0" r="26"/><circle cx="84" cy="-12" r="36"/><circle cx="120" cy="4" r="22"/></g><rect x="14" y="20" width="122" height="12" rx="6" fill="var(--cloud2)"/></g></g><g class="sc-cloud" style="--d:52s;--x:-18px"><g transform="translate(1010 318) scale(0.42)"><g fill="var(--cloud)"><rect width="150" height="32" rx="16"/><circle cx="40" cy="0" r="26"/><circle cx="84" cy="-12" r="36"/><circle cx="120" cy="4" r="22"/></g><rect x="14" y="20" width="122" height="12" rx="6" fill="var(--cloud2)"/></g></g>
-      <!-- distant mountains and the sea -->
-      <g fill="var(--m2)"><path d="M-60 400C40 352 110 340 190 356S330 372 420 400Z"/><path d="M760 400C850 330 930 318 1010 344S1150 320 1260 350V400Z"/></g>
-      <g fill="var(--m1)"><path d="M120 400C220 366 300 360 370 374S470 386 540 400Z"/><path d="M640 400C720 372 790 364 860 374S1010 352 1100 366S1220 380 1260 384V400Z"/></g>
+      <!-- the sea -->
       <rect x="-60" y="394" width="1320" height="110" fill="url(#sc-gs)"/>
       <g fill="none" stroke="#fff" stroke-width="2.500" stroke-linecap="round" opacity=".7"><path class="sc-glint" style="--t:0s" d="M470 412h44"/><path class="sc-glint" style="--t:-1.4s" d="M500 424h26"/><path class="sc-glint" style="--t:-2.6s" d="M560 408h30"/><path class="sc-glint" style="--t:-0.8s" d="M700 416h40"/><path class="sc-glint" style="--t:-3.1s" d="M730 430h22"/><path class="sc-glint" style="--t:-2s" d="M860 410h34"/></g>
       <!-- sailboats crossing the sea, and birds crossing the sky -->
@@ -43,7 +40,10 @@
       <g fill="none" stroke="var(--bird)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <g class="sc-birds" style="--x0:-40px;--y0:330px;--x1:1240px;--y1:286px;--d:26s;--t:3s"><path class="sc-flap" style="--t:0s" transform="translate(0 0) scale(1.60)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/><path class="sc-flap" style="--t:-0.2s" transform="translate(26 12) scale(1.28)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/></g><g class="sc-birds" style="--x0:1240px;--y0:300px;--x1:-40px;--y1:322px;--d:34s;--t:9s"><path class="sc-flap" style="--t:-0.1s" transform="translate(0 0) scale(1.44)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/><path class="sc-flap" style="--t:-0.3s" transform="translate(-24 10) scale(1.12)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/><path class="sc-flap" style="--t:0s" transform="translate(-30 -12) scale(1.20)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/></g><g class="sc-birds" style="--x0:-40px;--y0:300px;--x1:1240px;--y1:330px;--d:30s;--t:15s"><path class="sc-flap" style="--t:-0.25s" transform="translate(0 0) scale(1.12)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/></g><g class="sc-birds" style="--x0:1240px;--y0:340px;--x1:-40px;--y1:296px;--d:38s;--t:21s"><path class="sc-flap" style="--t:0s" transform="translate(0 0) scale(1.36)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/><path class="sc-flap" style="--t:-0.15s" transform="translate(22 -10) scale(1.04)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/><path class="sc-flap" style="--t:-0.35s" transform="translate(40 6) scale(1.12)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/><path class="sc-flap" style="--t:-0.05s" transform="translate(58 -6) scale(0.96)" d="M-9 -4Q-4 -7 0 0Q4 -7 9 -4"/></g>
       </g>
-      <g></g>
+      <!-- This is the map's island seen from up on a hill, looking down, so the map's own buildings fit as they are: ui.js
+           fills each of these from SetupMap.landmark(). Keep every roof at or below the horizon (y=394), or it stops
+           looking like a view from above. Here, the company on its own small island out in the bay. -->
+      <g id="sc-company" class="sc-far" transform="translate(850 432) scale(.36)"></g>
       <!-- green shore: a low hill on the left, and on the right the hill the road comes round -->
       <path fill="url(#sc-gg)" d="M-60 600V452C80 418 300 424 480 476V600Z"/>
       <path fill="url(#sc-gg)" d="M620 600C700 470 860 432 1000 420S1200 402 1260 398V600Z"/>
@@ -73,10 +73,17 @@
       </g>
       <g transform="translate(342 492)"><rect x="-8" y="-36" width="16" height="42" rx="6" fill="#F4F1EA"/><rect x="-8" y="-14" width="16" height="20" rx="6" fill="#DAD5CB"/><rect x="-4" y="-30" width="8" height="10" rx="3" fill="#EF5350"/></g><g transform="translate(858 492)"><rect x="-8" y="-36" width="16" height="42" rx="6" fill="#F4F1EA"/><rect x="-8" y="-14" width="16" height="20" rx="6" fill="#DAD5CB"/><rect x="-4" y="-30" width="8" height="10" rx="3" fill="#EF5350"/></g>
       <g fill="none" stroke="var(--bush)" stroke-width="5" stroke-linecap="round"><path class="sc-tuft" style="transform-origin:150px 532px" d="M150 532q-4 -14 -10 -20M150 532q0 -16 4 -24M150 532q6 -12 14 -16"/><path class="sc-tuft" style="transform-origin:1060px 536px;--t:-1.3s" d="M1060 536q-4 -14 -10 -20M1060 536q0 -16 4 -24M1060 536q6 -12 14 -16"/></g>
+      <!-- home and the bank on the left of the road, a friend's place on the right -->
+      <g id="sc-bank" class="sc-far" transform="translate(265 490) scale(.5)"></g>
+      <g id="sc-home" class="sc-far" transform="translate(120 535) scale(.75)"></g>
+      <g id="sc-friend" class="sc-far" transform="translate(1120 545) scale(.7)"></g>
       <!-- the car's shadow, and dust -->
       <ellipse id="sc-shadow" cx="600" cy="500" rx="150" ry="13" fill="#000" opacity=".3"/>
       <g class="sc-dust" style="transform-origin:470px 500px;--dx:-1"><g transform="translate(452 462) scale(1.15)"><g fill="#F3DFBE"><circle cx="4" cy="6" r="30"/><circle cx="-34" cy="12" r="20"/></g><g fill="#FFF3DC"><circle r="28"/><circle cx="-30" cy="6" r="20"/><circle cx="28" cy="8" r="18"/><circle cx="-6" cy="-22" r="18"/><circle cx="-52" cy="14" r="12"/></g></g></g><g class="sc-dust" style="transform-origin:730px 500px;--dx:1"><g transform="translate(1200 0) scale(-1 1)"><g transform="translate(452 462) scale(1.15)"><g fill="#F3DFBE"><circle cx="4" cy="6" r="30"/><circle cx="-34" cy="12" r="20"/></g><g fill="#FFF3DC"><circle r="28"/><circle cx="-30" cy="6" r="20"/><circle cx="28" cy="8" r="18"/><circle cx="-6" cy="-22" r="18"/><circle cx="-52" cy="14" r="12"/></g></g></g></g>
     </svg>
+    <!-- notes over the scene, shown one at a time: pen arrows naming things (drawn by ui.js), and what the driver says -->
+    <svg class="sc-notes" id="sc-notes" viewBox="0 150 1200 450" preserveAspectRatio="xMidYMax slice"></svg>
+    <div class="sc-note" id="sc-say" data-ms="5200"></div>
   </div>
   <footer>
     <span>Pretend coins only. Scores are rough estimates, not advice. <button data-act="perfect">There is no perfect setup</button>.</span>

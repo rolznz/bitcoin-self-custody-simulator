@@ -2,11 +2,12 @@
 /* ---------- state ---------- */
 const SATS=1e8;
 let S;
-function reset(){S={step:0,base:presetSetup('hot'),mine:null,editBase:false,simBase:false,open:{},conf:{before:null,after:null},note:'',custom:{},picked:{mine:false},dis:null,dis2:null,tally:{n:0,a:0,b:0},w:{old:SATS,vault:0,log:[],tx:null,receipt:null,report:null,done:{}}}}
+function reset(){S={step:0,base:presetSetup('hot'),mine:null,editBase:false,simBase:false,open:{},conf:{before:null,after:null},note:'',custom:{},picked:{mine:false},dis:null,w:{old:SATS,vault:0,log:[],tx:null,receipt:null,report:null,done:{}}}}
 reset();
 const $=id=>document.getElementById(id);
-const STEPS=['Start','Today','Build','Use it','Stress test'];
+const STEPS=['Start','Today','Build','Use it','Share'];
 const SHARE_URL='https://rolznz.github.io/bitcoin-self-custody-simulator/';
+const SHARE_TEXT='Practise bitcoin self-custody with pretend coins: build a setup, throw disasters at it, and see what holds up.';
 const btc=s=>(s/SATS).toFixed(4).replace(/\.?0+$/,'')+' BTC';
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -119,29 +120,19 @@ function screenStart(){
   <div><button class="btn cta" data-act="go" data-to="1">Get started</button></div>`;
 }
 function disasterCard(which,setups,d,title,hint){
-  const list=disasterList(setups),names=setups.length>1?['Before','Now']:[''];
-  const opts=k=>list.filter(x=>x[0]===k).map(x=>`<button type="button" data-act="disaster" data-w="${which}" data-id="${x[1].id}"${d&&d.id===x[1].id?' class="on" aria-current="true"':''}>${elabel(x[1],setups)}</button>`).join('');
+  const list=disasterList(setups);
   const one=(s,o,name)=>{const word=o.kind==='t'?['taken','safe']:['gone','still there'];
     return `<div class="dres ${o.bad?'bad':'ok'}"><div class="body">${name?`<b>${name}</b>`:''}
       <div class="dkeys"${(s.n===1&&!TL(s))||custodial(s)?' hidden':''}>${s.keys.map((k,i)=>`<span class="dk${o.hit[i]?' hit':''}"><span class="tok" style="--kc:var(--k${i})">${LETTERS[i]}</span>${word[o.hit[i]?0:1]}</span>`).join('')}${o.rhit==null?'':`<span class="dk${o.rhit?' hit':''}"><span class="tok" style="--kc:var(--base-bar)">R</span>${word[o.rhit?0:1]}</span>`}</div>
       <span>${o.text}</span><span class="st lv-${o.bad?'high':'low'}">${o.verdict}</span></div></div>`};
-  const t=S.tally;
-  if(which==='today'){ // in the dialog on the Today screen: a grid of tiles to pick from, then the result
-    const head=(icon,text)=>`<div class="simhead"><span class="emo" aria-hidden="true">${icon}</span><h3>${text}</h3><button class="simx" data-act="simClose" aria-label="Close">×</button></div>`;
-    if(d&&!S.simList)return head(d.icon,d.label)+`<div role="status" class="dcmp">${one(setups[0],d.res[0],'')}</div>
-      <div class="rowb"><button class="btn small" id="dis-today" data-act="disaster" data-w="today">🎲 Throw another</button><button class="btn small ghost" data-act="simList">Back to the list</button></div>`;
-    const icon=e=>e.supply?'🚚':e.brand?'🐞':ICON[e.id]||'⚠️';
-    const tiles=k=>`<div class="dtiles">${list.filter(x=>x[0]===k).map(x=>`<button type="button" class="dtile" data-act="disaster" data-w="today" data-id="${x[1].id}"><span aria-hidden="true">${icon(x[1])}</span>${elabel(x[1],setups)}</button>`).join('')}</div>`;
-    return head('🔥',title)+`<button class="btn dsurprise" id="dis-today" data-act="disaster" data-w="today">🎲 Surprise me</button>
-      <h4>Theft</h4>${tiles('t')}<h4>Loss</h4>${tiles('l')}`;
-  }
-  return `<div class="card"><h3>${title}</h3><p class="hint">${hint}</p>
-    <div class="dctl"><button class="btn small${which==='today'?' outline':''}" id="dis-${which}" data-act="disaster" data-w="${which}">${d?'Another random one':'Random disaster'}</button><span class="hint">or</span>
-      <details class="dmenu" id="pick-${which}"><summary aria-label="Pick a disaster">Pick one</summary><div class="dlist"><h4>Theft</h4>${opts('t')}<h4>Loss</h4>${opts('l')}</div></details></div>
-    ${d?`<div role="status"><div class="dhead"><span class="emo" aria-hidden="true">${d.icon}</span><b>${d.label}</b></div>
-      <div class="dcmp${setups.length>1?' two':''}">${setups.map((s,i)=>one(s,d.res[i],names[i])).join('')}</div>
-      ${setups.length>1&&t.n>1?`<p class="hint" style="margin-top:10px">${t.n} disasters so far. Before survived ${t.a}, now survived ${t.b}.</p>`:''}</div>`:''}
-  </div>`;
+  // In its dialog: a grid of tiles to pick from, then the result.
+  const head=(icon,text)=>`<div class="simhead"><span class="emo" aria-hidden="true">${icon}</span><h3>${text}</h3><button class="simx" data-act="simClose" aria-label="Close">×</button></div>`;
+  if(d&&!S.simList)return head(d.icon,d.label)+`<div role="status" class="dcmp">${one(setups[0],d.res[0],'')}</div>
+    <div class="rowb"><button class="btn small" id="dis-today" data-act="disaster" data-w="today">🎲 Throw another</button><button class="btn small ghost" data-act="simList">Back to the list</button></div>`;
+  const icon=e=>e.supply?'🚚':e.brand?'🐞':ICON[e.id]||'⚠️';
+  const tiles=k=>`<div class="dtiles">${list.filter(x=>x[0]===k).map(x=>`<button type="button" class="dtile" data-act="disaster" data-w="today" data-id="${x[1].id}"><span aria-hidden="true">${icon(x[1])}</span>${elabel(x[1],setups)}</button>`).join('')}</div>`;
+  return head('🔥',title)+`<button class="btn dsurprise" id="dis-today" data-act="disaster" data-w="today">🎲 Surprise me</button>
+    <h4>Theft</h4>${tiles('t')}<h4>Loss</h4>${tiles('l')}`;
 }
 function setupList(s){
   const AT={home:'at home',office:'at the office',relative:'at a relative’s place',friend:'at a friend’s place',bank:'in the bank box',carry:'on you'};
@@ -200,7 +191,7 @@ function screenMap(which){
   const tip=(k,title,x)=>x?`<button class="mapcardtip" data-act="mapApply" data-k="${k}"><small>${title}</small><b>${x.do}</b><span>Theft ${x.from.theft} → ${x.to.theft} · Loss ${x.from.loss} → ${x.to.loss}</span></button>`:'';
   const cards=tips?`<div class="mapcards">${tip('small','💡 A small step',tips.small)}${tip('big','🏗️ A big step',tips.big)}${!tips.small&&!tips.big?'<div class="mapcardtip done"><b>Nothing more to suggest.</b><span>From here, every change trades one risk for another.</span></div>':''}</div>`:'';
   return `<h2 class="sr">${build?'Build your new setup':'Your setup today'}</h2>
-  <div class="mapcard${intro?' mapintro':''}${result||cards?' lift':''}">${SetupMap.svg(S[which],fx)}<span class="maplabel">${build?'Your new setup':'Your current setup'}</span>${result}${cards}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
+  <div class="mapcard${intro?' mapintro':''}${result||cards?' lift':''}">${SetupMap.svg(S[which],fx)}<span class="maplabel">${build?'Your new setup':'Your current setup'}</span><button type="button" class="mapreset">Reset view</button>${result}${cards}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
     <button class="mapscore${build?' rows':''}${moving?' changing':''}" data-act="scores" aria-label="${build?`Before: theft risk ${was.theft}, loss risk ${was.loss}. Now: theft risk ${sc.theft}, loss risk ${sc.loss}`:`Theft risk ${word[level(sc.theft)]}, loss risk ${word[level(sc.loss)]}`}. Open the scoreboard">${chip}</button>
     <div class="maptools">${tool('data-act="help"',S.helpOpen,'❓','Help','Help')}${tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster')}${tool('data-act="editBase"',S.editBase,'✏️',build?'Edit new setup':'Edit current setup',build?'Edit new setup':'Edit current setup')}<button class="maptool next" data-act="go" data-to="${build?3:2}"><span aria-hidden="true">${build?'🧪':'🚀'}</span>${build?'Try using it →':'Improve it →'}</button></div></div>`;
 }
@@ -221,7 +212,7 @@ function screenUse(){
   if(st.type==='etf')return `<h2>Use it</h2>
   <p class="lede">With an ETF there is nothing to try here.</p>
   <div class="card"><h3>An ETF is shares, not bitcoin</h3><p class="hint" style="margin-top:4px">You can’t send, receive or spend the coins. To pay for anything you sell shares through your broker, during market hours.</p></div>
-  <div class="rowb"><button class="btn ghost" data-act="go" data-to="2">Change your setup</button><button class="btn" data-act="go" data-to="4">Stress test it</button></div>`;
+  <div class="rowb"><button class="btn ghost" data-act="go" data-to="2">Change your setup</button><button class="btn" data-act="go" data-to="4">Finish →</button></div>`;
   const chk=(on,l)=>`<span class="check${on?' done':''}">${on?'✓':'○'} ${l}</span>`;
   const item=(e,l,a)=>`<div class="item"><span class="emo" aria-hidden="true">${e}</span><b>${l}</b><span class="hint">${btc(a)}</span><button class="btn small" data-act="buy" data-l="${l}" data-a="${a}" aria-label="Buy ${l.toLowerCase()}" ${w.vault<a?'disabled':''}>Buy</button></div>`;
   const oldHint=custodial(old)?{exchange:'On an exchange',fintech:'In a payment app',bank:'With a bank',etf:'ETF shares'}[old.type]:old.n===1?'1 key':`${old.m}-of-${old.n}`;
@@ -245,23 +236,16 @@ function screenUse(){
     <button class="btn small ghost" data-act="rehearse">${st.tested?'Run again':'Wipe and recover'}</button></div>
     ${w.report?`<div class="report" style="margin-top:12px">${w.report.map(r=>`<div><span>${r[0]}</span><span>${r[1]}</span></div>`).join('')}</div>`:''}</div>`}
   ${w.log.length?`<div><p class="hint" style="margin-bottom:6px">Activity</p><ul class="log">${w.log.slice(0,4).map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`:''}`}
-  <div><button class="btn" data-act="go" data-to="4">Stress test it</button></div>`;
+  <div><button class="btn" data-act="go" data-to="4">Finish →</button></div>`;
 }
-function screenStress(R){
-  const dT=R.mine.theft-R.base.theft,dL=R.mine.loss-R.base.loss,w=d=>d<=-3?'down':d>=3?'up':'same';
-  const verdict={'down/down':'Safer on both counts.','down/up':'Harder to steal, easier to lose.','up/down':'Harder to lose, easier to steal.','up/up':'Riskier on both counts.','same/same':'About the same as before.',
-    'down/same':'Harder to steal, same loss risk.','same/down':'Harder to lose, same theft risk.','up/same':'Easier to steal, same loss risk.','same/up':'Easier to lose, same theft risk.'}[w(dT)+'/'+w(dL)];
-  const arrow=d=>d<=-3?'▼':d>=3?'▲':'≈';
-  const num=v=>`<b style="color:color-mix(in srgb,${riskColor(v)} 80%,var(--shade))">${v}</b>`;
-  return `<h2>Stress test</h2>
-  <p class="lede">Throw disasters at both setups and see which one holds up.</p>
-  ${disasterCard('stress',[S.base,S.mine],S.dis2,'Simulate a disaster','The same disaster hits your old setup and your new one.')}
-  <div class="card"><p class="hint">Overall</p><p class="verdict">${verdict}</p>${R.mine.control!==R.base.control?`<p style="font-weight:700;margin-top:6px">${(dT+dL<0)===(R.mine.control>R.base.control)?'And':'But'} ${R.mine.control>R.base.control?(R.mine.control===4?'the coins are now fully yours.':'more of the control is now yours.'):'you’ve handed over some control.'}</p>`:''}
-    <div class="deltas"><span class="pill">Theft risk ${num(R.base.theft)} to ${num(R.mine.theft)} ${arrow(dT)}</span><span class="pill">Loss risk ${num(R.base.loss)} to ${num(R.mine.loss)} ${arrow(dL)}</span><span class="pill">Control: ${R.base.control===R.mine.control?CTRL[R.mine.control].toLowerCase():CTRL[R.base.control].toLowerCase()+', now '+CTRL[R.mine.control].toLowerCase()}</span><span class="pill">Setup effort ${R.base.setup} to ${R.mine.setup} of 5</span><span class="pill">Spending effort ${S.base.type==='etf'?'can’t spend':R.base.spend} to ${S.mine.type==='etf'?'can’t spend':R.mine.spend+' of 5'}</span></div>
-    <h3 style="margin-top:16px">Your new setup in plain words</h3>${summaryBody(S.mine)}
-    <p class="hint" style="margin-top:10px">Not happy? <button class="btn ghost small" data-act="go" data-to="2">Tweak your setup</button></p></div>
-  <div class="card share"><h3>Like the app? Help share it.</h3>
-    <div class="rowb"><a href="${SHARE_URL}">${SHARE_URL.replace('https://','')}</a><button class="btn small" data-act="share">${S.shared?'Copied':'Copy link'}</button></div></div>`;
+// The last screen is only about passing the game on. Disasters and scores live on the map screens.
+function screenShare(){
+  return `<div class="finish"><h2>That’s the game.</h2>
+  <p class="lede">If you found it fun or useful, share it with someone who might too.</p>
+  <div class="card share"><button class="btn cta" data-act="share">${S.shared?'✓ Link copied':'📣 Share the simulator'}</button>
+    <a href="${SHARE_URL}">${SHARE_URL.replace('https://','')}</a>
+    <p class="hint">This shares a link to the simulator and nothing else.</p></div>
+  <div class="rowb"><button class="btn ghost small" data-act="go" data-to="2">Back to your setup</button><button class="btn ghost small" data-act="reset">Start over</button></div></div>`;
 }
 function feedbackText(){
   const c=S.conf;
@@ -368,7 +352,7 @@ function render(){
   const brands=brandEvents([S.base,S.mine]);
   const R={base:risk(S.base,brands),mine:S.mine?risk(S.mine,brands):null};
   $('steps').innerHTML=STEPS.map((s,i)=>`<li><button data-act="go" data-to="${i}" ${i===S.step?'aria-current="step"':''}><span class="no">${i+1}. </span>${s}</button></li>`).join('');
-  $('stage').innerHTML=[screenStart,screenToday,screenBuild,screenUse,()=>screenStress(R)][S.step]();
+  $('stage').innerHTML=[screenStart,screenToday,screenBuild,screenUse,screenShare][S.step]();
   document.querySelector('.grid').classList.toggle('solo',S.step===0);
   document.body.classList.toggle('landing',S.step===0);
   $('reset').hidden=S.step===0;
@@ -418,9 +402,63 @@ function go(to){
   if(firstMap){mapIntroSeen=true;S.mapIntro='run';mapBeat=-1}
   if(to===0&&S.step!==0)startIntro(); // coming back to the first screen replays the car's entrance
   if(to!==1&&S.mapIntro==='run')S.mapIntro='done'; // leaving the map (by "Improve it", say) ends its introduction
+  if(to!==1&&to!==2)setMapView(1,0,0); // the map keeps its zoom between Today and Build, and loses it anywhere else
   buildSeen=null;S.chipAnim=null; // arriving on the Build screen never animates the scores; only changes made there do
   S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.helpOpen=false;S.mapDis=S.run=null;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
   if(firstMap)runMapIntro();
+}
+/* ---------- map: zoom and drag ---------- */
+// Mouse: wheel to zoom, drag to move. Touch: drag to move, pinch to zoom. The view is kept as three CSS variables on
+// <body> rather than on the map, because the map is redrawn on every change of state and must come back as it was.
+// Nothing moves while the map's introduction is playing: there a click anywhere means "continue".
+const MV={k:1,x:0,y:0};
+function setMapView(k,x,y){
+  const m=document.querySelector('.map'),r=m?m.getBoundingClientRect():{width:800,height:560},w=r.width/MV.k,h=r.height/MV.k;
+  k=Math.min(4,Math.max(1,k));
+  const lx=w*((k-1)/2+.3),ly=h*((k-1)/2+.3); // it can be dragged about a third of the way off, never out of sight
+  Object.assign(MV,{k,x:Math.min(lx,Math.max(-lx,x)),y:Math.min(ly,Math.max(-ly,y))});
+  const st=document.body.style;st.setProperty('--mk',MV.k);st.setProperty('--mx',MV.x+'px');st.setProperty('--my',MV.y+'px');
+  document.body.classList.toggle('mapmoved',MV.k!==1||MV.x!==0||MV.y!==0);
+}
+// Zoom to k keeping the point (px,py) of the window where it is. The map scales about its own middle.
+function zoomMapAt(px,py,k){
+  const m=document.querySelector('.map');if(!m)return;
+  k=Math.min(4,Math.max(1,k));
+  const r=m.getBoundingClientRect(),cx=r.left+r.width/2-MV.x,cy=r.top+r.height/2-MV.y,f=k/MV.k;
+  setMapView(k,px-cx-f*(px-cx-MV.x),py-cy-f*(py-cy-MV.y));
+}
+{
+  const pts=new Map();let moved=false,pinch=0;
+  const onMap=ev=>{const t=ev.target;return t.closest&&t.closest('.mapcard')&&!t.closest('.mapintro,button,.mapcards,.mapresult,.mapscore,.mapcap')};
+  document.addEventListener('wheel',ev=>{
+    if(!onMap(ev))return;ev.preventDefault();
+    zoomMapAt(ev.clientX,ev.clientY,MV.k*Math.exp(-ev.deltaY*(ev.ctrlKey?.01:.0015)));
+  },{passive:false});
+  document.addEventListener('pointerdown',ev=>{
+    if(!onMap(ev)||(ev.pointerType==='mouse'&&ev.button!==0))return;
+    if(!pts.size)moved=false;
+    pts.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});pinch=0;
+  });
+  addEventListener('pointermove',ev=>{
+    const p=pts.get(ev.pointerId);if(!p)return;
+    const dx=ev.clientX-p.x,dy=ev.clientY-p.y;
+    if(!moved&&pts.size===1&&Math.hypot(dx,dy)<6)return; // a small wobble is still a click
+    moved=true;document.body.classList.add('mapdrag');
+    p.x=ev.clientX;p.y=ev.clientY;
+    if(pts.size===1)return setMapView(MV.k,MV.x+dx,MV.y+dy);
+    const [a,b]=[...pts.values()],d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+    if(pinch)zoomMapAt(mx,my,MV.k*d/pinch);
+    setMapView(MV.k,MV.x+dx/2,MV.y+dy/2); // each finger carries half of the move
+    pinch=d;
+  });
+  const up=ev=>{
+    if(!pts.delete(ev.pointerId))return;pinch=0;
+    if(!pts.size){document.body.classList.remove('mapdrag');if(moved)setTimeout(()=>{moved=false},60)}
+  };
+  addEventListener('pointerup',up);addEventListener('pointercancel',up);
+  // the click that ends a drag must not open whatever was under the pointer
+  addEventListener('click',ev=>{if(moved){moved=false;ev.stopPropagation();ev.preventDefault()}},true);
+  document.addEventListener('click',ev=>{if(ev.target.closest('.mapreset'))setMapView(1,0,0)});
 }
 /* ---------- map introduction ---------- */
 // The first time the map is shown it builds itself: you, then each thing you own, with a caption for each.
@@ -562,8 +600,10 @@ document.addEventListener('click',ev=>{
     const t=bestChanges(S.mine,true)[b.dataset.k];
     if(t){S.mine=clone(t.setup);S.picked.mine=true;S.w.report=null;changed('mine');S.mapDis=S.run=null}
   }
-  if(a==='share'){ // copy the link; where the page isn't allowed to, the link is still there to copy by hand
-    try{navigator.clipboard.writeText(SHARE_URL).then(()=>{S.shared=true;render()},()=>{})}catch(e){}
+  if(a==='share'){ // the phone's own share sheet where there is one; otherwise copy the link, which is also there to copy by hand
+    const copy=()=>{try{navigator.clipboard.writeText(SHARE_URL).then(()=>{S.shared=true;render()},()=>{})}catch(e){}};
+    if(navigator.share)navigator.share({title:'Bitcoin Self-custody simulator',text:SHARE_TEXT,url:SHARE_URL}).catch(e=>{if(e.name!=='AbortError')copy()});
+    else copy();
     return;
   }
   if(a==='simList')S.simList=true;
@@ -600,7 +640,7 @@ document.addEventListener('click',ev=>{
   render();
   if((a==='buy'||a==='testOut')&&$('sign'))$('sign').scrollIntoView({block:'nearest'});
 });
-function changed(which){S.dis2=null;S.tally={n:0,a:0,b:0};if(which==='base')S.dis=null}
+function changed(which){if(which==='base')S.dis=null}
 /* ---------- disaster taglines ---------- */
 // One line under each disaster's name on the map, mostly borrowed from memes. They are jokes about the event,
 // never advice. Brand and supply-chain events have an id per brand, so those match on the start of the id.
@@ -651,8 +691,7 @@ function throwDisaster(id){
   if(!R.over)R.n++;
 }
 function disaster(w,id){
-  if(w==='today')throwDisaster(id);
-  else{S.dis2=runDisaster([S.base,S.mine],id,S.dis2&&S.dis2.id);const t=S.tally;t.n++;if(!S.dis2.res[0].bad)t.a++;if(!S.dis2.res[1].bad)t.b++}
+  throwDisaster(id);
 }
 document.addEventListener('change',ev=>{
   const el=ev.target;
@@ -673,11 +712,7 @@ $('scores').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.cur
 $('scores').addEventListener('close',()=>{if(S.scoresOpen){S.scoresOpen=false;render()}});
 $('help').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.currentTarget.close()});
 $('help').addEventListener('close',()=>{if(S.helpOpen){S.helpOpen=false;render()}});
-document.addEventListener('toggle',ev=>{const d=ev.target;if(d.dataset&&d.dataset.d)S.open[d.dataset.d]=d.open;
-  if(d.classList&&d.classList.contains('dmenu')&&d.open)d.querySelector('.dlist').scrollIntoView({block:'nearest'})},true);
-// The disaster menu closes on a click outside it or on Escape.
-document.addEventListener('click',ev=>{document.querySelectorAll('.dmenu[open]').forEach(d=>{if(!d.contains(ev.target))d.open=false})});
-document.addEventListener('keydown',ev=>{if(ev.key!=='Escape')return;const d=document.querySelector('.dmenu[open]');if(d){d.open=false;d.querySelector('summary').focus()}});
+document.addEventListener('toggle',ev=>{const d=ev.target;if(d.dataset&&d.dataset.d)S.open[d.dataset.d]=d.open;},true);
 document.addEventListener('input',ev=>{if(ev.target.id==='note'){S.note=ev.target.value}});
 render();
 /* ---------- landing car ---------- */
@@ -707,7 +742,6 @@ function buildCar(root){
   const W=352,H=156,D=290,BY=-150;
   plane(root,W,H,`translate3d(0,${BY}px,${D/2}px)`,'',`<svg viewBox="-176 -78 352 156">
     <defs><linearGradient id="c3-o" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFA033"/><stop offset=".5" stop-color="#F47B20"/><stop offset="1" stop-color="#DE6410"/></linearGradient>
-    <linearGradient id="c3-c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD95A"/><stop offset="1" stop-color="#FFB81F"/></linearGradient>
     <linearGradient id="c3-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9AD4FF"/><stop offset="1" stop-color="#3F97E6"/></linearGradient></defs>
     <rect x="-176" y="-78" width="352" height="156" rx="74" fill="url(#c3-o)"/>
     <path d="M-120 -64h240" stroke="#FFC078" stroke-width="7" stroke-linecap="round" opacity=".8"/>
@@ -733,27 +767,18 @@ function buildCar(root){
     for(const side of[-1,1])plane(w,2*R,2*R,`translate3d(${side*TW/2}px,0,0) rotateY(90deg)`,'border-radius:50%;background:#1B1840',side===sx?hub:'');
   }
 
-  /* the coin: a thick disc with a face on the front and a bitcoin mark on the back */
-  const CY=-296,CZ=-30,CR=64,CT=18;
-  plane(root,2*CR,2*CR,`translate3d(0,${CY}px,${CZ+CT/2}px)`,'',`<svg viewBox="-64 -64 128 128">
-    <circle r="64" fill="url(#c3-c)"/><circle r="55" fill="none" stroke="#F2A900" stroke-width="3" opacity=".6"/>
-    <g class="c3-look"><g class="c3-blink"><ellipse cx="-22" cy="-12" rx="8" ry="11" fill="#1B1840"/><ellipse cx="22" cy="-12" rx="8" ry="11" fill="#1B1840"/>
-    <circle cx="-19" cy="-17" r="3.2" fill="#fff"/><circle cx="25" cy="-17" r="3.2" fill="#fff"/></g></g>
-    <circle cx="-40" cy="10" r="10" fill="#FF6B93" opacity=".75"/><circle cx="40" cy="10" r="10" fill="#FF6B93" opacity=".75"/>
-    <path d="M-14 12Q-7 22 0 13Q7 22 14 12" fill="none" stroke="#1B1840" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`);
-  plane(root,2*CR,2*CR,`translate3d(0,${CY}px,${CZ-CT/2}px) rotateY(180deg)`,'',`<svg viewBox="-64 -64 128 128"><circle r="64" fill="#F2A900"/><circle r="50" fill="none" stroke="#FFCB3D" stroke-width="5"/>
-    <g fill="#FFCB3D"><rect x="-10" y="-36" width="6" height="72" rx="3"/><rect x="2" y="-36" width="6" height="72" rx="3"/><path d="M-20 -28H8Q26 -28 26 -15Q26 -3 12 -1Q30 1 30 14Q30 28 10 28H-20Z"/></g></svg>`);
-  wallsZ(root,circle(CR,20),CY,CZ,CT,'#F8B21A','#D58E00');
+  /* the driver: whoever you play as on the map, as a flat sticker of their head and shoulders. seatDriver() fills it in. */
+  plane(root,150,180,'translate3d(0,-316px,-30px)','','<svg id="c3-driver" viewBox="-30 -105 60 72" style="overflow:hidden"></svg>');
 
   /* steering wheel (a tilted ring), arms and hands, roll bar, side glass */
   for(let k=0;k<4;k++)plane(root,128,128,`translate3d(0,-236px,30px) rotateX(62deg) translateZ(${k*4-6}px)`,'','<svg viewBox="-64 -64 128 128"><circle r="55" fill="none" stroke="#1B1840" stroke-width="14"/></svg>'); // stacked rings, so it has some thickness
-  // Arms: each hangs from a shoulder on the coin's edge and reaches forward to the wheel. Arm and hand are crossed
-  // panels so they show from any side. The arm on the viewer's right swings up from its shoulder to wave.
+  // Arms: each hangs from a shoulder and reaches forward to the wheel. Arm and hand are crossed panels so they show
+  // from any side. The arm on the viewer's right swings up from its shoulder to wave.
   for(const sx of[-1,1]){
-    const arm=group(group(root,`translate3d(${sx*52}px,-262px,-21px)`));if(sx>0)arm.classList.add('c3-wave');
-    const dx=sx*2,dy=18,dz=57,L=Math.hypot(dx,dy,dz),aim=`translate3d(${dx/2}px,${dy/2}px,${dz/2}px) rotateY(${Math.atan2(-dz,dx)}rad) rotateZ(${Math.asin(dy/L)}rad)`;
-    for(const rx of[0,90])plane(arm,L,15,`${aim} rotateX(${rx}deg)`,'border-radius:7px;background:#F5A800');
-    for(const r of['','rotateY(90deg)','rotateX(90deg)'])plane(arm,36,36,`translate3d(${dx}px,${dy}px,${dz}px) ${r}`,'border-radius:50%;background:#FFB81F'); // three discs: round from every side
+    const arm=group(group(root,`translate3d(${sx*44}px,-258px,-24px)`));if(sx>0)arm.classList.add('c3-wave');
+    const dx=sx*10,dy=14,dz=60,L=Math.hypot(dx,dy,dz),aim=`translate3d(${dx/2}px,${dy/2}px,${dz/2}px) rotateY(${Math.atan2(-dz,dx)}rad) rotateZ(${Math.asin(dy/L)}rad)`;
+    for(const rx of[0,90])plane(arm,L,15,`${aim} rotateX(${rx}deg)`,'border-radius:7px;background:var(--sleeve)');
+    for(const r of['','rotateY(90deg)','rotateX(90deg)'])plane(arm,32,32,`translate3d(${dx}px,${dy}px,${dz}px) ${r}`,'border-radius:50%;background:var(--skin)'); // three discs: round from every side
   }
   plane(root,180,86,'translate3d(0,-262px,-96px)','','<svg viewBox="-90 -43 180 86"><path d="M-84 43V-18Q-84 -37 -66 -37H66Q84 -37 84 -18V43" fill="none" stroke="#1B1840" stroke-width="12" stroke-linecap="round"/></svg>');
   for(const sx of[-1,1]){
@@ -762,8 +787,15 @@ function buildCar(root){
   }
 }
 buildCar($('sc-pitch'));
+for(const id of['company','bank','home','friend'])$('sc-'+id).innerHTML=SetupMap.landmark(id); // the map's own buildings, in the scenery
+// Puts whoever you play as on the map behind the wheel. Called again whenever the first screen comes back.
+function seatDriver(){
+  const d=SetupMap.driver();$('c3-driver').innerHTML=d.svg;$('sc-say').textContent='“'+d.quote+'”';
+  $('car3d').style.setProperty('--sleeve',d.sleeve);$('car3d').style.setProperty('--skin',d.skin);
+}
 // One unit of the drawing in pixels, so the car layer can match the painted scene at any window size.
-new ResizeObserver(([e])=>{const r=e.contentRect;if(r.width)e.target.style.setProperty('--s',Math.max(r.width/1200,r.height/450))}).observe($('scene'));
+// "narrow" means the window shows too little of the drawing's width for the buildings at its sides to be in view.
+new ResizeObserver(([e])=>{const r=e.contentRect;if(!r.width)return;const s=Math.max(r.width/1200,r.height/450);e.target.style.setProperty('--s',s);e.target.classList.toggle('narrow',r.width/s<1100)}).observe($('scene'));
 /* ---------- landing entrance ---------- */
 // The car jumps in once per page load. A click or tap skips to the end. Skipped entirely under reduced motion.
 const calm=matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -773,9 +805,11 @@ function endIntro(){
   clearTimeout(introTimer);
   document.body.classList.remove('intro');
   if(performance.now()-introStart>1000)document.body.classList.add('landed'); // it did land, so let the dust drift away
+  runNotes();
 }
 // Plays on page load, and again whenever the player comes back to the first screen.
 function startIntro(){
+  seatDriver();
   if(calm)return;
   introStart=performance.now();clearTimeout(introTimer);
   document.body.classList.remove('landed');document.body.classList.add('intro');
@@ -783,11 +817,35 @@ function startIntro(){
   addEventListener('pointerdown',endIntro,{once:true});
 }
 startIntro();
-// Tap the car and it hops.
+// Tap the car and it hops, then sets off: the same as pressing "Get started".
 $('car3d').addEventListener('click',()=>{
-  const m=$('sc-mover');if(calm||m.classList.contains('hop')||document.body.classList.contains('leaving'))return;
-  m.classList.add('hop');setTimeout(()=>m.classList.remove('hop'),700);
+  const m=$('sc-mover'),start=()=>{const b=document.querySelector('.btn.cta[data-act="go"]');if(b)b.click()};
+  if(m.classList.contains('hop')||document.body.classList.contains('leaving'))return;
+  if(calm)return start();
+  m.classList.add('hop');setTimeout(()=>{m.classList.remove('hop');start()},700);
 });
+/* ---------- landing notes ---------- */
+// Pen arrows that name what is in the scene, and a speech bubble with something the driver really said. One shows at a
+// time, in turn, once the car has landed. [text, x, y, tilt, arrow from, bend, to, needs a wide window]
+const NOTES=[['You',452,226,-6,[486,214],[516,202],[540,226]],
+  ['Your home',214,446,-4,[196,458],[176,476],[150,484],1],
+  ['The bank',352,424,3,[332,434],[312,440],[292,456],1],
+  ['A friend’s place',1010,462,-3,[1052,474],[1078,478],[1098,498],1],
+  ['The exchange',952,356,4,[914,368],[890,366],[872,384],1]];
+$('sc-notes').innerHTML=NOTES.map(([t,x,y,r,a,b,c,wide])=>{
+  const ang=Math.atan2(c[1]-b[1],c[0]-b[0]),tip=d=>`${(c[0]-13*Math.cos(ang+d)).toFixed(1)} ${(c[1]-13*Math.sin(ang+d)).toFixed(1)}`;
+  return `<g class="sc-note"${wide?' data-wide="1"':''}><path pathLength="1" d="M${a[0]} ${a[1]}Q${b[0]} ${b[1]} ${c[0]} ${c[1]}M${tip(.5)}L${c[0]} ${c[1]}L${tip(-.5)}"/><text x="${x}" y="${y}" text-anchor="middle" transform="rotate(${r} ${x} ${y})">${t}</text></g>`}).join('');
+let noteTimer=0,noteI=-1;
+function nextNote(){
+  const c=document.body.classList,all=[...document.querySelectorAll('#scene .sc-note')];
+  all.forEach(n=>n.classList.remove('on'));
+  if(!c.contains('landing')||c.contains('intro')||c.contains('leaving')){noteI=-1;noteTimer=setTimeout(nextNote,800);return}
+  const fit=all.filter(n=>!(n.dataset.wide&&$('scene').classList.contains('narrow')));
+  noteI=(noteI+1)%fit.length;fit[noteI].classList.add('on');
+  noteTimer=setTimeout(nextNote,+fit[noteI].dataset.ms||3200);
+}
+function runNotes(){clearTimeout(noteTimer);noteI=-1;noteTimer=setTimeout(nextNote,700)}
+runNotes();
 // "Get started": the car drives off toward you, then the next screen opens. Returns false if there is nothing to play.
 function driveOff(then){
   const c=document.body.classList;

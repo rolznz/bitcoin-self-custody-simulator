@@ -3,7 +3,7 @@
   --primary:#5438F0; --on-primary:#FFFFFF; --base-bar:#A7A4CB;
   --k0:#FFB81F; --k1:#FF6B93; --k2:#19C29D; --k3:#9A82FF; --k4:#45A9FF; --tok-ink:#1B1840;
   --low:#17A865; --yel:#E0B400; --mid:#F07F00; --high:#EF5350; --shade:#000;
-  --sky:#8CCBFF; --sky2:#D4EEFF; --sun:#FFB81F; --cloud:#FFFFFF; --cloud2:#DDEEFF; --g1:#C6F06A; --g2:#3CC98C; --road1:#55507F; --road2:#2B2850; --bush:#2FA364; --bush2:#5CC66C; --bush3:#7FD877; --m1:#7FA6EA; --m2:#A9C4F4; --sea1:#56B6F0; --sea2:#C2E8FF; --wood:#C98A4B; --wood2:#9A6A3A; --bird:#3B4C7A; --night:0;
+  --sky:#8CCBFF; --sky2:#D4EEFF; --sun:#FFB81F; --cloud:#FFFFFF; --cloud2:#DDEEFF; --g1:#C6F06A; --g2:#3CC98C; --road1:#55507F; --road2:#2B2850; --bush:#2FA364; --bush2:#5CC66C; --bush3:#7FD877; --sea1:#56B6F0; --sea2:#C2E8FF; --wood:#C98A4B; --wood2:#9A6A3A; --bird:#3B4C7A; --night:0;
   --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
   --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
   box-sizing:border-box;
@@ -15,7 +15,7 @@
     --bg:#131129; --surface:#1E1B42; --soft:#28245A; --ink:#F1EFFF; --muted:#ACA8D8; --line:#37327A;
     --primary:#9C8AFF; --on-primary:#131129; --base-bar:#625E96;
     --low:#3DDC84; --yel:#FFE066; --mid:#FFA23D; --high:#FF6B6B; --shade:#fff;
-    --sky:#0C1030; --sky2:#1B2560; --sun:#EDEBFF; --cloud:#2C3478; --cloud2:#242B66; --g1:#1C8663; --g2:#0A4F44; --road1:#25224F; --road2:#0C0B22; --bush:#083F37; --bush2:#0D5647; --bush3:#136A56; --m1:#182058; --m2:#202A6A; --sea1:#16307A; --sea2:#1C3F8C; --wood:#5B4636; --wood2:#3E3026; --bird:#8E9AD0; --night:1;
+    --sky:#0C1030; --sky2:#1B2560; --sun:#EDEBFF; --cloud:#2C3478; --cloud2:#242B66; --g1:#1C8663; --g2:#0A4F44; --road1:#25224F; --road2:#0C0B22; --bush:#083F37; --bush2:#0D5647; --bush3:#136A56; --sea1:#16307A; --sea2:#1C3F8C; --wood:#5B4636; --wood2:#3E3026; --bird:#8E9AD0; --night:1;
   }
 }
 :root[data-theme="dark"]{
@@ -23,7 +23,7 @@
   --bg:#131129; --surface:#1E1B42; --soft:#28245A; --ink:#F1EFFF; --muted:#ACA8D8; --line:#37327A;
   --primary:#9C8AFF; --on-primary:#131129; --base-bar:#625E96;
   --low:#3DDC84; --yel:#FFE066; --mid:#FFA23D; --high:#FF6B6B; --shade:#fff;
-  --sky:#0C1030; --sky2:#1B2560; --sun:#EDEBFF; --cloud:#2C3478; --cloud2:#242B66; --g1:#1C8663; --g2:#0A4F44; --road1:#25224F; --road2:#0C0B22; --bush:#083F37; --bush2:#0D5647; --bush3:#136A56; --m1:#182058; --m2:#202A6A; --sea1:#16307A; --sea2:#1C3F8C; --wood:#5B4636; --wood2:#3E3026; --bird:#8E9AD0; --night:1;
+  --sky:#0C1030; --sky2:#1B2560; --sun:#EDEBFF; --cloud:#2C3478; --cloud2:#242B66; --g1:#1C8663; --g2:#0A4F44; --road1:#25224F; --road2:#0C0B22; --bush:#083F37; --bush2:#0D5647; --bush3:#136A56; --sea1:#16307A; --sea2:#1C3F8C; --wood:#5B4636; --wood2:#3E3026; --bird:#8E9AD0; --night:1;
 }
 *,*::before,*::after{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -201,20 +201,7 @@ details .fields{margin-top:8px}
 .lostbox{background:color-mix(in srgb,var(--high) 20%,var(--surface));border-radius:18px;padding:14px 16px;display:grid;gap:8px;justify-items:start}
 .receipt.warn{background:color-mix(in srgb,var(--mid) 26%,var(--surface))}
 /* disaster */
-.dctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
-/* Disaster menu: our own list instead of a native <select>, whose popup is too tall for the screen and covers the control. */
-.dmenu{position:relative;flex:1 1 170px;min-width:0;max-width:100%}
-.dmenu summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);font-size:.95rem}
-.dmenu summary::-webkit-details-marker{display:none}
-.dmenu summary::after{content:"▾";color:var(--muted)}
-.dlist{position:absolute;z-index:5;left:0;right:0;top:calc(100% + 4px);max-height:min(320px,50vh);overflow:auto;display:grid;gap:2px;padding:6px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgb(0 0 0/.18)}
-.dlist h4{margin:6px 8px 2px;font-family:var(--body);font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
-.dlist button{text-align:left;border:0;background:none;padding:7px 8px;border-radius:8px;cursor:pointer;font-size:.92rem}
-.dlist button:hover,.dlist button.on{background:var(--soft)}
-.dhead{display:flex;gap:10px;align-items:center;margin-top:16px;font-size:1.1rem}
-.dhead .emo{font-size:1.8rem;line-height:1}
 .dcmp{display:grid;gap:10px;margin-top:10px}
-.dcmp.two{grid-template-columns:1fr 1fr}
 .dres{border-radius:16px;padding:14px}
 .dres.bad{background:color-mix(in srgb,var(--high) 16%,var(--surface))}
 .dres.ok{background:color-mix(in srgb,var(--low) 18%,var(--surface))}
@@ -237,8 +224,6 @@ details .fields{margin-top:8px}
 .report div{display:flex;gap:8px;align-items:flex-start}
 
 /* stress matrix */
-.verdict{font-family:var(--display);font-weight:800;font-size:clamp(1.5rem,4vw,2.2rem);line-height:1.1}
-.deltas{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .mx{display:grid;gap:6px}
 .mx .head,.mx .ev{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:center}
 .mx .head{font-size:.85rem;color:var(--muted);font-weight:600;padding:0 12px}
@@ -325,6 +310,10 @@ body.mapscreen::before{background:#7EC8FF}
 .scoremore{border-top:2px solid var(--line);padding-top:14px}
 .scorefull.score .worry,.scorefull.score .note{display:block}.scorefull.score .effort{display:grid}
 .scorefull.score .meters{display:grid;grid-template-columns:1fr;gap:14px}
+/* the last screen: one big button to pass the game on */
+.finish{display:grid;gap:18px;justify-items:center;text-align:center;max-width:560px;margin:6vh auto 0}
+.finish .share{display:grid;gap:14px;justify-items:center;width:100%;padding:28px 20px}
+.finish .rowb{justify-content:center}
 .share a{color:var(--primary);font-weight:700;overflow-wrap:anywhere}
 .map text{font-family:var(--body);fill:#1B1840}
 .maptap{cursor:pointer}
@@ -433,6 +422,12 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
 /* which setup this map is, and (on the Build screen) the next recommended changes as tappable cards */
 .maplabel{position:absolute;left:14px;top:10px;background:#1B1840;color:#fff;font-family:var(--display);font-weight:700;font-size:.95rem;padding:6px 14px;border-radius:14px}
 .mapintro .maplabel{opacity:0}
+/* zoom and drag (see setMapView in ui.js). touch-action: the map handles its own drags and pinches. */
+.map{transform:translate(var(--mx,0px),var(--my,0px)) scale(var(--mk,1));touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.mapintro .map{transform:none;cursor:auto}
+.mapdrag .map,.mapdrag .maptap{cursor:grabbing}
+.mapreset{display:none;position:absolute;right:12px;top:10px;border:0;background:#1B1840;color:#fff;font-family:var(--display);font-weight:700;font-size:.95rem;padding:6px 14px;border-radius:14px;cursor:pointer}
+.mapmoved .mapcard:not(.mapintro) .mapreset{display:block}
 .mapcards{position:absolute;right:14px;bottom:80px;width:min(320px,calc(100% - 28px));display:grid;gap:8px} /* bottom right, over open sea beside the island */
 .mapcardtip{display:grid;gap:3px;text-align:left;background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:16px;box-shadow:0 4px 0 #1B1840;padding:10px 14px;font-size:.9rem;cursor:pointer;transition:transform .12s,box-shadow .12s}
 button.mapcardtip:hover{transform:translateY(-2px);box-shadow:0 6px 0 #1B1840}
@@ -488,6 +483,7 @@ body.landing{overflow-x:clip;background:linear-gradient(var(--sky),var(--sky2) 6
 .landing footer{position:relative;isolation:isolate;margin:0;padding:14px 0 16px;color:#F1EFFF}
 .landing footer::before{content:"";position:absolute;z-index:-1;top:-1px;bottom:0;left:calc(50% - 50vw);width:100vw;background:var(--road2)}
 .sc-night{opacity:var(--night)}.sc-day{opacity:calc(1 - var(--night))}
+.sc-far{filter:brightness(calc(1 - var(--night)*.6))} /* the map's buildings keep their own colours, so they are dimmed at night instead */
 /* ---------- landing car: flat panels in 3D, see buildCar() in ui.js ---------- */
 #scene{isolation:isolate}
 #scene .sc-front{z-index:2}
@@ -519,6 +515,16 @@ body.landing{overflow-x:clip;background:linear-gradient(var(--sky),var(--sky2) 6
 @keyframes sc-spin{to{transform:rotateX(-360deg)}}
 @keyframes sc-shadow{0%,70%{opacity:0;transform:scale(.5)}80%{opacity:.3;transform:scale(1)}84%{transform:scale(1.08)}100%{opacity:.3;transform:scale(1)}}
 @keyframes sc-dust{0%,79%{opacity:0;transform:scale(.2)}88%{opacity:1;transform:scale(1.2)}100%{opacity:1;transform:scale(1)}}
+/* ---------- landing: notes over the scene, one at a time (see NOTES in ui.js) ---------- */
+#scene .sc-notes{z-index:4}
+.sc-note{opacity:0;transition:opacity .3s}.sc-note.on{opacity:1}
+.intro .sc-note,.leaving .sc-note{opacity:0}
+.sc-notes path{fill:none;stroke:#F47B20;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:0}
+.sc-notes text{font:800 25px var(--display);fill:#1B1840;stroke:#fff;stroke-width:7px;stroke-linejoin:round;paint-order:stroke}
+/* the speech bubble grows up and to the right from beside the driver's head */
+#sc-say{position:absolute;z-index:4;left:calc(50% + var(--s,1)*46px);bottom:calc(var(--s,1)*404px);max-width:min(250px,calc(50vw - var(--s,1)*46px - 10px));padding:9px 13px;background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:18px;box-shadow:3px 4px 0 #1B1840;font:700 .9rem/1.25 var(--body);transform-origin:0 100%}
+#scene.narrow #sc-say{bottom:calc(var(--s,1)*364px);font-size:.8rem} /* on a phone it sits lower, clear of the text above */
+#sc-say::after{content:"";position:absolute;left:14px;bottom:-10px;width:14px;height:14px;background:#fff;border:solid #1B1840;border-width:0 3px 3px 0;transform:skewX(28deg) rotate(45deg)}
 /* ---------- landing: text ---------- */
 .scribble{position:relative;white-space:nowrap}
 .scribble svg{position:absolute;left:-2%;top:88%;width:104%;overflow:visible;pointer-events:none}
@@ -531,18 +537,19 @@ body.landing{overflow-x:clip;background:linear-gradient(var(--sky),var(--sky2) 6
 @media (prefers-reduced-motion:no-preference){
   .scribble path{animation:sc-draw .45s ease-out .35s both}.scribble path+path{animation-delay:.75s}
   .intro .scribble path{animation:none;stroke-dashoffset:1}
-  /* the car: engine running, a slow sway, the coin blinking, glancing about and waving now and then */
+  /* the car: engine running, a slow sway, the driver glancing about and waving now and then */
   body:not(.intro) #sc-pitch{animation:sc-bob .5s ease-in-out infinite alternate}
   body:not(.intro) #sc-yaw{animation:sc-sway 7s ease-in-out infinite alternate}
-  .c3-blink{transform-box:fill-box;transform-origin:center;animation:sc-blink 4.2s infinite}
-  .c3-look{animation:sc-look 11s ease-in-out infinite}
+  #c3-driver .maphead{transform-box:fill-box;transform-origin:50% 85%;animation:sc-look 11s ease-in-out infinite}
   body:not(.intro) #car3d .c3-wave{animation:sc-wave 9s ease-in-out 2.5s infinite}
   .landed .sc-dust{animation:sc-dust-away 1.8s ease-out both}
-  /* tap the car: a hop. Hover the button: it revs and the coin looks over. */
+  .sc-note.on path{animation:sc-draw .5s ease-out both}
+  #sc-say.on{animation:sc-pop .4s cubic-bezier(.3,1.6,.5,1) both}
+  /* tap the car: a hop, then it sets off. Hover the button: it revs and the driver looks over. */
   #sc-mover.hop{animation:sc-hop .7s both}
   #sc-mover.hop .sc-spin,body:has(.cta:hover) #car3d .sc-spin,.leaving #car3d .sc-spin{animation:sc-spin .4s linear infinite}
   body:has(.cta:hover):not(.intro) #sc-pitch{animation-duration:.14s}
-  body:has(.cta:hover) .c3-look{animation:none;transform:translate(-7px,-3px)}
+  body:has(.cta:hover) #c3-driver .maphead{animation:none;transform:rotate(-9deg)}
   /* "Get started": it drives off toward you */
   .leaving #sc-mover{animation:sc-leave .62s cubic-bezier(.5,0,.9,.4) both}
   .leaving .stage>*{opacity:0;transform:translateY(-10px)}
@@ -557,11 +564,11 @@ body.landing{overflow-x:clip;background:linear-gradient(var(--sky),var(--sky2) 6
   .sc-tuft{animation:sc-lean 3.2s ease-in-out var(--t,0s) infinite alternate;--lean:5deg}
   .sc-flap{transform-box:fill-box;transform-origin:center;animation:sc-flap .5s ease-in-out var(--t,0s) infinite alternate}
 }
+@keyframes sc-pop{from{transform:scale(.4)}to{transform:scale(1)}}
 @keyframes sc-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
 @keyframes sc-bob{from{transform:translateY(0)}to{transform:translateY(-3px)}}
 @keyframes sc-sway{from{transform:rotateY(-4deg)}to{transform:rotateY(4deg)}}
-@keyframes sc-blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
-@keyframes sc-look{0%,38%,62%,88%,100%{transform:translate(0,0)}44%,56%{transform:translate(-6px,1px)}68%,82%{transform:translate(6px,-1px)}}
+@keyframes sc-look{0%,38%,62%,88%,100%{transform:rotate(0deg)}44%,56%{transform:rotate(-6deg)}68%,82%{transform:rotate(6deg)}}
 @keyframes sc-wave{0%,62%,100%{transform:rotateZ(0deg) rotateX(0deg)}68%{transform:rotateZ(20deg) rotateX(107deg)}73%{transform:rotateZ(36deg) rotateX(107deg)}78%{transform:rotateZ(8deg) rotateX(107deg)}83%{transform:rotateZ(36deg) rotateX(107deg)}88%{transform:rotateZ(8deg) rotateX(107deg)}93%{transform:rotateZ(20deg) rotateX(107deg)}}
 @keyframes sc-dust-away{from{opacity:1;transform:scale(1)}to{opacity:0;transform:translate(calc(var(--dx)*46px),-14px) scale(1.5)}}
 @keyframes sc-hop{0%,100%{transform:translate(0px,-104px) scale(.8)}40%{transform:translate(0px,-172px) scale(.78,.82);animation-timing-function:cubic-bezier(.5,0,.9,.5)}66%{transform:translate(0px,-104px) scale(.8)}76%{transform:translate(0px,-104px) scale(.85,.73)}88%{transform:translate(0px,-104px) scale(.785,.82)}}

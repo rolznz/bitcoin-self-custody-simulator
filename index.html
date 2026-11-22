@@ -464,7 +464,8 @@ button.mapcardtip:active{transform:translateY(3px);box-shadow:0 1px 0 #1B1840}
 .mrbody{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-top:2px}
 .mrbody>span:first-child{line-height:1.35}
 .mapresult .runs{display:block;color:#5A5688;font-weight:700;font-size:.84rem;margin-top:2px}
-.mrstamp{flex:none;font-family:var(--display);font-weight:800;font-size:1.02rem;line-height:1;text-transform:uppercase;letter-spacing:.06em;text-align:center;max-width:6.5em;padding:7px 9px;border:3px solid;border-radius:9px;transform:rotate(-9deg);animation:mrstamp .3s 2.6s cubic-bezier(.2,1.2,.4,1) both}
+.mrstamp{pointer-events:none;flex:none;font-family:var(--display);font-weight:800;font-size:1.02rem;line-height:1;text-transform:uppercase;letter-spacing:.06em;text-align:center;max-width:6.5em;padding:7px 9px;border:3px solid;border-radius:9px;transform:rotate(-9deg);animation:mrstamp .3s 2.6s cubic-bezier(.2,1.2,.4,1) both}
+.mapresult.seen .mrstamp{animation:none} /* turned over and back: the stamp has been seen. pointer-events: while it waits to land it is invisible and oversized, and must not sit on top of the × */
 .mapresult.bad .mrstamp{color:#D7263D;background:#FFF1F1}.mapresult.ok .mrstamp{color:#12924F;background:#EEFBF3}
 .mrbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
 .mrbtn{border:2.5px solid #1B1840;border-radius:99px;background:#fff;color:#1B1840;box-shadow:0 3px 0 #1B1840;font:700 .9rem/1 var(--body);padding:8px 13px;cursor:pointer;transition:transform .12s,box-shadow .12s}
@@ -2419,7 +2420,7 @@ document.addEventListener('click',ev=>{
   if(a==='helpMore')S.helpMore=!S.helpMore;
   if(a==='scores'){S.scoresOpen=!S.scoresOpen;S.scoresMore=false}
   if(a==='scoresMore'){S.scoresMore=!S.scoresMore;S.how=S.step===2?'mine':'base'} // the explanation opens further down the same dialog
-  if(a==='mapWhy'){b.closest('.mapresult').classList.toggle('why');return} // turn the result card over; no redraw, so the disaster doesn't replay
+  if(a==='mapWhy'){const c=b.closest('.mapresult').classList;c.toggle('why');c.add('seen');return} // turn the result card over; no redraw, so the disaster doesn't replay, and once turned the stamp doesn't thump down again
   if(a==='mapStop'){ // "Do it" on the turned-over card, on the Build map: make the change that would have stopped this disaster
     const t=S.mapDis&&stoppers(S.mine,S.mapDis.ev,S.mapDis.kind,true)[+b.dataset.i];
     if(t){S.mine=clone(t.setup);S.picked.mine=true;S.w.report=null;changed('mine');S.mapDis=S.run=null}

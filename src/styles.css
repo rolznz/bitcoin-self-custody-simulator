@@ -278,32 +278,13 @@ body.mapscreen::before{background:#7EC8FF}
 .mapscreen .wrap{padding-bottom:0}
 .mapcard{position:relative;flex:1;min-height:440px;width:100vw;margin:0 0 0 calc(50% - 50vw);overflow:hidden}
 .map{position:absolute;inset:8px 0 64px;width:100%;height:calc(100% - 72px);display:block}
-.mapscore{position:absolute;left:14px;bottom:14px;display:flex;gap:14px;align-items:center;height:48px;padding:0 16px;border-radius:24px;border:3px solid #1B1840;background:#fff;color:#1B1840;box-shadow:0 4px 0 #1B1840;font-size:.9rem;cursor:pointer;transition:transform .12s,box-shadow .12s}
-.mapscore:hover{transform:translateY(-2px);box-shadow:0 6px 0 #1B1840}
 /* the same two risks inside the edit dialog, above "Done": they change as you edit, and open the scoreboard */
 .riskline{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:center;min-height:44px;padding:6px 16px;border-radius:22px;border:2px solid var(--line,#D9D6EE);background:var(--soft);color:inherit;font:inherit;font-size:.9rem;cursor:pointer}
 .riskline span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .riskline i{width:12px;height:12px;border-radius:50%}
-.mapscore span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
-.mapscore i{width:12px;height:12px;border-radius:50%}
-/* Build screen: two rows, Before and Now. When a change moves the scores, the Now row plays old to new: the dot swells
-   and changes colour, the old word and number slide out, the new ones slide in, and the chip glows for a moment. */
-.mapscore.rows{display:grid;grid-template-columns:auto auto auto;gap:3px 14px;height:auto;padding:8px 18px;border-radius:22px;text-align:left}
-.mapscore.rows small{font-weight:700;color:#5A5688;font-size:.78rem}
-.swap{display:inline-grid}.swap em{grid-area:1/1;font-style:normal;white-space:nowrap}
-.chg .swap em:first-child{opacity:0;animation:chgout .5s 1s both}
-.chg .swap em:last-child{animation:chgin .5s 1.25s both}
-.chg i{animation:chgdot 1.1s .8s both}
-.mapscore.changing{animation:chgglow 3s both}
-@keyframes chgout{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-9px)}}
-@keyframes chgin{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
-@keyframes chgdot{from{background:var(--a);transform:scale(1)}50%{transform:scale(1.9)}to{background:var(--b);transform:scale(1)}}
-@keyframes chgglow{0%,100%{box-shadow:0 4px 0 #1B1840}12%,70%{box-shadow:0 4px 0 #1B1840,0 0 0 7px #FFD84D}}
-@media (prefers-reduced-motion:reduce){.chg .swap em,.chg i,.mapscore.changing{animation:none}}
 @media (max-width:760px){
   .mapcard{min-height:520px}
   .map{inset:4px 0 132px;height:calc(100% - 136px)}
-  .mapscore{left:10px;right:10px;bottom:72px;justify-content:center}
 }
 /* the full scoreboard inside its dialog: undo the sticky side panel and the narrow-screen summary */
 .scorefull.score{position:static;order:0;margin:0;padding:0;border-radius:0;box-shadow:none;background:none;display:grid;gap:14px}
@@ -342,7 +323,6 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
 .mapline .pen{animation:sc-draw .32s ease-out both}.mapline .pen.head{animation:sc-head .16s ease-out .3s both}
 .mapintro .mapstep.in{opacity:1;animation:mapin .5s both}
 .mapintro .mapstep.in.was{animation:none} /* already there before a redraw: no second entrance */
-.mapfresh .maptool{animation:mapin .5s both}.mapfresh .maptool+.maptool{animation-delay:.12s}
 .mapcap{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);max-width:calc(100% - 24px);background:#1B1840;color:#fff;font-family:var(--display);font-weight:700;font-size:1.15rem;padding:10px 18px;border-radius:16px;border:0;text-align:center;opacity:0;cursor:pointer}
 .mapintro{cursor:pointer}
 /* the caption is a bar: back arrow (from the second step on), the words, and the arrow that continues */
@@ -356,23 +336,34 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
 .mapcap.up{bottom:112px}
 /* the way forward is filled in and set a little apart from the two things to do on this screen */
 .maptool.next{background:var(--primary);color:var(--on-primary);padding:0 16px;margin-left:8px}
-@media (max-width:760px){ /* phones: Edit is a round icon in the top right corner; at the bottom, the score chip, then "Try a disaster" beside the way forward */
+@media (max-width:760px){ /* phones, Today: Edit is a round icon in the top right corner; at the bottom, "Try a disaster" beside the way forward */
   .maptools{position:static} /* so each button places itself on the map card */
   .maptool{position:absolute;font-size:.86rem}
   .maptool[data-act="simBase"],.maptool.next{bottom:14px;width:calc(50% - 14px);margin:0;padding:0 8px}
   .maptool[data-act="simBase"]{left:10px}.maptool.next{right:10px}
   .maptool[data-act="editBase"]{right:10px;top:10px;width:48px;padding:0;gap:0;font-size:0} /* the icon alone; the name is still its label */
-  .mapscore{bottom:76px}
-  .map{inset:4px 0 134px;height:calc(100% - 138px)}
+  .map{inset:4px 0 76px;height:calc(100% - 80px)}
   .mapcard{min-height:520px}
   .mapcap{bottom:14px;font-size:1rem;width:calc(100% - 24px)}
   .mapcap.up{bottom:102px}
-  /* Today has no risk chip, so everything above the buttons sits one row lower and the map gets the room */
-  .mapcard:not(:has(.mapscore)) .map{inset:4px 0 76px;height:calc(100% - 80px)}
-  .mapcard:not(:has(.mapscore)) .mapresult,.mapcard:not(:has(.mapscore)) .mapcards{bottom:80px}
+  /* phones, Build: the two ways to build are the bottom row, labelled. Once there is a way forward (.fwd) it takes the
+     bottom row to itself and they move up one. "Try a disaster" is the round icon in the corner here. */
+  .mapcard.build .maptool[data-act="suggest"],.mapcard.build .maptool[data-act="editBase"]{top:auto;bottom:14px;width:calc(50% - 14px);padding:0 8px;gap:6px;font-size:.86rem}
+  .mapcard.build .maptool[data-act="suggest"]{left:10px}.mapcard.build .maptool[data-act="editBase"]{right:10px}
+  .mapcard.build.fwd .maptool[data-act="suggest"],.mapcard.build.fwd .maptool[data-act="editBase"]{bottom:72px}
+  .mapcard.build .maptool.next{left:10px;right:10px;width:auto}
+  .mapcard.build .maptool[data-act="simBase"]{left:auto;right:10px;top:10px;bottom:auto;width:48px;padding:0;gap:0;font-size:0}
+  .mapcard.build.fwd .map{inset:4px 0 134px;height:calc(100% - 138px)}
 }
 @keyframes mapin{0%{opacity:0;transform:translateY(-34px) scale(.6)}60%{opacity:1;transform:translateY(3px) scale(1.06)}100%{opacity:1;transform:none}}
 @keyframes mapcap{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%)}}
+/* Build, wider screens: "Try a disaster" is the round icon in the top right corner, as it is on a phone. The row of
+   buttons is stretched to the top of the card so the icon can sit there; the stretched box lets clicks through to the map. */
+@media (min-width:761px){
+  .mapcard.build .maptools{top:10px;align-items:flex-end;pointer-events:none}
+  .mapcard.build .maptool{pointer-events:auto}
+  .mapcard.build .maptool[data-act="simBase"]{position:absolute;top:0;right:0;width:48px;padding:0;gap:0;font-size:0}
+}
 .maptool:hover{transform:translateY(-2px);box-shadow:0 6px 0 #1B1840}
 .maptool:active,.maptool[aria-pressed="true"]{transform:translateY(3px);box-shadow:0 1px 0 #1B1840;background:#FFD84D}
 #mapitem{width:auto;min-width:min(260px,calc(100vw - 24px));max-width:min(340px,calc(100vw - 24px));border-radius:18px;overflow:visible}
@@ -437,12 +428,17 @@ button.mapcardtip:hover{transform:translateY(-2px);box-shadow:0 6px 0 #1B1840}
 button.mapcardtip:active{transform:translateY(3px);box-shadow:0 1px 0 #1B1840}
 .mapcardtip small{font-weight:700;color:#5A5688}.mapcardtip b{font-size:.98rem;line-height:1.25}.mapcardtip span{color:#5A5688;font-size:.84rem}
 .mapcardtip.done{cursor:default;background:#E3F6EA}
+/* the suggestions are a panel opened by "Suggest a step": a heading with a close button, then the steps */
+.mapcardshead{position:relative;display:flex;align-items:center;min-height:40px;padding:4px 48px 4px 14px;background:#1B1840;color:#fff;border-radius:16px;font-family:var(--display);font-size:1rem}
+.mapcardshead .mrx{right:3px;top:3px}
+/* Arriving on Build: what this screen is for, above the two ways to do it. It goes once the new setup differs. */
+.mapbanner{position:absolute;right:14px;bottom:80px;width:min(380px,calc(100% - 28px));display:grid;gap:3px;background:#1B1840;color:#fff;border-radius:16px;padding:12px 16px;text-align:center;pointer-events:none}
+.mapbanner b{font-family:var(--display);font-size:1.15rem}.mapbanner span{font-size:.9rem;opacity:.85}
 /* phones: the cards or the result sit between the map and the buttons, and the map moves up to make room */
 @media (max-width:760px){
-  .mapcards,.mapresult{bottom:140px;left:10px;right:10px;width:auto}
-  .mapscore.rows{justify-content:center;font-size:.84rem;padding:6px 12px;gap:2px 10px}
-  .mapcard:has(.mapscore.rows) .mapcards,.mapcard:has(.mapscore.rows) .mapresult{bottom:148px} /* the two-row chip is a little taller */
-  .mapcardtip{padding:7px 12px;gap:1px}.mapcardtip small{display:none}.mapcardtip b{font-size:.9rem}
+  .mapcards,.mapresult,.mapbanner{bottom:80px;left:10px;right:10px;width:auto}
+  .mapcard.build.fwd .mapcards,.mapcard.build.fwd .mapresult,.mapcard.build.fwd .mapbanner{bottom:138px} /* above both rows of buttons */
+  .mapcardtip{padding:7px 12px;gap:1px}.mapcardtip b{font-size:.9rem}
   .mapcard.lift{min-height:680px}
   .mapcard.lift .map{inset:44px 0 356px;height:calc(100% - 400px)}
 }
@@ -472,9 +468,14 @@ button.mapcardtip:active{transform:translateY(3px);box-shadow:0 1px 0 #1B1840}
 .mrdo strong{font-size:1rem;line-height:1.25}.mrdo span{color:#5A5688;font-size:.88rem;line-height:1.3}
 .mrdo small{font-weight:800;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#5A5688;margin-top:4px}
 .mrdo .mrbtn{margin-top:4px}
+.mapresult.change{animation-delay:.1s}.mapresult.change .mrbadge{font-size:1.6rem}
+.mapresult.change .mrface>b{font-size:1.1rem;padding-right:44px}
+.mrrisks{display:grid;gap:3px;font-size:.95rem}
+.mrrisks span{display:flex;align-items:center;gap:6px;white-space:nowrap}.mrrisks i{flex:none;width:12px;height:12px;border-radius:50%}.mrrisks small{color:#5A5688}
+.mapresult .mrrisks b{font:700 .95rem/1.3 var(--body);padding:0}
+@media (max-width:760px){.mapcard.build.fwd.lift .map{inset:44px 0 404px;height:calc(100% - 448px)}} /* two rows of buttons under the card */
 @keyframes mrstamp{from{opacity:0;transform:rotate(-20deg) scale(2.6)}to{opacity:1;transform:rotate(-9deg) scale(1)}}
 @keyframes mrturn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
-@media (max-width:760px){.mapresult{bottom:140px;left:10px;right:10px;width:auto}}
 @keyframes fxbar{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes fxdrop{from{transform:translateY(-340px);opacity:0}30%{opacity:1}to{transform:none;opacity:1}}
 @keyframes fxgone{to{opacity:0}}
@@ -492,7 +493,7 @@ button.mapcardtip:active{transform:translateY(3px);box-shadow:0 1px 0 #1B1840}
 /* reduced motion: no movement, just the end state (what was hit, marked, and the result) */
 @media (prefers-reduced-motion:reduce){
   /* the map's introduction still plays, step by step, without the movement: things, captions and arrows appear in place */
-  .mapintro .mapstep.in,.mapcap.in,.mapline .pen,.mapline .pen.head,.mapfresh .maptool{animation:none!important}
+  .mapintro .mapstep.in,.mapcap.in,.mapline .pen,.mapline .pen.head{animation:none!important}
   .fxdrop,.fxthief,.fxbolt,.fxsmoke,.fxpoof{display:none}
   .fxfire,.fxflame,.fxlock,.fxtime,.fxhand,.fxmark,.mapresult,.mrstamp,.fate-gone,.fate-taken,.fate-safe,.fate-hacked{animation:none!important;opacity:1}
   .fate-gone{filter:grayscale(1) brightness(.3);opacity:.45}.fate-taken{opacity:.15}.fate-hacked{filter:saturate(.5) brightness(.85)}

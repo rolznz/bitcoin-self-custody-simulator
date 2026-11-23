@@ -158,14 +158,12 @@ function setupList(s){
 function startFrom(){
   return `<div class="rowb"><span class="hint">Start from</span>${[['hot','Phone wallet'],['laptop','Laptop wallet'],['typical','Hardware wallet'],['exchange','Exchange'],['fintech','Payment app'],['bank','Bank or broker'],['etf','ETF'],['m23','2-of-3 on your own'],['prov','2-of-3 with a provider'],['prov5','3-of-5 with a provider']].map(([p,l])=>`<button class="btn ghost small" data-act="preset" data-w="base" data-p="${p}">${l}</button>`).join('')}</div>`;
 }
-let buildSeen=null; // the new setup's scores as last drawn on the Build screen, to notice when a change moves them
 function screenMap(which){
   // The map shows the setup. Its two buttons open the disaster panel and the edit form, each in a dialog (see render).
-  // The map fills the screen. On Build, a chip in one corner compares the risks before and now and opens the full
-  // scoreboard. Today has no chip: the introduction says the risk once, and the edit dialog shows it (see riskLine).
+  // The map fills the screen. Neither screen keeps the risks on show: Today's introduction says them once, Build
+  // shows how they moved after each change, and the edit dialog always has them (see riskLine), with the scoreboard.
   const tool=(attrs,on,icon,name,short)=>`<button class="maptool" ${attrs}${on==null?'':` aria-pressed="${on}"`} aria-label="${name}" title="${name}"><span aria-hidden="true">${icon}</span>${short}</button>`;
-  const intro=which==='base'&&S.mapIntro==='run',sc=scoreOf(S[which]),word={low:'Low',mid:'Medium',high:'High'};
-  const risk=(name,v)=>`<span><i style="background:${riskColor(v)}"></i>${name} <b>${word[level(v)]}</b></span>`;
+  const intro=which==='base'&&S.mapIntro==='run',word={low:'Low',mid:'Medium',high:'High'};
   // A disaster that can be shown on the map plays there, and its result is a bar over the map instead of a dialog.
   // Disasters stack up until the coins are gone or the player resets (see throwDisaster).
   const R=S.run,d=R&&S.mapDis,o=d&&d.res[0],over=R&&R.over;
@@ -188,26 +186,44 @@ function screenMap(which){
         <div class="mrbtns">${btn('mapWhy','← Back')}</div></div>`:''}</div>`:'';
   // The Build screen is the same map showing the new setup. Its chip compares each risk with the current setup's, and
   // while no disaster is playing it offers the model's next recommended changes as cards that apply with one tap.
-  const build=which==='mine',was=build?scoreOf(S.base):null;
-  // On the Build screen the chip has two rows, Before and Now, each with its own coloured dots. When a change moves the
-  // scores, the Now row plays from the old values to the new ones for about three seconds (see .chg in the CSS).
-  if(build){
-    if(buildSeen&&(buildSeen.theft!==sc.theft||buildSeen.loss!==sc.loss))S.chipAnim={from:buildSeen,until:Date.now()+3200};
-    buildSeen={theft:sc.theft,loss:sc.loss};
-  }
-  const moving=build&&S.chipAnim&&Date.now()<S.chipAnim.until?S.chipAnim.from:null;
-  const cell=(name,v,from)=>from!=null&&from!==v
-    ?`<span class="chg"><i style="background:${riskColor(v)};--a:${riskColor(from)};--b:${riskColor(v)}"></i>${name} <b class="swap"><em>${word[level(from)]} ${from}</em><em>${word[level(v)]} ${v}</em></b></span>`
-    :`<span><i style="background:${riskColor(v)}"></i>${name} <b>${word[level(v)]} ${v}</b></span>`;
-  const chip=build?`<small>Before</small>${cell('Theft',was.theft)}${cell('Loss',was.loss)}<small>Now</small>${cell('Theft',sc.theft,moving&&moving.theft)}${cell('Loss',sc.loss,moving&&moving.loss)}`
-    :risk('Theft risk',sc.theft)+risk('Loss risk',sc.loss);
-  const tips=build&&!fx?bestChanges(S.mine,true):null;
+  /* The Build screen is the same map showing the new setup, and it shows things only once they mean something.
+     - You arrive at a copy of the current setup, with a banner ("Now build your new setup.") and two ways to build:
+       "Suggest a step" opens the model's next recommended changes, a small one and a big one, which apply with one
+       tap; "Edit it myself" opens the edit form.
+     - After every change, by either route or from a disaster's "Do it", a card says once what changed and how the two
+       risks moved, and offers to test the new setup with a disaster (S.change; see noteChange).
+     - Once the new setup differs from the current one (or there is nothing left to suggest), the way forward appears,
+       "Try using it", and so does "Try a disaster". */
+  const build=which==='mine',built=build&&isBuilt();
+  const tips=build?bestChanges(S.mine,true):null,none=tips&&!tips.small&&!tips.big,fwd=!build||built||none;
   const tip=(k,title,x)=>x?`<button class="mapcardtip" data-act="mapApply" data-k="${k}"><small>${title}</small><b>${x.do}</b><span>Theft ${x.from.theft} → ${x.to.theft} · Loss ${x.from.loss} → ${x.to.loss}</span></button>`:'';
-  const cards=tips?`<div class="mapcards">${tip('small','💡 A small step',tips.small)}${tip('big','🏗️ A big step',tips.big)}${!tips.small&&!tips.big?'<div class="mapcardtip done"><b>Nothing more to suggest.</b><span>From here, every change trades one risk for another.</span></div>':''}</div>`:'';
+  const cards=build&&S.suggest&&!fx?`<div class="mapcards"><div class="mapcardshead"><b>${none?'💡 Suggestions':'💡 Pick a step'}</b><button type="button" class="mrx" data-act="suggest" aria-label="Close" title="Close">×</button></div>${tip('small','A small step',tips.small)}${tip('big','A big step',tips.big)}${none?'<div class="mapcardtip done"><b>Nothing more to suggest.</b><span>From here, every change trades one risk for another.</span></div>':''}</div>`:'';
+  const c=build&&!fx&&!cards?S.change:null;
+  const moved=(name,a,z)=>`<span><i style="background:${riskColor(z)}"></i>${name} <b>${a===z?`${word[level(z)]} ${z}`:`${word[level(a)]} ${a} → ${word[level(z)]} ${z}`}</b>${a===z?' <small>no change</small>':''}</span>`;
+  const change=c?`<div class="mapresult ok change" role="status"><span class="mrbadge" aria-hidden="true">✅</span><button type="button" class="mrx" data-act="changeDone" aria-label="Close" title="Close">×</button>
+      <div class="mrface"><b>${c.what||'You edited your setup.'}</b>
+        <div class="mrrisks">${moved('Theft risk',c.from.theft,c.to.theft)}${moved('Loss risk',c.from.loss,c.to.loss)}</div>
+        <div class="mrbtns">${btn('changeTest','🔥 Test it with a disaster','main')+btn('scores','📊 Compare with today')}</div></div></div>`:'';
+  const banner=build&&!built&&!fx&&!cards&&!change?`<div class="mapbanner" role="status"><b>Now build your new setup.</b><span>${none?'There is nothing to suggest for this one. You can still edit it yourself.':'Get a suggestion, or edit it yourself if you already know the setup you want.'}</span></div>`:'';
+  const tools=build
+    ?(built?tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster'):'')+tool('data-act="suggest"',!!S.suggest,'💡','Suggest a step','Suggest a step')+tool('data-act="editBase"',S.editBase,'✏️','Edit it myself','Edit it myself')
+    :tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster')+tool('data-act="editBase"',S.editBase,'✏️','Edit current setup','Edit current setup');
   return `<h2 class="sr">${build?'Build your new setup':'Your setup today'}</h2>
-  <div class="mapcard${intro?' mapintro':''}${result||cards?' lift':''}">${SetupMap.svg(S[which],fx)}${build?'<span class="maplabel">Your new setup</span>':''}${result}${cards}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
-    ${build?`<button class="mapscore${build?' rows':''}${moving?' changing':''}" data-act="scores" aria-label="${build?`Before: theft risk ${was.theft}, loss risk ${was.loss}. Now: theft risk ${sc.theft}, loss risk ${sc.loss}`:`Theft risk ${word[level(sc.theft)]}, loss risk ${word[level(sc.loss)]}`}. Open the scoreboard">${chip}</button>`:''}
-    <div class="maptools">${tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster')}${tool('data-act="editBase"',S.editBase,'✏️',build?'Edit new setup':'Edit current setup',build?'Edit new setup':'Edit current setup')}<button class="maptool next" data-act="go" data-to="${build?3:2}"><span aria-hidden="true">${build?'🧪':'🚀'}</span>${build?'Try using it →':'Improve it →'}</button></div></div>`;
+  <div class="mapcard${intro?' mapintro':''}${build?' build':''}${build&&fwd?' fwd':''}${result||cards||change?' lift':''}">${SetupMap.svg(S[which],fx)}${built?'<span class="maplabel">Your new setup</span>':''}${result}${cards}${change}${banner}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
+    <div class="maptools">${tools}${fwd?`<button class="maptool next" data-act="go" data-to="${build?3:2}"><span aria-hidden="true">${build?'🧪':'🚀'}</span>${build?'Try using it →':'Improve it →'}</button>`:''}</div></div>`;
+}
+// The new setup counts as built once it differs from the current one. "Tested" is about using it, not what it is.
+const sameSetup=(a,b)=>{const f=s=>JSON.stringify({...s,tested:0});return f(a)===f(b)};
+const isBuilt=()=>!!S.mine&&!sameSetup(S.mine,S.base);
+// Every change to the new setup on the Build map goes through here: do() makes it, and if the setup is different
+// afterwards, the "what changed" card is set to show the move from just before this change to just after it.
+function noteChange(what,make){
+  const before=clone(S.mine),from=scoreOf(S.mine);
+  make();
+  if(sameSetup(before,S.mine))return false;
+  const to=scoreOf(S.mine);
+  S.change={what,from:{theft:from.theft,loss:from.loss},to:{theft:to.theft,loss:to.loss}};S.suggest=false;
+  return true;
 }
 function screenToday(){return screenMap('base')}
 function screenBuild(){return screenMap('mine')}
@@ -410,7 +426,7 @@ function go(to){
   if(to===0&&S.step!==0)startIntro(); // coming back to the first screen replays the car's entrance
   if(to!==1&&S.mapIntro==='run')S.mapIntro='done'; // leaving the map (by "Improve it", say) ends its introduction
   const wasMap=S.step===1||S.step===2; // the map keeps its zoom between Today and Build, and starts afresh when you come to it from anywhere else
-  buildSeen=null;S.chipAnim=null; // arriving on the Build screen never animates the scores; only changes made there do
+  S.suggest=false;S.change=null; // arriving on a map screen: no suggestions panel open, and no "what changed" card left over
   S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.mapDis=S.run=null;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
   if((to===1||to===2)&&!wasMap)homeMapView();
   if(firstMap)runMapIntro();
@@ -509,7 +525,7 @@ function nextMapBeat(){
   S.mapIntro='done'; // show the finished map and its buttons
   const card=document.querySelector('.mapcard.mapintro');if(!card)return;
   card.querySelectorAll('.mapcap,.mapline').forEach(e=>e.remove());
-  card.classList.remove('mapintro');card.classList.add('mapfresh');
+  card.classList.remove('mapintro'); // every button was brought in by its own caption, so nothing makes a second entrance
 }
 function paintMapIntro(arriving){
   const card=document.querySelector('.mapcard.mapintro');if(!card||mapBeat<0)return;
@@ -635,15 +651,20 @@ document.addEventListener('click',ev=>{
   if(a==='go'){if(b.classList.contains('cta')&&driveOff(()=>go(+b.dataset.to)))return;return go(+b.dataset.to)}
   if(a==='reset'){reset();mapIntroSeen=false;startIntro();return go(0)} // "Start over" replays the car's entrance, and the map's onboarding when you next reach it
   if(a==='editBase'){ // editing the setup ends any run of disasters. On the Build screen the form starts from the setup as it stands.
-    S.editBase=!S.editBase;
-    if(S.editBase){S.mapDis=S.run=null;if(S.step===2)S.picked.mine=true}
+    if(S.editBase){editDone();render();return}
+    S.editBase=true;S.mapDis=S.run=null;S.suggest=false;
+    if(S.step===2){S.picked.mine=true;S.change=null;editFrom={setup:clone(S.mine),sc:scoreOf(S.mine)}}
   }
+  if(a==='suggest'){S.suggest=!S.suggest;S.change=null;S.mapDis=S.run=null} // the suggestions panel takes the place of whatever card was showing
+  if(a==='changeDone')S.change=null;
+  if(a==='changeTest'){S.change=null;throwDisaster(null)}
   // "Try a disaster" always throws a random one onto the map. Choosing a particular one comes afterwards, from the result.
   if(a==='simBase'||a==='mapAnother'){
     // During the introduction, pressing "Try a disaster" while its caption is showing does what the caption asked, so
     // the introduction moves on: once the disaster is put away, the next caption is waiting. It is the one exception to
     // "only the caption and empty map continue", because this caption is itself an instruction to press the button.
     if(a==='simBase'&&S.step===1&&S.mapIntro==='run'&&(introBeats()[mapBeat]||{}).point==='[data-act="simBase"]')mapBeat++;
+    S.change=null;S.suggest=false; // a disaster has the map to itself
     throwDisaster(null);
   }
   if(a==='simPick'){S.simBase=true;S.simList=true}
@@ -654,11 +675,11 @@ document.addEventListener('click',ev=>{
   if(a==='mapWhy'){const c=b.closest('.mapresult').classList;c.toggle('why');c.add('seen');return} // turn the result card over; no redraw, so the disaster doesn't replay, and once turned the stamp doesn't thump down again
   if(a==='mapStop'){ // "Do it" on the turned-over card, on the Build map: make the change that would have stopped this disaster
     const t=S.mapDis&&stoppers(S.mine,S.mapDis.ev,S.mapDis.kind,true)[+b.dataset.i];
-    if(t){S.mine=clone(t.setup);S.picked.mine=true;S.w.report=null;changed('mine');S.mapDis=S.run=null}
+    if(t){noteChange(t.do,()=>{S.mine=clone(t.setup)});S.picked.mine=true;S.w.report=null;changed('mine');S.mapDis=S.run=null}
   }
-  if(a==='mapApply'){ // a recommendation card on the Build map: apply it, and any run of disasters starts afresh
+  if(a==='mapApply'){ // a suggestion on the Build map: apply it, and any run of disasters starts afresh
     const t=bestChanges(S.mine,true)[b.dataset.k];
-    if(t){S.mine=clone(t.setup);S.picked.mine=true;S.w.report=null;changed('mine');S.mapDis=S.run=null}
+    if(t){noteChange(t.do,()=>{S.mine=clone(t.setup)});S.picked.mine=true;S.w.report=null;changed('mine');S.mapDis=S.run=null}
   }
   if(a==='share'){ // the phone's own share sheet where there is one; otherwise copy the link, which is also there to copy by hand
     const copy=()=>{try{navigator.clipboard.writeText(SHARE_URL).then(()=>{S.shared=true;render()},()=>{})}catch(e){}};
@@ -775,7 +796,18 @@ $('how').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.curren
 $('sim').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.currentTarget.close()});
 $('sim').addEventListener('close',()=>{if(S.simBase){S.simBase=false;render()}}); // Esc or a click outside
 $('edit').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.currentTarget.close()});
-$('edit').addEventListener('close',()=>{if(S.editBase){S.editBase=false;render()}});
+$('edit').addEventListener('close',()=>{if(S.editBase){editDone();render()}}); // Esc or a click outside
+// Closing the edit dialog, however it is closed. On the Build screen, one "what changed" card covers the whole visit
+// to the form: from the setup as it was when the form opened to the setup as it is now. Nothing changed, no card.
+let editFrom=null;
+function editDone(){
+  S.editBase=false;
+  if(S.step===2&&editFrom&&S.mine&&!sameSetup(editFrom.setup,S.mine)){
+    const to=scoreOf(S.mine);
+    S.change={what:null,from:{theft:editFrom.sc.theft,loss:editFrom.sc.loss},to:{theft:to.theft,loss:to.loss}};
+  }
+  editFrom=null;
+}
 $('scores').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.currentTarget.close()});
 $('scores').addEventListener('close',()=>{if(S.scoresOpen){S.scoresOpen=false;render()}});
 document.addEventListener('toggle',ev=>{const d=ev.target;if(d.dataset&&d.dataset.d)S.open[d.dataset.d]=d.open;},true);

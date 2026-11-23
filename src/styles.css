@@ -274,13 +274,16 @@ body.mapscreen::before{background:#7EC8FF}
 .mapscreen .wrap{min-height:100svh;display:flex;flex-direction:column}
 .mapscreen .grid{flex:1;display:flex;align-items:stretch}.mapscreen .score{display:none}
 .mapscreen .stage{flex:1;display:flex;flex-direction:column}
-.mapscreen footer{display:none} /* on this screen the footer's contents are behind the Help button on the map */
+.mapscreen footer{display:none} /* the map fills this screen; the footer is on the first screen and the later ones */
 .mapscreen .wrap{padding-bottom:0}
-#help p{margin:0}.helpgh{margin-left:auto;display:inline-flex} /* the same GitHub mark as the footer, at the right of the button row */
 .mapcard{position:relative;flex:1;min-height:440px;width:100vw;margin:0 0 0 calc(50% - 50vw);overflow:hidden}
 .map{position:absolute;inset:8px 0 64px;width:100%;height:calc(100% - 72px);display:block}
 .mapscore{position:absolute;left:14px;bottom:14px;display:flex;gap:14px;align-items:center;height:48px;padding:0 16px;border-radius:24px;border:3px solid #1B1840;background:#fff;color:#1B1840;box-shadow:0 4px 0 #1B1840;font-size:.9rem;cursor:pointer;transition:transform .12s,box-shadow .12s}
 .mapscore:hover{transform:translateY(-2px);box-shadow:0 6px 0 #1B1840}
+/* the same two risks inside the edit dialog, above "Done": they change as you edit, and open the scoreboard */
+.riskline{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:center;min-height:44px;padding:6px 16px;border-radius:22px;border:2px solid var(--line,#D9D6EE);background:var(--soft);color:inherit;font:inherit;font-size:.9rem;cursor:pointer}
+.riskline span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.riskline i{width:12px;height:12px;border-radius:50%}
 .mapscore span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .mapscore i{width:12px;height:12px;border-radius:50%}
 /* Build screen: two rows, Before and Now. When a change moves the scores, the Now row plays old to new: the dot swells
@@ -297,9 +300,6 @@ body.mapscreen::before{background:#7EC8FF}
 @keyframes chgdot{from{background:var(--a);transform:scale(1)}50%{transform:scale(1.9)}to{background:var(--b);transform:scale(1)}}
 @keyframes chgglow{0%,100%{box-shadow:0 4px 0 #1B1840}12%,70%{box-shadow:0 4px 0 #1B1840,0 0 0 7px #FFD84D}}
 @media (prefers-reduced-motion:reduce){.chg .swap em,.chg i,.mapscore.changing{animation:none}}
-.mapintro .mapscore{opacity:0;pointer-events:none}.mapfresh .mapscore:not(.in){animation:mapin .5s both}
-.mapintro .mapscore.in{opacity:1;pointer-events:auto} /* the introduction's last caption brings it in. It fades in where it stands, so the caption's arrow can be aimed at it straight away */
-.mapintro .mapscore{transition:opacity .3s}
 @media (max-width:760px){
   .mapcard{min-height:520px}
   .map{inset:4px 0 132px;height:calc(100% - 136px)}
@@ -356,16 +356,20 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
 .mapcap.up{bottom:112px}
 /* the way forward is filled in and set a little apart from the two things to do on this screen */
 .maptool.next{background:var(--primary);color:var(--on-primary);padding:0 16px;margin-left:8px}
-@media (max-width:760px){ /* phones: score chip, then the two tools side by side, then the way forward on its own row */
-  .maptools{left:10px;right:10px;justify-content:center;gap:8px;flex-wrap:wrap}
-  .maptool{flex:1;font-size:.86rem}.maptool.next{flex:1 1 60%;margin-left:0;order:3}
-  .maptool[data-act="help"]{flex:0 0 auto;order:2} /* Help shares the last row with the way forward */
-  .mapscore{bottom:132px}
-  .map{inset:4px 0 190px;height:calc(100% - 194px)}
-  .mapcard{min-height:560px}
+@media (max-width:760px){ /* phones: Edit is a round icon in the top right corner; at the bottom, the score chip, then "Try a disaster" beside the way forward */
+  .maptools{position:static} /* so each button places itself on the map card */
+  .maptool{position:absolute;font-size:.86rem}
+  .maptool[data-act="simBase"],.maptool.next{bottom:14px;width:calc(50% - 14px);margin:0;padding:0 8px}
+  .maptool[data-act="simBase"]{left:10px}.maptool.next{right:10px}
+  .maptool[data-act="editBase"]{right:10px;top:10px;width:48px;padding:0;gap:0;font-size:0} /* the icon alone; the name is still its label */
+  .mapscore{bottom:76px}
+  .map{inset:4px 0 134px;height:calc(100% - 138px)}
+  .mapcard{min-height:520px}
   .mapcap{bottom:14px;font-size:1rem;width:calc(100% - 24px)}
-  .mapcap.up{bottom:158px}
-  .mapcard:has(.mapscore.in) .mapcap.up{bottom:204px} /* the risk chip sits above the buttons here, so its caption goes above the chip */
+  .mapcap.up{bottom:102px}
+  /* Today has no risk chip, so everything above the buttons sits one row lower and the map gets the room */
+  .mapcard:not(:has(.mapscore)) .map{inset:4px 0 76px;height:calc(100% - 80px)}
+  .mapcard:not(:has(.mapscore)) .mapresult,.mapcard:not(:has(.mapscore)) .mapcards{bottom:80px}
 }
 @keyframes mapin{0%{opacity:0;transform:translateY(-34px) scale(.6)}60%{opacity:1;transform:translateY(3px) scale(1.06)}100%{opacity:1;transform:none}}
 @keyframes mapcap{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%)}}
@@ -427,8 +431,6 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
 .map{transform:translate(var(--mx,0px),var(--my,0px)) scale(var(--mk,1));touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
 .mapintro .map{cursor:pointer}
 .mapdrag .map,.mapdrag .maptap{cursor:grabbing}
-.mapreset{display:none;position:absolute;right:12px;top:10px;border:0;background:#1B1840;color:#fff;font-family:var(--display);font-weight:700;font-size:.95rem;padding:6px 14px;border-radius:14px;cursor:pointer}
-.mapmoved .mapcard:not(.mapintro) .mapreset{display:block}
 .mapcards{position:absolute;right:14px;bottom:80px;width:min(320px,calc(100% - 28px));display:grid;gap:8px} /* bottom right, over open sea beside the island */
 .mapcardtip{display:grid;gap:3px;text-align:left;background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:16px;box-shadow:0 4px 0 #1B1840;padding:10px 14px;font-size:.9rem;cursor:pointer;transition:transform .12s,box-shadow .12s}
 button.mapcardtip:hover{transform:translateY(-2px);box-shadow:0 6px 0 #1B1840}
@@ -437,9 +439,9 @@ button.mapcardtip:active{transform:translateY(3px);box-shadow:0 1px 0 #1B1840}
 .mapcardtip.done{cursor:default;background:#E3F6EA}
 /* phones: the cards or the result sit between the map and the buttons, and the map moves up to make room */
 @media (max-width:760px){
-  .mapcards,.mapresult{bottom:196px;left:10px;right:10px;width:auto}
+  .mapcards,.mapresult{bottom:140px;left:10px;right:10px;width:auto}
   .mapscore.rows{justify-content:center;font-size:.84rem;padding:6px 12px;gap:2px 10px}
-  .mapcard:has(.mapscore.rows) .mapcards,.mapcard:has(.mapscore.rows) .mapresult{bottom:204px} /* the two-row chip is a little taller */
+  .mapcard:has(.mapscore.rows) .mapcards,.mapcard:has(.mapscore.rows) .mapresult{bottom:148px} /* the two-row chip is a little taller */
   .mapcardtip{padding:7px 12px;gap:1px}.mapcardtip small{display:none}.mapcardtip b{font-size:.9rem}
   .mapcard.lift{min-height:680px}
   .mapcard.lift .map{inset:44px 0 356px;height:calc(100% - 400px)}
@@ -472,7 +474,7 @@ button.mapcardtip:active{transform:translateY(3px);box-shadow:0 1px 0 #1B1840}
 .mrdo .mrbtn{margin-top:4px}
 @keyframes mrstamp{from{opacity:0;transform:rotate(-20deg) scale(2.6)}to{opacity:1;transform:rotate(-9deg) scale(1)}}
 @keyframes mrturn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
-@media (max-width:760px){.mapresult{bottom:196px;left:10px;right:10px;width:auto}}
+@media (max-width:760px){.mapresult{bottom:140px;left:10px;right:10px;width:auto}}
 @keyframes fxbar{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes fxdrop{from{transform:translateY(-340px);opacity:0}30%{opacity:1}to{transform:none;opacity:1}}
 @keyframes fxgone{to{opacity:0}}
@@ -489,6 +491,8 @@ button.mapcardtip:active{transform:translateY(3px);box-shadow:0 1px 0 #1B1840}
 @keyframes fxhack{20%{transform:translateX(-5px) rotate(-5deg)}40%{transform:translateX(5px) rotate(5deg)}60%{transform:translateX(-4px) rotate(-3deg)}80%{transform:translateX(3px)}to{transform:none;filter:saturate(.5) brightness(.85)}}
 /* reduced motion: no movement, just the end state (what was hit, marked, and the result) */
 @media (prefers-reduced-motion:reduce){
+  /* the map's introduction still plays, step by step, without the movement: things, captions and arrows appear in place */
+  .mapintro .mapstep.in,.mapcap.in,.mapline .pen,.mapline .pen.head,.mapfresh .maptool{animation:none!important}
   .fxdrop,.fxthief,.fxbolt,.fxsmoke,.fxpoof{display:none}
   .fxfire,.fxflame,.fxlock,.fxtime,.fxhand,.fxmark,.mapresult,.mrstamp,.fate-gone,.fate-taken,.fate-safe,.fate-hacked{animation:none!important;opacity:1}
   .fate-gone{filter:grayscale(1) brightness(.3);opacity:.45}.fate-taken{opacity:.15}.fate-hacked{filter:saturate(.5) brightness(.85)}

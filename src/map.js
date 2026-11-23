@@ -292,7 +292,8 @@ const SetupMap=(()=>{
   const SAY={phone:'you have a bitcoin wallet on your phone',laptop:'you have a bitcoin wallet on your laptop',signer:'your key is on a hardware signer',login:'all you hold is a login',coins:'your coins are with a company',key:'a company holds one key',paper:'you wrote down the 12-word recovery phrase on a piece of paper',steel:'you stamped the 12-word recovery phrase into steel',note:'your passphrase is written down',file:'there is a copy of the wallet file'};
   const AT={'Home':' at home','Relative’s place':' at a relative’s place','Office':' at the office','Friend’s place':' at a friend’s place','Bank box':' in a bank box','Cloud':' in the cloud'};
   const ORDER=['coins','phone','laptop','signer','key','login','paper','steel','note','file'];
-  function beats(){
+  // lead: a sentence about the setup's risk, said just before the disaster button is introduced (ui.js writes it).
+  function beats(lead){
     const things=REG.map((t,i)=>({t,i})).filter(x=>x.t.t).sort((a,b)=>ORDER.indexOf(a.t.t)-ORDER.indexOf(b.t.t));
     const out=[{steps:['you'],text:'This is you. Tap yourself to be someone else.'}];
     if(things.length>3)out.push({steps:things.map(x=>'t'+x.i),text:'Let’s say this is your setup.'});
@@ -306,11 +307,10 @@ const SetupMap=(()=>{
       const device=out.findIndex(b=>b.steps.length===1&&REG[+b.steps[0].slice(1)]&&['phone','laptop','signer'].includes(REG[+b.steps[0].slice(1)].t));
       if(pin&&device>0)out.splice(device+1,0,beat);else out.push(beat);
     }
-    // the last four are about what is on the screen around the map, not things on it; "point" is what the caption's arrow leads to
-    out.push({steps:[],point:'[data-act="simBase"]',text:'🔥 Press “Try a disaster” to see what could go wrong.'});
+    // the last three are about the buttons around the map, not things on it; "point" is what the caption's arrow leads to
+    out.push({steps:[],point:'[data-act="simBase"]',text:'🔥 '+(lead?lead+' ':'')+'Press “Try a disaster” to see what could go wrong.'});
     out.push({steps:[],point:'[data-act="editBase"]',text:'✏️ You can edit your current setup at any time.'});
     out.push({steps:[],point:'.maptool.next',text:'🚀 When you’re ready, press “Improve it” to build a better one.'});
-    out.push({steps:[],point:'.mapscore',text:'📊 This is how risky your current setup is. Build a new one and you can compare the two.'});
     return out;
   }
 

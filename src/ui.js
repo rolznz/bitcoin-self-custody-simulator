@@ -161,7 +161,8 @@ function startFrom(){
 let buildSeen=null; // the new setup's scores as last drawn on the Build screen, to notice when a change moves them
 function screenMap(which){
   // The map shows the setup. Its two buttons open the disaster panel and the edit form, each in a dialog (see render).
-  // The map fills the screen. A chip in one corner gives the two risks in a word each and opens the full scoreboard.
+  // The map fills the screen. On Build, a chip in one corner compares the risks before and now and opens the full
+  // scoreboard. Today has no chip: the introduction says the risk once, and the edit dialog shows it (see riskLine).
   const tool=(attrs,on,icon,name,short)=>`<button class="maptool" ${attrs}${on==null?'':` aria-pressed="${on}"`} aria-label="${name}" title="${name}"><span aria-hidden="true">${icon}</span>${short}</button>`;
   const intro=which==='base'&&S.mapIntro==='run',sc=scoreOf(S[which]),word={low:'Low',mid:'Medium',high:'High'};
   const risk=(name,v)=>`<span><i style="background:${riskColor(v)}"></i>${name} <b>${word[level(v)]}</b></span>`;
@@ -179,7 +180,7 @@ function screenMap(which){
   const btn=(act,text,cls)=>`<button type="button" class="mrbtn${cls?' '+cls:''}" data-act="${act}">${text}</button>`;
   const fixrow=(x,i)=>`<div class="mrdo">${x.how==='big'?'<small>A bigger step</small>':i?'<small>Or</small>':''}<strong>${x.do}</strong><span>${x.why}</span>${which!=='mine'?'':x.later?'<span>You can do that in the next step, “Try using it”.</span>':`<button type="button" class="mrbtn main" data-act="mapStop" data-i="${i}">Do it</button>`}</div>`;
   const result=fx?`<div class="mapresult ${over?'bad':'ok'}" role="status"><span class="mrbadge" aria-hidden="true">${d.icon}</span><button type="button" class="mrx" data-act="mapDisDone" aria-label="Close" title="Close">×</button>
-      <div class="mrface"><b>${d.label}</b>${tagline(d.id)?`<i class="tagline">${tagline(d.id)}</i>`:''}
+      <div class="mrface"><b>${d.label}</b>${tagline(d.id,d.label)?`<i class="tagline">${tagline(d.id,d.label)}</i>`:''}
         <div class="mrbody"><span>${o.text}${over&&over.text?' '+over.text:''}${R.n?` <small class="runs">${over?`You had survived ${R.n}.`:`Survived ${R.n} in a row.`}</small>`:''}</span><span class="mrstamp">${over?over.verdict:'Coins safe'}</span></div>
         ${over?(fixes.length?`<div class="mrbtns">${btn('mapWhy','💡 How could I have stopped it?','main')}</div>`:''):`<div class="mrbtns">${btn('mapAnother','🎲 Another','main')+btn('simPick','Choose one…')}</div>`}</div>
       ${fixes.length?`<div class="mrfix"><b>💡 How to stop it</b>
@@ -204,9 +205,9 @@ function screenMap(which){
   const tip=(k,title,x)=>x?`<button class="mapcardtip" data-act="mapApply" data-k="${k}"><small>${title}</small><b>${x.do}</b><span>Theft ${x.from.theft} → ${x.to.theft} · Loss ${x.from.loss} → ${x.to.loss}</span></button>`:'';
   const cards=tips?`<div class="mapcards">${tip('small','💡 A small step',tips.small)}${tip('big','🏗️ A big step',tips.big)}${!tips.small&&!tips.big?'<div class="mapcardtip done"><b>Nothing more to suggest.</b><span>From here, every change trades one risk for another.</span></div>':''}</div>`:'';
   return `<h2 class="sr">${build?'Build your new setup':'Your setup today'}</h2>
-  <div class="mapcard${intro?' mapintro':''}${result||cards?' lift':''}">${SetupMap.svg(S[which],fx)}${build?'<span class="maplabel">Your new setup</span>':''}<button type="button" class="mapreset">Reset view</button>${result}${cards}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
-    <button class="mapscore${build?' rows':''}${moving?' changing':''}" data-act="scores" aria-label="${build?`Before: theft risk ${was.theft}, loss risk ${was.loss}. Now: theft risk ${sc.theft}, loss risk ${sc.loss}`:`Theft risk ${word[level(sc.theft)]}, loss risk ${word[level(sc.loss)]}`}. Open the scoreboard">${chip}</button>
-    <div class="maptools">${tool('data-act="help"',S.helpOpen,'❓','Help','Help')}${tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster')}${tool('data-act="editBase"',S.editBase,'✏️',build?'Edit new setup':'Edit current setup',build?'Edit new setup':'Edit current setup')}<button class="maptool next" data-act="go" data-to="${build?3:2}"><span aria-hidden="true">${build?'🧪':'🚀'}</span>${build?'Try using it →':'Improve it →'}</button></div></div>`;
+  <div class="mapcard${intro?' mapintro':''}${result||cards?' lift':''}">${SetupMap.svg(S[which],fx)}${build?'<span class="maplabel">Your new setup</span>':''}${result}${cards}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
+    ${build?`<button class="mapscore${build?' rows':''}${moving?' changing':''}" data-act="scores" aria-label="${build?`Before: theft risk ${was.theft}, loss risk ${was.loss}. Now: theft risk ${sc.theft}, loss risk ${sc.loss}`:`Theft risk ${word[level(sc.theft)]}, loss risk ${word[level(sc.loss)]}`}. Open the scoreboard">${chip}</button>`:''}
+    <div class="maptools">${tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster')}${tool('data-act="editBase"',S.editBase,'✏️',build?'Edit new setup':'Edit current setup',build?'Edit new setup':'Edit current setup')}<button class="maptool next" data-act="go" data-to="${build?3:2}"><span aria-hidden="true">${build?'🧪':'🚀'}</span>${build?'Try using it →':'Improve it →'}</button></div></div>`;
 }
 function screenToday(){return screenMap('base')}
 function screenBuild(){return screenMap('mine')}
@@ -383,7 +384,7 @@ function render(){
   const ed=$('edit');
   if(S.editBase&&onMap){
     const y=ed.scrollTop;
-    ed.innerHTML=`<div class="simbody"><div class="simhead"><span class="emo" aria-hidden="true">✏️</span><h3>${mw==='mine'?'Edit new setup':'Edit current setup'}</h3><button class="simx" data-act="editBase" aria-label="Close">×</button></div>${editor(mw)}<div><button class="btn" data-act="editBase">Done</button></div></div>`;
+    ed.innerHTML=`<div class="simbody"><div class="simhead"><span class="emo" aria-hidden="true">✏️</span><h3>${mw==='mine'?'Edit new setup':'Edit current setup'}</h3><button class="simx" data-act="editBase" aria-label="Close">×</button></div>${editor(mw)}${riskLine(S[mw])}<div><button class="btn" data-act="editBase">Done</button></div></div>`;
     if(!ed.open)ed.showModal();
     ed.scrollTop=y;
   }else if(ed.open)ed.close();
@@ -395,16 +396,6 @@ function render(){
       ${S.scoresMore?`<div class="scoremore">${howHTML()}</div>`:''}</div>`;
     if(!sb.open)sb.showModal();
   }else if(sb.open)sb.close();
-  // help, opened from the map: everything the footer says on the other screens
-  const hp=$('help');
-  if(S.helpOpen&&onMap){
-    hp.innerHTML=`<div class="simbody"><div class="simhead"><span class="emo" aria-hidden="true">❓</span><h3>Help</h3><button class="simx" data-act="help" aria-label="Close">×</button></div>
-      <p>Pretend coins only. Scores are rough estimates, not advice.</p>
-      <p><b>Never enter your seed or passphrase into any website.</b> This simulator will never ask for them.</p>
-      <div class="rowb"><button class="btn small ghost" data-act="helpMore" aria-expanded="${!!S.helpMore}">There is no perfect setup</button><button class="btn small ghost" data-act="reset">Start over</button><span class="helpgh">${document.querySelector('footer .gh').outerHTML}</span></div>
-      ${S.helpMore?`<div class="scoremore">${perfectHTML()}</div>`:''}</div>`;
-    if(!hp.open)hp.showModal();
-  }else if(hp.open)hp.close();
   document.body.classList.toggle('mapscreen',onMap);
   if(S.step===1&&S.mapIntro==='run')paintMapIntro(false); // the map was just redrawn mid-introduction: put it back as it was
   if(act&&$(act))$(act).focus();
@@ -413,14 +404,14 @@ function go(to){
   if(to>1&&!S.mine)S.mine=clone(S.base);
   // The map's introduction plays every time you arrive from the first screen, not only the first time: going back to Start
   // is starting again, so everything that happens the first time happens again, the fixed first disaster included.
-  const firstMap=to===1&&!calm&&(S.step===0||!mapIntroSeen);
+  const firstMap=to===1&&(S.step===0||!mapIntroSeen);
   if(firstMap){mapIntroSeen=true;S.mapIntro='run';mapBeat=-1;S.thrown=false}
   if(to===1&&S.step===0)SetupMap.fresh(); // and the first seed you open is the Rickroll again
   if(to===0&&S.step!==0)startIntro(); // coming back to the first screen replays the car's entrance
   if(to!==1&&S.mapIntro==='run')S.mapIntro='done'; // leaving the map (by "Improve it", say) ends its introduction
   const wasMap=S.step===1||S.step===2; // the map keeps its zoom between Today and Build, and starts afresh when you come to it from anywhere else
   buildSeen=null;S.chipAnim=null; // arriving on the Build screen never animates the scores; only changes made there do
-  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.helpOpen=false;S.mapDis=S.run=null;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
+  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.mapDis=S.run=null;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
   if((to===1||to===2)&&!wasMap)homeMapView();
   if(firstMap)runMapIntro();
 }
@@ -429,7 +420,7 @@ function go(to){
 // <body> rather than on the map, because the map is redrawn on every change of state and must come back as it was.
 // It works during the map's introduction too. There a click still means "continue", but a drag or a pinch is not a
 // click, and the caption's arrow is taken away while the map moves and drawn again once it has stopped.
-// "home" is the view the map starts in and "Reset view" returns to (see homeMapView).
+// "home" is the view the map starts in (see homeMapView). There is no button to return to it: a drag or a pinch does.
 const MV={k:1,x:0,y:0,home:true};
 let mapArrowTimer=0;
 function setMapView(k,x,y,home){
@@ -438,7 +429,6 @@ function setMapView(k,x,y,home){
   const lx=w*((k-1)/2+.3),ly=h*((k-1)/2+.3); // it can be dragged about a third of the way off, never out of sight
   Object.assign(MV,{k,x:Math.min(lx,Math.max(-lx,x)),y:Math.min(ly,Math.max(-ly,y)),home:!!home});
   const st=document.body.style;st.setProperty('--mk',MV.k);st.setProperty('--mx',MV.x+'px');st.setProperty('--my',MV.y+'px');
-  document.body.classList.toggle('mapmoved',!MV.home);
   if(S.mapIntro==='run'){const l=document.querySelector('.mapline');if(l)l.innerHTML='';clearTimeout(mapArrowTimer);mapArrowTimer=setTimeout(()=>aimMapArrow(0),250)}
 }
 // The whole island on a wide screen. A phone held upright is too narrow to show all of it at a size you can read, so
@@ -489,18 +479,33 @@ function zoomMapAt(px,py,k){
   addEventListener('pointerup',up);addEventListener('pointercancel',up);
   // the click that ends a drag must not open whatever was under the pointer
   addEventListener('click',ev=>{if(moved){moved=false;ev.stopPropagation();ev.preventDefault()}},true);
-  document.addEventListener('click',ev=>{if(ev.target.closest('.mapreset'))homeMapView()});
 }
 /* ---------- map introduction ---------- */
 // The first time the map is shown it builds itself: you, then each thing you own, with a caption for each.
-// Each caption waits for a click or tap, so nobody is rushed. It plays once per page load and never under reduced motion.
+// Each caption waits for a click or tap, so nobody is rushed. It plays for everyone, each time you arrive from the
+// first screen. Under reduced motion the steps, captions and clicks are all the same; only the movement is left out
+// (things appear in place and the arrow is simply there), because the introduction is how the map gets explained.
 // How far it has got is kept in mapBeat, not in the page, because the screen is redrawn on every change of state:
 // paintMapIntro() can rebuild the current moment on a freshly drawn map, so a redraw can never leave the map empty.
 let mapIntroSeen=false,mapBeat=-1;
+// The Today screen has no risk chip. The risk of the current setup is said once, in words, by the caption that
+// introduces "Try a disaster": one word when theft and loss are at the same level, both when they differ.
+const RISK_WORD={low:'low',mid:'medium',high:'high'};
+function riskSentence(){
+  const sc=scoreOf(S.base),t=RISK_WORD[level(sc.theft)],l=RISK_WORD[level(sc.loss)];
+  return 'With your current setup, your '+(t===l?`risk is ${t}.`:`theft risk is ${t} and your loss risk is ${l}.`);
+}
+const introBeats=()=>SetupMap.beats(riskSentence());
+// The two risks in a word each, as on the map's chip. In the edit dialog it sits above "Done" and opens the scoreboard.
+function riskLine(setup){
+  const sc=scoreOf(setup),word={low:'Low',mid:'Medium',high:'High'};
+  const one=(name,v)=>`<span><i style="background:${riskColor(v)}"></i>${name} <b>${word[level(v)]}</b></span>`;
+  return `<button type="button" class="riskline" data-act="scores" aria-label="Theft risk ${word[level(sc.theft)]}, loss risk ${word[level(sc.loss)]}. Open the scoreboard">${one('Theft risk',sc.theft)}${one('Loss risk',sc.loss)}</button>`;
+}
 function runMapIntro(){setTimeout(()=>{if(mapBeat<0)nextMapBeat()},350)}
 function nextMapBeat(){
   if(S.mapIntro!=='run')return;
-  if(++mapBeat<SetupMap.beats().length)return paintMapIntro(true);
+  if(++mapBeat<introBeats().length)return paintMapIntro(true);
   S.mapIntro='done'; // show the finished map and its buttons
   const card=document.querySelector('.mapcard.mapintro');if(!card)return;
   card.querySelectorAll('.mapcap,.mapline').forEach(e=>e.remove());
@@ -508,7 +513,7 @@ function nextMapBeat(){
 }
 function paintMapIntro(arriving){
   const card=document.querySelector('.mapcard.mapintro');if(!card||mapBeat<0)return;
-  const cap=card.querySelector('.mapcap'),line=card.querySelector('.mapline'),beats=SetupMap.beats(),b=beats[mapBeat],at=mapBeat;
+  const cap=card.querySelector('.mapcap'),line=card.querySelector('.mapline'),beats=introBeats(),b=beats[mapBeat],at=mapBeat;
   // everything up to now is on the map; only what belongs to the newest caption animates in
   beats.slice(0,mapBeat+1).forEach((x,n)=>card.querySelectorAll([...x.steps.map(s=>`[data-step="${s}"]`),x.point].filter(Boolean).join(',')).forEach(e=>{e.classList.add('in');e.classList.toggle('was',n<mapBeat||!arriving)}));
   cap.innerHTML=`${mapBeat?'<button type="button" class="mapback" aria-label="Back">◂</button>':''}<span>${esc(b.text)}</span><button type="button" class="mapnext" aria-label="Continue">▸</button>`;
@@ -528,7 +533,7 @@ function paintMapIntro(arriving){
 // The pen arrow from the caption to what it is talking about. Drawn afresh for each caption, and again whenever the map
 // has been dragged or zoomed, since the thing is then somewhere else on the screen.
 function aimMapArrow(delay){
-  const card=document.querySelector('.mapcard.mapintro'),at=mapBeat,b=SetupMap.beats()[at];if(!card||!b)return;
+  const card=document.querySelector('.mapcard.mapintro'),at=mapBeat,b=introBeats()[at];if(!card||!b)return;
   const cap=card.querySelector('.mapcap'),line=card.querySelector('.mapline'),target=card.querySelector(b.point||`[data-step="${b.steps[0]}"]`);
   line.innerHTML='';
   if(target)setTimeout(()=>{
@@ -539,7 +544,7 @@ function aimMapArrow(delay){
     // on its way down to a button the arrow must not run across another one (on a phone the buttons are in two rows):
     // if it would, it leaves the caption from wherever along its edge the way down is clear
     if(below){
-      const inWay=[...card.querySelectorAll('.maptool.in,.mapscore.in')].filter(e=>e!==target).map(e=>e.getBoundingClientRect()).filter(o=>o.top<t.top&&o.bottom>k.bottom);
+      const inWay=[...card.querySelectorAll('.maptool.in')].filter(e=>e!==target).map(e=>e.getBoundingClientRect()).filter(o=>o.top<t.top&&o.bottom>k.bottom);
       const clear=x=>!inWay.some(o=>x>o.left-10&&x<o.right+10);
       if(!clear(x1))for(let d=12;d<k.width;d+=12){const x=[x1+d,x1-d].find(x=>x>=k.left+24&&x<=k.right-24&&x>=t.left+24&&x<=t.right-24&&clear(x));if(x!=null){x1=x;break}}
     }
@@ -634,12 +639,16 @@ document.addEventListener('click',ev=>{
     if(S.editBase){S.mapDis=S.run=null;if(S.step===2)S.picked.mine=true}
   }
   // "Try a disaster" always throws a random one onto the map. Choosing a particular one comes afterwards, from the result.
-  if(a==='simBase'||a==='mapAnother')throwDisaster(null);
+  if(a==='simBase'||a==='mapAnother'){
+    // During the introduction, pressing "Try a disaster" while its caption is showing does what the caption asked, so
+    // the introduction moves on: once the disaster is put away, the next caption is waiting. It is the one exception to
+    // "only the caption and empty map continue", because this caption is itself an instruction to press the button.
+    if(a==='simBase'&&S.step===1&&S.mapIntro==='run'&&(introBeats()[mapBeat]||{}).point==='[data-act="simBase"]')mapBeat++;
+    throwDisaster(null);
+  }
   if(a==='simPick'){S.simBase=true;S.simList=true}
   if(a==='simClose')S.simBase=false;
   if(a==='mapDisDone'){S.mapDis=S.run=null;render();return} // Reset: the map as it was
-  if(a==='help'){S.helpOpen=!S.helpOpen;S.helpMore=false}
-  if(a==='helpMore')S.helpMore=!S.helpMore;
   if(a==='scores'){S.scoresOpen=!S.scoresOpen;S.scoresMore=false}
   if(a==='scoresMore'){S.scoresMore=!S.scoresMore;S.how=S.step===2?'mine':'base'} // the explanation opens further down the same dialog
   if(a==='mapWhy'){const c=b.closest('.mapresult').classList;c.toggle('why');c.add('seen');return} // turn the result card over; no redraw, so the disaster doesn't replay, and once turned the stamp doesn't thump down again
@@ -697,7 +706,7 @@ function changed(which){if(which==='base')S.dis=null}
 // never advice. Brand and supply-chain events have an id per brand, so those match on the start of the id.
 const TAGLINE={
   t_home:'They even took the kitchen sink.',t_office:'The cleaner found something interesting.',t_rel:'“I was just looking for the Wi-Fi password.”',t_friend:'“I was just looking for the Wi-Fi password.”',
-  t_bank:'An inside job.',t_carry:'Yoink.',t_hot:'You installed a fake wallet app.',t_cloud:'They said it would show up as ******* if you typed it.',
+  t_bank:'An inside job.',t_carry:'Yoink.',t_cloud:'They said it would show up as ******* if you typed it.',
   t_border:'Papers, please.',t_phish:'Your wallet urgently needs to be “validated”.',t_lapse:'You had one job.',
   t_guess:'correct horse battery staple',t_app:'It’s not a bug, it’s a feature.',t_brand:'It’s not a bug, it’s a feature.',t_supply:'It fell off the back of a truck.',
   t_prov:'“We take your security very seriously.”',t_provapp:'Automatic updates: what could go wrong?',t_prov2:'“We take your security very seriously.”',
@@ -707,7 +716,10 @@ const TAGLINE={
   l_prov:'It’s not you, it’s us.',l_prov2:'It’s not you, it’s us.',c_bust:'Assets are fine.',l_gov:'“We’re from the government and we’re here to help.”',l_bug:'Works on my machine.',
   l_time:'One does not simply remember twelve words.',
 };
-const tagline=id=>TAGLINE[id]||TAGLINE[Object.keys(TAGLINE).find(k=>id.startsWith(k))]||'';
+// Malware names the device it is on, taken from the disaster's own label. Phones keep apps apart, so for malware to
+// reach a wallet's key the system has to be behind on its updates; the same line is used for a laptop.
+const tagline=(id,label)=>id==='t_hot'?`You let your ${/phone or computer/.test(label)?'devices':/phone/.test(label)?'phone':'laptop'} get a bit too out of date.`
+  :TAGLINE[id]||TAGLINE[Object.keys(TAGLINE).find(k=>id.startsWith(k))]||'';
 /* ---------- a run of disasters on the map ---------- */
 // Disasters compound. S.run keeps: a working copy of the setup ("live") with whatever was destroyed or carried off
 // removed, so the model judges each new disaster against what is actually left; which keys thieves hold so far; what
@@ -766,8 +778,6 @@ $('edit').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.curre
 $('edit').addEventListener('close',()=>{if(S.editBase){S.editBase=false;render()}});
 $('scores').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.currentTarget.close()});
 $('scores').addEventListener('close',()=>{if(S.scoresOpen){S.scoresOpen=false;render()}});
-$('help').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.currentTarget.close()});
-$('help').addEventListener('close',()=>{if(S.helpOpen){S.helpOpen=false;render()}});
 document.addEventListener('toggle',ev=>{const d=ev.target;if(d.dataset&&d.dataset.d)S.open[d.dataset.d]=d.open;},true);
 document.addEventListener('input',ev=>{if(ev.target.id==='note'){S.note=ev.target.value}});
 render();

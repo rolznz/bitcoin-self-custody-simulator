@@ -209,7 +209,7 @@ function screenMap(which){
     ?(built?tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster'):'')+tool('data-act="suggest"',!!S.suggest,'💡','Suggest a step','Suggest a step')+tool('data-act="editBase"',S.editBase,'✏️','Edit it myself','Edit it myself')
     :tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster')+tool('data-act="editBase"',S.editBase,'✏️','Edit current setup','Edit current setup');
   return `<h2 class="sr">${build?'Build your new setup':'Your setup today'}</h2>
-  <div class="mapcard${intro?' mapintro':''}${build?' build':''}${build&&fwd?' fwd':''}${result||cards||change?' lift':''}">${SetupMap.svg(S[which],fx)}${built?'<span class="maplabel">Your new setup</span>':''}${result}${cards}${change}${banner}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
+  <div class="mapcard${intro?' mapintro':''}${build?' build':''}${build&&fwd?' fwd':''}${result||cards||change?' lift':''}${build&&buildArrive?' arrive'+(buildArrive==='short'?' short':''):''}">${SetupMap.svg(S[which],fx,build)}${build&&buildArrive==='full'?'<div class="bpwipe" aria-hidden="true"></div>':''}${built?'<span class="maplabel">Your new setup</span>':''}${result}${cards}${change}${banner}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
     <div class="maptools">${tools}${fwd?`<button class="maptool next" data-act="go" data-to="${build?3:2}"><span aria-hidden="true">${build?'🧪':'🚀'}</span>${build?'Try using it →':'Improve it →'}</button>`:''}</div></div>`;
 }
 // The new setup counts as built once it differs from the current one. "Tested" is about using it, not what it is.
@@ -259,7 +259,7 @@ function screenUse(){
     failed:[`Only the test was lost: ${btc(TEST)}. The rest is still in your old setup.`,btn('go','🔧 Fix it in Build',1,2)+btn('useReset','↺ Start again')],
   }[w.stage];
   return `<h2 class="sr">Use your new setup</h2>
-  <div class="mapcard use">${SetupMap.svg(st)}
+  <div class="mapcard use${useArrive?' arrive'+(useArrive==='short'?' short':''):''}">${SetupMap.svg(st)}${useArrive==='full'?'<div class="bpwipe gold" aria-hidden="true"></div>':''}
     <div class="usehud"><span class="usebal" id="use-old"><small>Old setup</small><b>${btc(w.old)}</b></span><i aria-hidden="true">→</i><span class="usebal new" id="use-new"><small>${cust?ACCT[st.type]:'New setup'}</small><b>${btc(w.vault)}</b></span></div>
     <div class="usecap" role="status">${w.note?`<b class="usenote${w.bad?' bad':''}">${w.note}</b>`:''}<span class="usetext">${text}</span><div class="mrbtns">${buttons}</div></div></div>`;
 }
@@ -574,7 +574,23 @@ function render(){
   if(S.step===1&&S.mapIntro==='run')paintMapIntro(false); // the map was just redrawn mid-introduction: put it back as it was
   if(act&&$(act))$(act).focus();
 }
-function go(to){
+/* Arriving on Build is a small show, so the change of screen is felt: a blueprint sweeps across the map, a crane goes
+   up beside you, a sign and cones pop in, a hard hat drops on your head, and the two ways to build come down on cables.
+   The full show plays the first time you go from Today to Build after Start; later arrivals get a quick version without
+   the sweep. The crane, sign and hat stay for as long as you are building, and pack up when you go on to "Use it".
+   buildArrive is only set for the one redraw that arrives, so later redraws don't replay any of it. All of it is
+   movement, so under reduced motion the site is simply there. */
+// Arriving on "Use it" from Build is the same kind of show, after the site has packed up: a band of gold coins sweeps
+// across the map, the two balance pills drop in, and the card comes up. From anywhere else it is the quick version.
+let buildArrive=null,useArrive=null;
+function go(to,now){
+  if(S.step===2&&to===3&&!now&&!calm){ // packing up the site before going on
+    const c=document.querySelector('.mapcard.build');
+    if(c){if(!c.classList.contains('leaving')){c.classList.add('leaving');setTimeout(()=>{if(S.step===2)go(3,true)},400)}return}
+  }
+  if(to===1&&S.step===0)S.buildSeen=false;
+  buildArrive=to===2&&S.step!==2?(S.step===1&&!S.buildSeen?'full':'short'):null;if(to===2)S.buildSeen=true;
+  useArrive=to===3&&S.step!==3?(S.step===2?'full':'short'):null;
   if(to>1&&!S.mine)S.mine=clone(S.base);
   // The map's introduction plays every time you arrive from the first screen, not only the first time: going back to Start
   // is starting again, so everything that happens the first time happens again, the fixed first disaster included.
@@ -587,7 +603,7 @@ function go(to){
   if(to!==1&&S.mapIntro==='run')S.mapIntro='done'; // leaving the map (by "Improve it", say) ends its introduction
   const wasMap=S.step>=1&&S.step<=3; // the map keeps its zoom between Today and Build, and starts afresh when you come to it from anywhere else
   S.suggest=false;S.change=null; // arriving on a map screen: no suggestions panel open, and no "what changed" card left over
-  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.mapDis=S.run=null;render();window.scrollTo({top:0});
+  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.mapDis=S.run=null;render();buildArrive=useArrive=null;window.scrollTo({top:0});
   if(to>=1&&to<=3&&!wasMap)homeMapView();
   if(firstMap)runMapIntro();
 }

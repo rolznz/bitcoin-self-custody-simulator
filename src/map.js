@@ -253,7 +253,26 @@ const SetupMap=(()=>{
       s+=`<g class="fxthief" style="--from:${h.you?-260:260}px"><g transform="translate(${x} ${y})"><ellipse cy="2" rx="22" ry="7" fill="#000" opacity=".2"/><path d="M-19 0Q-20 -31 -8 -47H8Q20 -31 19 0Z" fill="#2B2756"/><circle cy="-56" r="15" fill="#2B2756"/><rect x="-15" y="-62" width="30" height="10" rx="5" fill="#fff"/><circle cx="-6" cy="-57" r="2.6" fill="#1B1840"/><circle cx="6" cy="-57" r="2.6" fill="#1B1840"/><path d="M14 -30q16 -8 22 6q4 16 -10 20q-14 2 -16 -10z" fill="#C9A26B"/></g></g>`}
     return s;
   }
-  function svg(setup,fx){
+  /* The Build screen is a building site: a crane beside you with its hook over your head, a sign and two cones, and a
+     hard hat on whoever you are. Each part sits in a group that only places it, around a group the CSS can animate
+     (.bcrane, .bsign, .bcone, .bhat): they arrive when you come to Build and leave when you go on (see ui.js). */
+  const HI='#FFC533';
+  function site(){
+    const two=(d,w)=>`<path d="${d}" fill="none" stroke="${INK}" stroke-width="${w+3.5}" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${HI}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    let zig='M-7 0';for(let y=-19,n=1;y>=-190;y-=19,n++)zig+=`L${n%2?7:-7} ${y}`;
+    const crane=`<g transform="translate(214 444)"><ellipse cy="2" rx="22" ry="7" fill="#000" opacity=".18"/><g class="bcrane">
+      <path d="M0 -216L-36 -190M0 -216L86 -190" fill="none" stroke="${INK}" stroke-width="2.5"/>${two('M-7 0V-190M7 0V-190',3.5)}<path d="${zig}" fill="none" stroke="${INK}" stroke-width="2"/>
+      ${two('M-38 -190H88',4.5)}${two('M0 -190V-216',3)}<rect x="-44" y="-188" width="18" height="15" rx="2" fill="#5A5688" stroke="${INK}" stroke-width="2.5"/>
+      <rect x="-12" y="-14" width="24" height="14" rx="2" fill="#5A5688" stroke="${INK}" stroke-width="2.5"/>
+      <path d="M86 -190V-170" stroke="${INK}" stroke-width="2.2"/><path d="M86 -170q7 2 5 9q-3 6 -9 2" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"/></g></g>`;
+    const sign=`<g transform="translate(248 480)"><g class="bsign"><path d="M-15 0V-18M15 0V-18" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/>
+      <rect x="-25" y="-46" width="50" height="30" rx="5" fill="${HI}" stroke="${INK}" stroke-width="3"/><text x="0" y="-24" text-anchor="middle" font-size="19">🚧</text></g></g>`;
+    const cone=(x,y)=>`<g transform="translate(${x} ${y})"><g class="bcone"><path d="M-10 0H10L3 -22H-3Z" fill="#FF7A1A" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/><path d="M-6 -9H6" stroke="#fff" stroke-width="3.5"/><path d="M-13 0H13" stroke="${INK}" stroke-width="4" stroke-linecap="round"/></g></g>`;
+    return crane+sign+cone(392,494)+cone(424,486);
+  }
+  const hat=()=>`<g transform="translate(${YOU.x} ${YOU.y})"><g class="bhat"><path d="M-20 -92Q-21 -117 0 -117Q21 -117 20 -92Z" fill="${HI}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/><path d="M-5 -116Q0 -120 5 -116V-100H-5Z" fill="#FFDD77" stroke="${INK}" stroke-width="1.6"/><path d="M-26 -92H26" stroke="${INK}" stroke-width="6.5" stroke-linecap="round"/><path d="M-26 -92H26" stroke="${HI}" stroke-width="3" stroke-linecap="round"/></g></g>`;
+  // onSite: true on the Build screen, where the map is a building site
+  function svg(setup,fx,onSite){
     const S=describe(setup),B=[],T=[];REG=[];FX=fx||null; // buildings sorted back to front; tokens and labels on top so nothing hides them
     let paths='';const spots={}; // where each building stands, for aiming a disaster at it
     for(const [id,p] of Object.entries(SPOTS)){
@@ -265,7 +284,7 @@ const SetupMap=(()=>{
     }
     // you: whoever you are playing as, holding what you carry
     REG.push({spot:'you'});
-    let you=`<g class="mapstep maptap" data-i="${REG.length-1}" data-step="you"><title>You</title><ellipse cx="${YOU.x}" cy="${YOU.y+2}" rx="24" ry="8" fill="#000" opacity=".18"/><g class="mapchar" data-carry="${S.you.length?1:0}" transform="translate(${YOU.x} ${YOU.y})">${figure(WHO,S.you.length)}</g>`;
+    let you=`<g class="mapstep maptap" data-i="${REG.length-1}" data-step="you"><title>You</title><ellipse cx="${YOU.x}" cy="${YOU.y+2}" rx="24" ry="8" fill="#000" opacity=".18"/><g class="mapchar" data-carry="${S.you.length?1:0}" transform="translate(${YOU.x} ${YOU.y})">${figure(WHO,S.you.length)}</g>${onSite?hat():''}`;
     you+=label(YOU.x,YOU.y+22,'You')+'</g>'+row(YOU.x+42+(S.you.length-1)*17,YOU.y+2,S.you,'With you',.85);
     if(S.head.length){ // thought bubble: closed until clicked. It floats up and to the right of the big head.
       REG.push({head:S.head});
@@ -283,7 +302,7 @@ const SetupMap=(()=>{
       <defs><linearGradient id="map-grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C6F06A"/><stop offset="1" stop-color="#5FCF8A"/></linearGradient></defs>
       <path d="M40 60h30M720 300h36M700 480h44M30 470h28M610 30h24M22 250h20M560 520h30M330 36h30" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".55"/>
       <ellipse cx="350" cy="320" rx="322" ry="204" fill="#1B8E77"/><ellipse cx="350" cy="306" rx="322" ry="204" fill="#E9DDB0"/><ellipse cx="350" cy="302" rx="308" ry="192" fill="url(#map-grass)"/>
-      ${far}<g class="mapstep" data-step="end">${paths}</g>${B.map(b=>b[1]).join('')}${T.join('')}<g class="mapyou"><g class="mapbob">${you}</g></g>${cloud}${FX&&FX.ev?effects(target(spots)):''}
+      ${far}<g class="mapstep" data-step="end">${paths}</g>${B.map(b=>b[1]).join('')}${T.join('')}${onSite?site():''}<g class="mapyou"><g class="mapbob">${you}</g></g>${cloud}${FX&&FX.ev?effects(target(spots)):''}
     </svg>`;
   }
 

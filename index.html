@@ -350,6 +350,37 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
   .usecap{left:10px;right:10px;bottom:14px;width:auto}
 }
 @media (prefers-reduced-motion:reduce){.walking .mapbob,.usepop{animation:none!important}.mapglide .map,.mapfate{transition:none}}
+/* Arriving on Build (see go in ui.js). --bd scales every delay: 1 for the full show, less for the quick one. */
+.mapcard.arrive{--bd:1}.mapcard.arrive.short{--bd:.18}
+/* the blueprint: a slanted band of blue grid paper crosses the map, which shows through it as pale shapes */
+.bpwipe{position:absolute;inset:0;z-index:3;pointer-events:none;
+  background:linear-gradient(rgb(255 255 255/.4) 1.5px,transparent 1.5px) 0 0/28px 28px,linear-gradient(90deg,rgb(255 255 255/.4) 1.5px,transparent 1.5px) 0 0/28px 28px,rgb(24 84 214/.64);
+  -webkit-backdrop-filter:grayscale(1) contrast(1.6) brightness(1.5);backdrop-filter:grayscale(1) contrast(1.6) brightness(1.5);animation:bpwipe 1.15s ease-in-out both}
+@keyframes bpwipe{0%{clip-path:polygon(0 0,0 0,-40% 100%,-40% 100%)}42%,56%{clip-path:polygon(0 0,140% 0,100% 100%,-40% 100%)}100%{clip-path:polygon(140% 0,140% 0,100% 100%,100% 100%)}}
+.bcrane,.bsign,.bcone,.bhat{transform-box:fill-box;transform-origin:50% 100%}
+.arrive .bcrane{animation:bcrane .6s calc(var(--bd)*.5s) cubic-bezier(.3,1.4,.5,1) both}
+@keyframes bcrane{from{transform:scaleY(0);opacity:0}30%{opacity:1}to{transform:none}}
+.arrive .bsign,.arrive .bcone{animation:fxpop .45s calc(var(--bd)*.9s) both}
+.arrive .bhat{animation:bhat .55s calc(var(--bd)*1.1s) cubic-bezier(.3,1.5,.5,1) both}
+@keyframes bhat{from{transform:translateY(-150px);opacity:0}30%{opacity:1}to{transform:none}}
+.arrive .mapbanner{animation:fxbar .45s calc(var(--bd)*1.35s) both}
+/* the two ways to build come down on a cable, which goes once they have landed */
+.mapcard.build .maptool[data-act="suggest"]::before,.mapcard.build .maptool[data-act="editBase"]::before{content:"";position:absolute;left:50%;bottom:100%;width:3px;height:100vh;margin-left:-1.5px;background:#1B1840;opacity:0;pointer-events:none}
+.arrive .maptool[data-act="suggest"],.arrive .maptool[data-act="editBase"]{animation:bhook .7s calc(var(--bd)*1.45s) cubic-bezier(.3,1.25,.5,1) both}
+.arrive .maptool[data-act="editBase"]{animation-delay:calc(var(--bd)*1.62s)}
+.arrive .maptool[data-act="suggest"]::before,.arrive .maptool[data-act="editBase"]::before{animation:bcable 1.5s calc(var(--bd)*1.45s) both}
+@keyframes bhook{from{transform:translateY(-100vh)}to{transform:none}}
+@keyframes bcable{0%,65%{opacity:1}100%{opacity:0}}
+/* arriving on "Use it": the same sweep in gold, dotted with coins; then the pills drop in and the card comes up */
+.bpwipe.gold{background:radial-gradient(circle at 16px 16px,rgb(255 255 255/.6) 0 6px,transparent 7px) 0 0/32px 32px,rgb(247 147 26/.66)}
+.use.arrive .usebal,.use.arrive .usehud>i{animation:usedrop .5s calc(var(--bd)*.95s) cubic-bezier(.3,1.4,.5,1) both}
+.use.arrive .usehud>i{animation-delay:calc(var(--bd)*1.05s)}.use.arrive .usebal.new{animation-delay:calc(var(--bd)*1.15s)}
+@keyframes usedrop{from{transform:translateY(-90px);opacity:0}40%{opacity:1}to{transform:none}}
+.use.arrive .usecap{animation:fxbar .45s calc(var(--bd)*1.4s) both}
+/* going on to "Use it": the site packs up first */
+.leaving .bcrane,.leaving .bsign,.leaving .bcone,.leaving .bhat{animation:bgone .35s ease-in both}
+@keyframes bgone{to{opacity:0;transform:translateY(-34px) scale(.8)}}
+@media (prefers-reduced-motion:reduce){.bpwipe{display:none}.arrive .usebal,.arrive .usehud>i,.arrive .usecap,.arrive .bcrane,.arrive .bsign,.arrive .bcone,.arrive .bhat,.arrive .mapbanner,.arrive .maptool,.arrive .maptool::before{animation:none!important}}
 /* Share: the closing words over the sea, and under them the island with everybody dancing on it (SetupMap.party). */
 .party{flex:1;display:flex;flex-direction:column;width:100vw;margin-left:calc(50% - 50vw);overflow:hidden}
 .party .finish{margin:2vh auto 0;padding:0 16px;color:#1B1840}.party .finish .lede{color:#1B1840}
@@ -367,7 +398,7 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
    buttons is stretched to the top of the card so the icon can sit there; the stretched box lets clicks through to the map. */
 @media (min-width:761px){
   .mapcard.build .maptools{top:10px;align-items:flex-end;pointer-events:none}
-  .mapcard.build .maptool{pointer-events:auto}
+  .mapcard.build .maptool{pointer-events:auto;position:relative} /* relative: for the cable it arrives on */
   .mapcard.build .maptool[data-act="simBase"]{position:absolute;top:0;right:0;width:48px;padding:0;gap:0;font-size:0}
 }
 .maptool:hover{transform:translateY(-2px);box-shadow:0 6px 0 #1B1840}
@@ -1656,7 +1687,26 @@ const SetupMap=(()=>{
       s+=`<g class="fxthief" style="--from:${h.you?-260:260}px"><g transform="translate(${x} ${y})"><ellipse cy="2" rx="22" ry="7" fill="#000" opacity=".2"/><path d="M-19 0Q-20 -31 -8 -47H8Q20 -31 19 0Z" fill="#2B2756"/><circle cy="-56" r="15" fill="#2B2756"/><rect x="-15" y="-62" width="30" height="10" rx="5" fill="#fff"/><circle cx="-6" cy="-57" r="2.6" fill="#1B1840"/><circle cx="6" cy="-57" r="2.6" fill="#1B1840"/><path d="M14 -30q16 -8 22 6q4 16 -10 20q-14 2 -16 -10z" fill="#C9A26B"/></g></g>`}
     return s;
   }
-  function svg(setup,fx){
+  /* The Build screen is a building site: a crane beside you with its hook over your head, a sign and two cones, and a
+     hard hat on whoever you are. Each part sits in a group that only places it, around a group the CSS can animate
+     (.bcrane, .bsign, .bcone, .bhat): they arrive when you come to Build and leave when you go on (see ui.js). */
+  const HI='#FFC533';
+  function site(){
+    const two=(d,w)=>`<path d="${d}" fill="none" stroke="${INK}" stroke-width="${w+3.5}" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${HI}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    let zig='M-7 0';for(let y=-19,n=1;y>=-190;y-=19,n++)zig+=`L${n%2?7:-7} ${y}`;
+    const crane=`<g transform="translate(214 444)"><ellipse cy="2" rx="22" ry="7" fill="#000" opacity=".18"/><g class="bcrane">
+      <path d="M0 -216L-36 -190M0 -216L86 -190" fill="none" stroke="${INK}" stroke-width="2.5"/>${two('M-7 0V-190M7 0V-190',3.5)}<path d="${zig}" fill="none" stroke="${INK}" stroke-width="2"/>
+      ${two('M-38 -190H88',4.5)}${two('M0 -190V-216',3)}<rect x="-44" y="-188" width="18" height="15" rx="2" fill="#5A5688" stroke="${INK}" stroke-width="2.5"/>
+      <rect x="-12" y="-14" width="24" height="14" rx="2" fill="#5A5688" stroke="${INK}" stroke-width="2.5"/>
+      <path d="M86 -190V-170" stroke="${INK}" stroke-width="2.2"/><path d="M86 -170q7 2 5 9q-3 6 -9 2" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"/></g></g>`;
+    const sign=`<g transform="translate(248 480)"><g class="bsign"><path d="M-15 0V-18M15 0V-18" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/>
+      <rect x="-25" y="-46" width="50" height="30" rx="5" fill="${HI}" stroke="${INK}" stroke-width="3"/><text x="0" y="-24" text-anchor="middle" font-size="19">🚧</text></g></g>`;
+    const cone=(x,y)=>`<g transform="translate(${x} ${y})"><g class="bcone"><path d="M-10 0H10L3 -22H-3Z" fill="#FF7A1A" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/><path d="M-6 -9H6" stroke="#fff" stroke-width="3.5"/><path d="M-13 0H13" stroke="${INK}" stroke-width="4" stroke-linecap="round"/></g></g>`;
+    return crane+sign+cone(392,494)+cone(424,486);
+  }
+  const hat=()=>`<g transform="translate(${YOU.x} ${YOU.y})"><g class="bhat"><path d="M-20 -92Q-21 -117 0 -117Q21 -117 20 -92Z" fill="${HI}" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/><path d="M-5 -116Q0 -120 5 -116V-100H-5Z" fill="#FFDD77" stroke="${INK}" stroke-width="1.6"/><path d="M-26 -92H26" stroke="${INK}" stroke-width="6.5" stroke-linecap="round"/><path d="M-26 -92H26" stroke="${HI}" stroke-width="3" stroke-linecap="round"/></g></g>`;
+  // onSite: true on the Build screen, where the map is a building site
+  function svg(setup,fx,onSite){
     const S=describe(setup),B=[],T=[];REG=[];FX=fx||null; // buildings sorted back to front; tokens and labels on top so nothing hides them
     let paths='';const spots={}; // where each building stands, for aiming a disaster at it
     for(const [id,p] of Object.entries(SPOTS)){
@@ -1668,7 +1718,7 @@ const SetupMap=(()=>{
     }
     // you: whoever you are playing as, holding what you carry
     REG.push({spot:'you'});
-    let you=`<g class="mapstep maptap" data-i="${REG.length-1}" data-step="you"><title>You</title><ellipse cx="${YOU.x}" cy="${YOU.y+2}" rx="24" ry="8" fill="#000" opacity=".18"/><g class="mapchar" data-carry="${S.you.length?1:0}" transform="translate(${YOU.x} ${YOU.y})">${figure(WHO,S.you.length)}</g>`;
+    let you=`<g class="mapstep maptap" data-i="${REG.length-1}" data-step="you"><title>You</title><ellipse cx="${YOU.x}" cy="${YOU.y+2}" rx="24" ry="8" fill="#000" opacity=".18"/><g class="mapchar" data-carry="${S.you.length?1:0}" transform="translate(${YOU.x} ${YOU.y})">${figure(WHO,S.you.length)}</g>${onSite?hat():''}`;
     you+=label(YOU.x,YOU.y+22,'You')+'</g>'+row(YOU.x+42+(S.you.length-1)*17,YOU.y+2,S.you,'With you',.85);
     if(S.head.length){ // thought bubble: closed until clicked. It floats up and to the right of the big head.
       REG.push({head:S.head});
@@ -1686,7 +1736,7 @@ const SetupMap=(()=>{
       <defs><linearGradient id="map-grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C6F06A"/><stop offset="1" stop-color="#5FCF8A"/></linearGradient></defs>
       <path d="M40 60h30M720 300h36M700 480h44M30 470h28M610 30h24M22 250h20M560 520h30M330 36h30" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".55"/>
       <ellipse cx="350" cy="320" rx="322" ry="204" fill="#1B8E77"/><ellipse cx="350" cy="306" rx="322" ry="204" fill="#E9DDB0"/><ellipse cx="350" cy="302" rx="308" ry="192" fill="url(#map-grass)"/>
-      ${far}<g class="mapstep" data-step="end">${paths}</g>${B.map(b=>b[1]).join('')}${T.join('')}<g class="mapyou"><g class="mapbob">${you}</g></g>${cloud}${FX&&FX.ev?effects(target(spots)):''}
+      ${far}<g class="mapstep" data-step="end">${paths}</g>${B.map(b=>b[1]).join('')}${T.join('')}${onSite?site():''}<g class="mapyou"><g class="mapbob">${you}</g></g>${cloud}${FX&&FX.ev?effects(target(spots)):''}
     </svg>`;
   }
 
@@ -2022,7 +2072,7 @@ function screenMap(which){
     ?(built?tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster'):'')+tool('data-act="suggest"',!!S.suggest,'💡','Suggest a step','Suggest a step')+tool('data-act="editBase"',S.editBase,'✏️','Edit it myself','Edit it myself')
     :tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster')+tool('data-act="editBase"',S.editBase,'✏️','Edit current setup','Edit current setup');
   return `<h2 class="sr">${build?'Build your new setup':'Your setup today'}</h2>
-  <div class="mapcard${intro?' mapintro':''}${build?' build':''}${build&&fwd?' fwd':''}${result||cards||change?' lift':''}">${SetupMap.svg(S[which],fx)}${built?'<span class="maplabel">Your new setup</span>':''}${result}${cards}${change}${banner}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
+  <div class="mapcard${intro?' mapintro':''}${build?' build':''}${build&&fwd?' fwd':''}${result||cards||change?' lift':''}${build&&buildArrive?' arrive'+(buildArrive==='short'?' short':''):''}">${SetupMap.svg(S[which],fx,build)}${build&&buildArrive==='full'?'<div class="bpwipe" aria-hidden="true"></div>':''}${built?'<span class="maplabel">Your new setup</span>':''}${result}${cards}${change}${banner}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
     <div class="maptools">${tools}${fwd?`<button class="maptool next" data-act="go" data-to="${build?3:2}"><span aria-hidden="true">${build?'🧪':'🚀'}</span>${build?'Try using it →':'Improve it →'}</button>`:''}</div></div>`;
 }
 // The new setup counts as built once it differs from the current one. "Tested" is about using it, not what it is.
@@ -2072,7 +2122,7 @@ function screenUse(){
     failed:[`Only the test was lost: ${btc(TEST)}. The rest is still in your old setup.`,btn('go','🔧 Fix it in Build',1,2)+btn('useReset','↺ Start again')],
   }[w.stage];
   return `<h2 class="sr">Use your new setup</h2>
-  <div class="mapcard use">${SetupMap.svg(st)}
+  <div class="mapcard use${useArrive?' arrive'+(useArrive==='short'?' short':''):''}">${SetupMap.svg(st)}${useArrive==='full'?'<div class="bpwipe gold" aria-hidden="true"></div>':''}
     <div class="usehud"><span class="usebal" id="use-old"><small>Old setup</small><b>${btc(w.old)}</b></span><i aria-hidden="true">→</i><span class="usebal new" id="use-new"><small>${cust?ACCT[st.type]:'New setup'}</small><b>${btc(w.vault)}</b></span></div>
     <div class="usecap" role="status">${w.note?`<b class="usenote${w.bad?' bad':''}">${w.note}</b>`:''}<span class="usetext">${text}</span><div class="mrbtns">${buttons}</div></div></div>`;
 }
@@ -2387,7 +2437,23 @@ function render(){
   if(S.step===1&&S.mapIntro==='run')paintMapIntro(false); // the map was just redrawn mid-introduction: put it back as it was
   if(act&&$(act))$(act).focus();
 }
-function go(to){
+/* Arriving on Build is a small show, so the change of screen is felt: a blueprint sweeps across the map, a crane goes
+   up beside you, a sign and cones pop in, a hard hat drops on your head, and the two ways to build come down on cables.
+   The full show plays the first time you go from Today to Build after Start; later arrivals get a quick version without
+   the sweep. The crane, sign and hat stay for as long as you are building, and pack up when you go on to "Use it".
+   buildArrive is only set for the one redraw that arrives, so later redraws don't replay any of it. All of it is
+   movement, so under reduced motion the site is simply there. */
+// Arriving on "Use it" from Build is the same kind of show, after the site has packed up: a band of gold coins sweeps
+// across the map, the two balance pills drop in, and the card comes up. From anywhere else it is the quick version.
+let buildArrive=null,useArrive=null;
+function go(to,now){
+  if(S.step===2&&to===3&&!now&&!calm){ // packing up the site before going on
+    const c=document.querySelector('.mapcard.build');
+    if(c){if(!c.classList.contains('leaving')){c.classList.add('leaving');setTimeout(()=>{if(S.step===2)go(3,true)},400)}return}
+  }
+  if(to===1&&S.step===0)S.buildSeen=false;
+  buildArrive=to===2&&S.step!==2?(S.step===1&&!S.buildSeen?'full':'short'):null;if(to===2)S.buildSeen=true;
+  useArrive=to===3&&S.step!==3?(S.step===2?'full':'short'):null;
   if(to>1&&!S.mine)S.mine=clone(S.base);
   // The map's introduction plays every time you arrive from the first screen, not only the first time: going back to Start
   // is starting again, so everything that happens the first time happens again, the fixed first disaster included.
@@ -2400,7 +2466,7 @@ function go(to){
   if(to!==1&&S.mapIntro==='run')S.mapIntro='done'; // leaving the map (by "Improve it", say) ends its introduction
   const wasMap=S.step>=1&&S.step<=3; // the map keeps its zoom between Today and Build, and starts afresh when you come to it from anywhere else
   S.suggest=false;S.change=null; // arriving on a map screen: no suggestions panel open, and no "what changed" card left over
-  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.mapDis=S.run=null;render();window.scrollTo({top:0});
+  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.mapDis=S.run=null;render();buildArrive=useArrive=null;window.scrollTo({top:0});
   if(to>=1&&to<=3&&!wasMap)homeMapView();
   if(firstMap)runMapIntro();
 }

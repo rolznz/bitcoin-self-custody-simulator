@@ -1478,6 +1478,14 @@ const SetupMap=(()=>{
   const TOK={
     phone:`<rect x="-13" y="-48" width="26" height="46" rx="6" fill="${INK}"/><rect x="-10" y="-44" width="20" height="36" rx="3" fill="#5438F0"/><circle cy="-27" r="7" fill="#FFB81F"/>`,
     laptop:`<rect x="-19" y="-36" width="38" height="26" rx="4" fill="${INK}"/><rect x="-16" y="-33" width="32" height="20" rx="2" fill="#5438F0"/><path d="M-24 -8h48l-4 6h-40z" fill="#8E8AB8"/>`,
+    /* Hardware signers. Each brand has its own shape, loosely like a kind of device people will have seen, and never
+       named: A a dark shield with a screen and two buttons, B a stick with a steel cover that swings round, C a squat
+       green one on its side, with a wide screen and a wheel. The orange one is the self-built signer (brand D). "pebble" is the buttonless, screenless
+       stone that comes with a wallet where a company holds one of the keys. look() picks between them. */
+    signerA:`<path d="M-15 -46H15Q20 -46 20 -41V-19L9 -3H-9L-20 -19V-41Q-20 -46 -15 -46Z" fill="#2B2B33"/><path d="M-20 -19L-9 -3H9L20 -19Z" fill="#1D1D24"/><rect x="-13" y="-41" width="26" height="15" rx="2.5" fill="#0D0D12"/><path d="M-8 -36h10M-8 -31h16" stroke="#7CFFB2" stroke-width="2" stroke-linecap="round"/><circle cx="-7" cy="-16" r="3.4" fill="#5A5A66"/><circle cx="7" cy="-16" r="3.4" fill="#5A5A66"/>`,
+    signerB:`<rect x="-3" y="-14" width="6" height="12" fill="#8E8AB8"/><rect x="-26" y="-34" width="42" height="18" rx="4.5" fill="#1B1B22"/><rect x="-21" y="-30.5" width="22" height="11" rx="2" fill="#0D0D12"/><path d="M-17 -25h12" stroke="#fff" stroke-width="2" stroke-linecap="round"/><rect x="-18" y="-37" width="7" height="3.5" rx="1.5" fill="#1B1B22"/><rect x="-6" y="-37" width="7" height="3.5" rx="1.5" fill="#1B1B22"/><g transform="rotate(-26 12 -25)"><rect x="0" y="-34.5" width="34" height="19" rx="9.5" fill="#D3D8E0" stroke="#8E9AB0" stroke-width="1.6"/><circle cx="12" cy="-25" r="4.2" fill="#8E9AB0"/><path d="M19 -30h9M19 -20h9" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/></g>`,
+    signerC:`<rect x="-3" y="-14" width="6" height="12" fill="#8E8AB8"/><rect x="-25" y="-42" width="50" height="30" rx="8" fill="#0C5F52"/><rect x="-25" y="-22" width="50" height="10" rx="5" fill="#094A40"/><rect x="-20" y="-37.5" width="28" height="20" rx="3" fill="#0D0D12"/><path d="M-15 -31h12M-15 -25h18" stroke="#3FE0B5" stroke-width="2.2" stroke-linecap="round"/><circle cx="16.5" cy="-25" r="5.2" fill="#12806E" stroke="#3FE0B5" stroke-width="1.6"/><circle cx="16.5" cy="-36" r="1.6" fill="#3FE0B5"/>`,
+    pebble:`<path d="M0 -47L20 -36V-13L0 -2L-20 -13V-36Z" fill="#CDD2DA" stroke="#A3ABB9" stroke-width="1.6" stroke-linejoin="round"/><path d="M0 -43L16 -34V-15L0 -6L-16 -15V-34Z" fill="#DDE1E7"/><path d="M-12 -38L-4 -42.5M-16 -30V-22" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".8"/><circle cy="-24.5" r="7" fill="#F5F6F8" stroke="#8E9AB0" stroke-width="1.5"/><path d="M-3.6 -24q3.6 -4.6 7.2 0M-1.8 -21.6q1.8 -2.4 3.6 0" fill="none" stroke="#8E9AB0" stroke-width="1.3" stroke-linecap="round"/>`,
     signer:`<rect x="-24" y="-36" width="48" height="24" rx="12" fill="#F47B20"/><rect x="-24" y="-24" width="48" height="12" rx="6" fill="#DD6614"/><rect x="-12" y="-33" width="18" height="18" rx="3" fill="${INK}"/><rect x="-9" y="-30" width="12" height="3" rx="1.5" fill="#F47B20"/><circle cx="14" cy="-30" r="2.2" fill="#FFF4E0"/><circle cx="14" cy="-24" r="2.2" fill="#FFF4E0"/><circle cx="14" cy="-18" r="2.2" fill="#FFF4E0"/><rect x="-3" y="-12" width="6" height="10" fill="#8E8AB8"/>`,
     paper:`<g transform="rotate(-5)"><rect x="-16" y="-46" width="32" height="42" rx="2" fill="#FFFDF2" stroke="#E4DCC0"/><path d="M-11 -38h9M2 -38h9M-11 -31h9M2 -31h9M-11 -24h9M2 -24h9M-11 -17h9M2 -17h9M-11 -10h9M2 -10h9" stroke="#8E8AB8" stroke-width="2" stroke-linecap="round"/></g>`,
     steel:`<rect x="-20" y="-34" width="40" height="28" rx="3" fill="#B8C2D4"/><rect x="-20" y="-12" width="40" height="6" rx="3" fill="#8E9AB0"/><g fill="#5F6B82"><circle cx="-15" cy="-29" r="1.8"/><circle cx="15" cy="-29" r="1.8"/><circle cx="-15" cy="-15" r="1.8"/><circle cx="15" cy="-15" r="1.8"/></g><path d="M-11 -26h22M-11 -21h22M-11 -16h22" stroke="#6C7890" stroke-width="2.4" stroke-dasharray="2.4 1.6"/>`,
@@ -1544,12 +1552,14 @@ const SetupMap=(()=>{
     const [f,fresh]=fate(t);t.fate=f;t.fresh=fresh;t.id=tid(t);t.x=x;t.y=y;
     const mark=FXMARK[f]?`<g class="fxmark${fresh?'':' was'}" transform="translate(0 -24)"><circle r="13" fill="${FXMARK[f][0]}" stroke="#fff" stroke-width="2.5"/>${FXMARK[f][1]}</g>`:'';
     const badge=t.k==null?'':`<circle cx="17" cy="-46" r="10" fill="${keyColor(t.k)}" stroke="#fff" stroke-width="2"/><text x="17" y="-42" text-anchor="middle" font-size="11" font-weight="800">${keyName(t.k)}</text>`;
-    return `<g class="maptap" data-i="${REG.length-1}" transform="translate(${x.toFixed(1)} ${y}) scale(${s})"><title>${NAMES[t.t]}</title><g class="mapstep" data-step="t${REG.length-1}"><ellipse rx="20" ry="6" fill="#000" opacity=".16"/><g class="mapfate ${f?'fate-'+f:''}${fresh?'':' was'}"><g class="mappulse" style="--t:${-(REG.length%6)*.4}s">${TOK[t.t]}${badge}${MARK[t.mark]||''}</g></g>${mark}</g></g>`;
+    return `<g class="maptap" data-i="${REG.length-1}" transform="translate(${x.toFixed(1)} ${y}) scale(${s})"><title>${NAMES[t.t]}</title><g class="mapstep" data-step="t${REG.length-1}"><ellipse rx="20" ry="6" fill="#000" opacity=".16"/><g class="mapfate ${f?'fate-'+f:''}${fresh?'':' was'}"><g class="mappulse" style="--t:${-(REG.length%6)*.4}s">${TOK[t.look||t.t]}${badge}${MARK[t.mark]||''}</g></g>${mark}</g></g>`;
   }
   const label=(x,y,text,dim)=>{const w=text.length*7.2+18;return `<g opacity="${dim?.6:1}"><rect x="${x-w/2}" y="${y-13}" width="${w}" height="20" rx="10" fill="#fff" opacity=".9"/><text x="${x}" y="${y+1.5}" text-anchor="middle" font-size="13" font-weight="700">${text}</text></g>`};
   // a row of tokens centred on x; they close up when there are many
   const row=(x,y,items,place,s=1)=>{const gap=Math.min(46,items.length>1?150/(items.length-1):46)*s,x0=x-(items.length-1)*gap/2;return items.map((t,i)=>(t.place=place,token(x0+i*gap,y,t,s))).join('')};
 
+  // which picture a hardware signer gets: its brand's, or the pebble when a company holds one of the setup's keys
+  const look=(k,s)=>k.brand==='D'?'signer':s.keys.some(isProv)?'pebble':{A:'signerA',B:'signerB',C:'signerC'}[k.brand]||'signer';
   /* what is where, read from the app's setup */
   function describe(s){
     const d={places:{home:[],office:[],relative:[],friend:[],bank:[]},you:[],head:[],cloud:[],company:null};
@@ -1566,7 +1576,7 @@ const SetupMap=(()=>{
       const kk=TL(s)&&i===keys.length-1?'R':i;
       if(isProv(k)){d.company=d.company||{name:'Provider',items:[]};d.company.items.push({t:'key',k:kk,role:'provkey',key:k,loc:'company'});return}
       if(k.device!=='none'){
-        put(k.dloc,{t:{hw:'signer',phone:'phone',laptop:'laptop'}[k.device],k:kk,role:'device',key:k,mark:k.pin==='strong'?'lock':null});
+        put(k.dloc,{t:{hw:'signer',phone:'phone',laptop:'laptop'}[k.device],look:k.device==='hw'?look(k,s):null,k:kk,role:'device',key:k,mark:k.pin==='strong'?'lock':null});
         if(k.pin!=='none')d.head.push({label:{hw:'Signer',phone:'Phone',laptop:'Laptop'}[k.device]+' unlock PIN',secret:k.pin==='simple'?'1234':'31415926',dots:k.pin==='simple'?4:8,k:kk});
       }
       if(k.backup==='paper'||k.backup==='metal'){

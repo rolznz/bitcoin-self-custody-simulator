@@ -174,39 +174,9 @@ details summary{cursor:pointer;font-size:.9rem;font-weight:600;color:var(--muted
 details .fields{margin-top:8px}
 
 /* use it */
-.checks{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.check{display:inline-flex;gap:6px;align-items:center;border-radius:99px;padding:4px 12px;font-size:.88rem;background:var(--surface);color:var(--muted)}
-.check.done{background:var(--low);color:var(--tok-ink);font-weight:600}
-.flow{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:stretch}
-.wallet{border-radius:22px;padding:18px;background:var(--surface);display:grid;gap:12px;align-content:start}
-.wallet .wtop{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:28px}
-.wallet .wname{font-weight:700}
-.wallet .bal{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;font-variant-numeric:tabular-nums}
-.wallet .toks{display:flex;padding-left:6px}
-.wallet .toks .tok{width:26px;height:26px;font-size:.8rem;margin-left:-6px;border:2px solid var(--ink)}
-.wallet.vault{background:var(--ink);color:var(--bg)}
-.wallet.vault .hint{color:inherit;opacity:.75}
-.wallet.vault .btn{background:var(--bg);color:var(--ink)}
-.flow .arrow{align-self:center;width:36px;height:36px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-weight:700}
-.flow .arrow::before{content:"\2192"}
 .receipt{background:color-mix(in srgb,var(--low) 22%,var(--surface));border-radius:14px;padding:10px 14px;font-weight:600}
-.sectionh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-.shop{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.item{background:var(--surface);border-radius:18px;padding:14px;display:grid;gap:2px;justify-items:start}
-.item .emo{font-size:2rem;line-height:1.3}
-.item .btn{margin-top:8px}
-.split{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.sign{background:var(--surface);border:2px solid var(--primary);border-radius:22px;padding:18px;display:grid;gap:12px}
-.signhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
-.signhead .amt{font-family:var(--display);font-weight:800;font-size:1.3rem}
-.slots{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.slot{width:30px;height:30px;border-radius:50%;border:2px dashed var(--base-bar)}
-/* dice roll */
-.dice{display:flex;align-items:center;gap:14px;background:var(--surface);border-radius:18px;padding:14px 16px}
 .die{font-size:2.2rem;line-height:1;display:inline-block;animation:roll .45s linear infinite}
 @keyframes roll{0%{transform:rotate(0) translateY(0)}25%{transform:rotate(90deg) translateY(-6px)}50%{transform:rotate(180deg) translateY(0)}75%{transform:rotate(270deg) translateY(-6px)}100%{transform:rotate(360deg) translateY(0)}}
-.lostbox{background:color-mix(in srgb,var(--high) 20%,var(--surface));border-radius:18px;padding:14px 16px;display:grid;gap:8px;justify-items:start}
-.receipt.warn{background:color-mix(in srgb,var(--mid) 26%,var(--surface))}
 /* disaster */
 .dcmp{display:grid;gap:10px;margin-top:10px}
 .dres{border-radius:16px;padding:14px}
@@ -220,15 +190,6 @@ details .fields{margin-top:8px}
 .dk{display:inline-flex;align-items:center;gap:6px}
 .dk .tok{width:22px;height:22px;font-size:.75rem}
 .dk.hit .tok{opacity:.35}
-.sigkeys{display:flex;flex-wrap:wrap;gap:8px}
-.sigkeys button{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:var(--surface);border-radius:14px;padding:8px 12px;cursor:pointer;text-align:left}
-.sigkeys button[aria-pressed="true"]{border-color:var(--low);background:var(--soft)}
-.sigkeys button:disabled{opacity:.45;cursor:default}
-.sigkeys small{display:block;color:var(--muted)}
-.log{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:.92rem}
-.log li{padding-left:14px;border-left:3px solid var(--line)}
-.report{display:grid;gap:6px;font-size:.95rem}
-.report div{display:flex;gap:8px;align-items:flex-start}
 
 /* stress matrix */
 .mx{display:grid;gap:6px}
@@ -260,8 +221,6 @@ footer button,footer a{background:none;border:0;text-decoration:underline;cursor
   .sumgrid{grid-template-columns:1fr}
   .score .meters{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .bar{grid-template-columns:44px 1fr 24px;gap:5px}
-  .flow{grid-template-columns:minmax(0,1fr)}.flow .arrow{justify-self:center}.flow .arrow::before{content:"\2193"}
-  .item{padding:12px 10px}
   .mx .head{display:none}
   .mx .ev{grid-template-columns:1fr 1fr}
   .mx .ev .what{grid-column:1/-1;font-weight:700}
@@ -364,6 +323,46 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
 }
 @keyframes mapin{0%{opacity:0;transform:translateY(-34px) scale(.6)}60%{opacity:1;transform:translateY(3px) scale(1.06)}100%{opacity:1;transform:none}}
 @keyframes mapcap{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%)}}
+/* "Use it": the new setup's map with two balance pills at the top and one card that says what to do next (see screenUse).
+   There are no buttons under the map here, so it runs to the bottom. */
+.mapcard.use .map{inset:8px 0 16px;height:calc(100% - 24px)}
+.usehud{position:absolute;left:14px;top:10px;display:flex;align-items:center;gap:8px;pointer-events:none}
+.usebal{display:grid;gap:1px;min-width:118px;background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:16px;box-shadow:0 4px 0 #1B1840;padding:6px 14px}
+.usebal small{font-weight:700;font-size:.78rem;color:#5A5688}.usebal b{font-family:var(--display);font-size:1.15rem;line-height:1.15;font-variant-numeric:tabular-nums}
+.usebal.new{background:#1B1840;color:#fff}.usebal.new small{color:#C9C6EE}
+.usehud>i{font-style:normal;font-weight:800;font-size:1.2rem;color:#1B1840}
+.usecap{position:absolute;right:14px;bottom:16px;width:min(400px,calc(100% - 28px));display:grid;gap:8px;background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:22px;box-shadow:0 6px 0 #1B1840;padding:14px 16px}
+.usenote{font-family:var(--display);font-size:1.05rem;line-height:1.3}.usenote.bad{color:#B3261E}
+.usetext{font-size:.98rem;line-height:1.4}
+/* while an errand runs the card only says what is happening */
+.usebusy .usenote,.usebusy .mrbtns{display:none}
+.usebusy .usetext{font-family:var(--display);font-weight:700;font-size:1.05rem}
+.usetext .die{font-size:1.5rem;vertical-align:middle;margin-right:4px}
+.usecoin{position:absolute;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:#F7931A;color:#fff;border:2.5px solid #1B1840;display:grid;place-items:center;font:800 1rem/1 var(--body);font-style:normal;pointer-events:none;z-index:2}
+.walking .mapbob{animation:usebob .2s ease-in-out infinite alternate}
+@keyframes usebob{to{transform:translateY(-5px)}}
+.mapfate{transition:filter .4s,opacity .4s}.usegone{filter:grayscale(1) brightness(.3);opacity:.45}
+.usepop{pointer-events:none;transform-box:fill-box;transform-origin:50% 100%;animation:fxpop .45s both}
+.mapglide .map{transition:transform .8s ease-in-out} /* the zoomed-in map following you */
+@media (max-width:760px){
+  .mapcard.use .map{inset:64px 0 176px;height:calc(100% - 240px)}
+  .usehud{left:10px;top:8px;gap:6px}.usebal{min-width:0;padding:5px 12px}
+  .usecap{left:10px;right:10px;bottom:14px;width:auto}
+}
+@media (prefers-reduced-motion:reduce){.walking .mapbob,.usepop{animation:none!important}.mapglide .map,.mapfate{transition:none}}
+/* Share: the closing words over the sea, and under them the island with everybody dancing on it (SetupMap.party). */
+.party{flex:1;display:flex;flex-direction:column;width:100vw;margin-left:calc(50% - 50vw);overflow:hidden}
+.party .finish{margin:2vh auto 0;padding:0 16px;color:#1B1840}.party .finish .lede{color:#1B1840}
+.partymap{flex:1 1 0;height:0;min-height:300px;width:100%;display:block} /* whatever height is left under the words, never its own */
+.dancer{transform-box:fill-box;transform-origin:50% 100%;animation:dance0 .5s var(--t,0s) ease-in-out infinite alternate}
+.dancer.d1{animation-name:dance1;animation-duration:.42s}.dancer.d2{animation-name:dance2;animation-duration:.36s}
+@keyframes dance0{from{transform:translateY(0) rotate(-7deg)}to{transform:translateY(-14px) rotate(7deg)}}
+@keyframes dance1{from{transform:rotate(-11deg)}to{transform:rotate(11deg)}}
+@keyframes dance2{from{transform:scale(1.07,.9)}to{transform:translateY(-24px) scale(.95,1.06)}}
+.partynote{paint-order:stroke;animation:partynote 2.6s var(--t,0s) linear infinite}
+@keyframes partynote{0%{opacity:0;transform:translate(0,0)}15%{opacity:1}100%{opacity:0;transform:translate(16px,-80px)}}
+@media (max-width:760px){.partymap{width:150%;margin-left:-25%}}
+@media (prefers-reduced-motion:reduce){.dancer,.partynote{animation:none!important}}
 /* Build, wider screens: "Try a disaster" is the round icon in the top right corner, as it is on a phone. The row of
    buttons is stretched to the top of the card so the icon can sit there; the stretched box lets clicks through to the map. */
 @media (min-width:761px){
@@ -1687,7 +1686,7 @@ const SetupMap=(()=>{
       <defs><linearGradient id="map-grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C6F06A"/><stop offset="1" stop-color="#5FCF8A"/></linearGradient></defs>
       <path d="M40 60h30M720 300h36M700 480h44M30 470h28M610 30h24M22 250h20M560 520h30M330 36h30" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".55"/>
       <ellipse cx="350" cy="320" rx="322" ry="204" fill="#1B8E77"/><ellipse cx="350" cy="306" rx="322" ry="204" fill="#E9DDB0"/><ellipse cx="350" cy="302" rx="308" ry="192" fill="url(#map-grass)"/>
-      ${far}<g class="mapstep" data-step="end">${paths}</g>${B.map(b=>b[1]).join('')}${T.join('')}${you}${cloud}${FX&&FX.ev?effects(target(spots)):''}
+      ${far}<g class="mapstep" data-step="end">${paths}</g>${B.map(b=>b[1]).join('')}${T.join('')}<g class="mapyou"><g class="mapbob">${you}</g></g>${cloud}${FX&&FX.ev?effects(target(spots)):''}
     </svg>`;
   }
 
@@ -1782,7 +1781,10 @@ const SetupMap=(()=>{
     if(tap){show(REG[+tap.dataset.i]);dl.showModal()}
   });
   // beats() and things() describe the map drawn by the latest svg() call. things() lists what is on it and what became of each.
-  const things=()=>REG.filter(t=>t.t).map(t=>({id:t.id,role:t.role,k:t.k,fate:t.fate,fresh:t.fresh}));
+  // i is the thing's data-i on the map, x and y where it stands, loc the place it is kept ("carry" is on you).
+  const things=()=>REG.map((t,i)=>({id:t.id,role:t.role,k:t.k,fate:t.fate,fresh:t.fresh,t:t.t,i,x:t.x,y:t.y,loc:t.loc})).filter(t=>t.t);
+  // "Use it" walks you about the island (see ui.js): you are everything inside .mapyou, standing at here().
+  const here=()=>({x:YOU.x,y:YOU.y});
   // A different character, picked at random, but nobody twice until everybody has had a turn.
   let turns=[];
   const another=()=>{
@@ -1790,13 +1792,30 @@ const SetupMap=(()=>{
     if(!turns.length)turns=Object.keys(CHARS).filter(id=>id!==WHO);
     WHO=turns.splice(Math.floor(Math.random()*turns.length),1)[0];
   };
-  return {svg,beats,things,driver,landmark,fresh,another};
+  /* The last screen: the island with nothing kept on it, and everybody you can play as dancing along its front edge,
+     whoever you are playing in the middle. Three dance moves and a few floating notes; the movement is all in the CSS
+     (.dancer, .partynote). The view is shifted so the island, not the drawing, is in the middle. */
+  function party(){
+    const B=Object.values(SPOTS).map(p=>[p.y,building(p.x,p.y,p.b).svg]).sort((a,b)=>a[0]-b[0]).map(b=>b[1]).join('');
+    const ids=Object.keys(CHARS).filter(id=>id!==WHO);ids.splice(ids.length>>1,0,WHO);
+    const at=i=>{const x=350+(i-(ids.length-1)/2)*56;return[x,302+192*Math.sqrt(1-((x-350)/308)**2)-42]};
+    const dancers=ids.map((id,i)=>[i,...at(i),id]).sort((a,b)=>a[2]-b[2]).map(([i,x,y,id])=>
+      `<g transform="translate(${x} ${y.toFixed(1)})"><ellipse cy="2" rx="24" ry="8" fill="#000" opacity=".18"/><g class="dancer d${i%3}" style="--t:${(-i*.17).toFixed(2)}s"><title>${CHARS[id].name}</title>${figure(id,0)}</g></g>`).join('');
+    const notes=[[150,250,'♪'],[250,300,'♫'],[352,286,'♪'],[452,300,'♫'],[556,252,'♪'],[306,340,'🎉'],[404,344,'🎉']].map(([x,y,n],i)=>
+      `<text class="partynote" style="--t:${(-i*.37).toFixed(2)}s" x="${x}" y="${y}" text-anchor="middle" font-size="${n==='🎉'?30:34}" font-weight="800" fill="#fff" stroke="#1B1840" stroke-width="1.5">${n}</text>`).join('');
+    return `<svg class="partymap" viewBox="-50 0 800 560" role="img" aria-label="Everybody dancing on the island">
+      <defs><linearGradient id="map-grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C6F06A"/><stop offset="1" stop-color="#5FCF8A"/></linearGradient></defs>
+      <path d="M40 60h30M700 480h44M30 470h28M22 250h20M560 520h30M330 36h30" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".55"/>
+      <ellipse cx="350" cy="320" rx="322" ry="204" fill="#1B8E77"/><ellipse cx="350" cy="306" rx="322" ry="204" fill="#E9DDB0"/><ellipse cx="350" cy="302" rx="308" ry="192" fill="url(#map-grass)"/>
+      ${islet(COMPANY.x,COMPANY.y)}${building(COMPANY.x,COMPANY.y,COMPANY.b).svg}${B}${notes}${dancers}</svg>`;
+  }
+  return {svg,beats,things,here,party,driver,landmark,fresh,another};
 })();
 //--UI--
 /* ---------- state ---------- */
 const SATS=1e8;
 let S;
-function reset(){S={step:0,base:presetSetup('hot'),mine:null,editBase:false,simBase:false,open:{},conf:{before:null,after:null},note:'',custom:{},picked:{mine:false},dis:null,w:{old:SATS,vault:0,log:[],tx:null,receipt:null,report:null,done:{}}}}
+function reset(){S={step:0,base:presetSetup('hot'),mine:null,editBase:false,simBase:false,open:{},conf:{before:null,after:null},note:'',custom:{},picked:{mine:false},dis:null,w:newUse(null)}}
 reset();
 const $=id=>document.getElementById(id);
 const STEPS=['Start','Today','Build','Use it','Share'];
@@ -2021,55 +2040,213 @@ function noteChange(what,make){
 }
 function screenToday(){return screenMap('base')}
 function screenBuild(){return screenMap('mine')}
-function signPanel(){
-  const tx=S.w.tx,st=S.mine,usable=st.keys.filter(k=>k.device!=='none'||k.backup!=='none').length;
-  const slots=Array.from({length:st.m},(_,j)=>tx.sigs[j]===undefined?'<span class="slot"></span>':`<span class="tok" style="--kc:var(--k${tx.sigs[j]})">${LETTERS[tx.sigs[j]]}</span>`).join('');
-  const where=k=>isProv(k)?'Provider co-signs online':k.device==='none'?(k.backup==='none'?'Exists nowhere, can’t sign':'Restore from backup first'):PLACES[k.dloc];
-  return `<div class="sign" id="sign"><div class="signhead"><h3>${esc(tx.label)}</h3><span class="amt">${btc(tx.amt)}</span></div>
-    <div class="slots">${slots}<span class="hint">${tx.sigs.length} of ${st.m} ${st.m===1?'signature':'signatures'}</span></div>
-    <p class="hint">${usable<st.m?'Not enough usable keys, so these coins are stuck.':'Tap a key to sign with it.'}</p>
-    <div class="sigkeys">${st.keys.map((k,i)=>`<button data-act="sig" data-i="${i}" aria-pressed="${tx.sigs.includes(i)}"${k.device==='none'&&k.backup==='none'?' disabled':''} style="--kc:var(--k${i})"><span class="tok">${LETTERS[i]}</span><span>Key ${LETTERS[i]}<small>${where(k)}</small></span></button>`).join('')}</div>
-    <div><button class="btn ghost small" data-act="cancelTx">Cancel</button></div></div>`;
-}
+/* ---------- Use it ---------- */
+/* The new setup's map again, and a short run of errands done on it one at a time. A card in the corner says what to do
+   next and has the one or two buttons for it; two pills at the top show the coins in the old setup and in the new one.
+     choose   send a small test, or send it all. Sending it all without a test always loses the lot (after a dice roll).
+     recover  every device is wiped, and you walk to each backup to bring the keys back. A key with no backup is gone;
+              if that leaves too few keys to spend, the test amount is lost and the way on is back to Build.
+     back     the test is sent back: you walk to the keys that sign. This is where a setup's daily effort is felt.
+     rest     the rest of the coins move over, and that is the end ("done").
+   A setup held by a company has no keys to restore, so it skips "recover" and sends the test back by logging in.
+   The walking and the flying coins are done in the page while the card is "busy" (useBusy); the state only changes when
+   an errand has finished, so leaving half way leaves you where you were. S.w.for is the setup these errands were done
+   with: arrive with a different one and they start again (see go). */
+const TEST=1e6;
+function newUse(setup){return{old:SATS,vault:0,stage:'choose',note:'',bad:false,lost:0,for:setup?clone(setup):null}}
 function screenUse(){
-  const w=S.w,st=S.mine,busy=!!w.tx||!!w.rolling,d=w.done,cust=custodial(st),old=S.base;
+  const w=S.w,st=S.mine,cust=custodial(st);
   if(st.type==='etf')return `<h2>Use it</h2>
   <p class="lede">With an ETF there is nothing to try here.</p>
   <div class="card"><h3>An ETF is shares, not bitcoin</h3><p class="hint" style="margin-top:4px">You can’t send, receive or spend the coins. To pay for anything you sell shares through your broker, during market hours.</p></div>
   <div class="rowb"><button class="btn ghost" data-act="go" data-to="2">Change your setup</button><button class="btn" data-act="go" data-to="4">Finish →</button></div>`;
-  const chk=(on,l)=>`<span class="check${on?' done':''}">${on?'✓':'○'} ${l}</span>`;
-  const item=(e,l,a)=>`<div class="item"><span class="emo" aria-hidden="true">${e}</span><b>${l}</b><span class="hint">${btc(a)}</span><button class="btn small" data-act="buy" data-l="${l}" data-a="${a}" aria-label="Buy ${l.toLowerCase()}" ${w.vault<a?'disabled':''}>Buy</button></div>`;
-  const oldHint=custodial(old)?{exchange:'On an exchange',fintech:'In a payment app',bank:'With a bank',etf:'ETF shares'}[old.type]:old.n===1?'1 key':`${old.m}-of-${old.n}`;
-  return `<h2>Use it</h2>
-  <p class="lede">Move some coins and spend a little. Feel what daily life is like.</p>
-  <div class="checks"><span class="hint">Things to try</span>${chk(d.test,'Send a test')}${chk(d.back,'Send some back')}${cust?'':chk(st.tested,'Practice recovery')}${chk(d.moved,'Move the rest')}${chk(d.bought,'Buy something')}${w.old!==SATS||w.vault>0||st.tested||w.lost||w.log.length?'<button class="link" style="font-size:.88rem;margin-left:4px" data-act="resetUse">Reset</button>':''}</div>
-  <div class="flow">
-    <div class="wallet"><div class="wtop"><span class="wname">Old setup</span><span class="hint">${oldHint}</span></div><div class="bal">${btc(w.old)}</div>
-      ${w.old<=0?`<span class="hint">${w.lost?'Empty. The coins are gone.':'Empty. Everything has moved.'}</span>`:`<div class="rowb">${w.old>=1e6?`<button class="btn small" data-act="testIn" ${busy?'disabled':''}>Send 0.01 test</button>`:''}<button class="btn small ghost" data-act="moveRest" ${busy?'disabled':''}>Move it all</button></div>`}</div>
-    <div class="arrow" aria-hidden="true"></div>
-    <div class="wallet vault"><div class="wtop"><span class="wname">${cust?ACCT[st.type]:'New wallet'}</span><span class="toks">${cust?'':st.keys.map((k,i)=>`<span class="tok" style="--kc:var(--k${i})">${LETTERS[i]}</span>`).join('')}</span></div><div class="bal">${btc(w.vault)}</div>
-      <div class="rowb"><button class="btn small" data-act="testOut" ${busy||w.vault<5e5?'disabled':''}>Send 0.005 back</button><span class="hint">${cust?HOLDER[st.type][0].toUpperCase()+HOLDER[st.type].slice(1)+' signs':st.n===1?'1 key signs':`${st.m} of ${st.n} keys sign`}</span></div></div>
-  </div>
-  ${w.rolling?'<div class="dice" role="status"><span class="die" aria-hidden="true">🎲</span><span><b>Rolling the dice…</b><br><span class="hint">You’re moving everything without a test first.</span></span></div>':''}
-  ${w.lost?`<div class="lostbox" role="alert"><b>You lost it all.</b><span>You moved ${btc(w.lost)} without a test first, and something was wrong: a mistyped address, a bad backup, or a wallet that wasn’t set up the way you thought.</span><button class="btn small" data-act="retry">Try again with 1 BTC</button></div>`:''}
-  <p class="hint">Receiving is always easy: you only share an address. Extra keys only add work when you spend.</p>
-  ${w.receipt?`<p class="receipt${w.receipt.startsWith('You were lucky')?' warn':''}" role="status">${esc(w.receipt)}</p>`:''}
-  ${w.tx?signPanel():`<div><div class="sectionh"><h3>Spend from ${cust?HOLDER[st.type]:'the new wallet'}</h3>${w.vault<1e4?`<span class="hint">Put coins in ${cust?'the account':'the new wallet'} first.</span>`:''}</div>
-    <div class="shop">${item('☕','Coffee',1e4)}${item('💻','Laptop',2e6)}${item('🚗','Used car',35e6)}</div></div>
-  ${cust?'':`<div class="card"><div class="split"><div><h3>Practice recovery</h3><p class="hint">Wipe every device and restore from your backups.</p></div>
-    <button class="btn small ghost" data-act="rehearse">${st.tested?'Run again':'Wipe and recover'}</button></div>
-    ${w.report?`<div class="report" style="margin-top:12px">${w.report.map(r=>`<div><span>${r[0]}</span><span>${r[1]}</span></div>`).join('')}</div>`:''}</div>`}
-  ${w.log.length?`<div><p class="hint" style="margin-bottom:6px">Activity</p><ul class="log">${w.log.slice(0,4).map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`:''}`}
-  <div><button class="btn" data-act="go" data-to="4">Finish →</button></div>`;
+  const into=cust?HOLDER[st.type]:'your new setup';
+  const btn=(act,text,main,to)=>`<button type="button" class="mrbtn${main?' main':''}" data-act="${act}"${to==null?'':` data-to="${to}"`}>${text}</button>`;
+  const [text,buttons]={
+    choose:[`Time to move your coins into ${into}. Send a small test first, or send it all?`,btn('useTest','🧪 Send a small test',1)+btn('useAll','Send it all')],
+    recover:['The test arrived. Now check you could get it back if every device broke.',btn('useRecover','💥 Wipe my devices and recover',1)],
+    back:[cust?'The test arrived. Now send it back, to check you can get coins out again.':'Now send the test back, to prove you can spend from it.',btn('useBack','↩️ Send the test back',1)],
+    rest:['Everything checks out.',btn('useRest','🚚 Move the rest',1)],
+    done:[`All ${btc(w.vault)} is in ${into} now.`,btn('go','Finish →',1,4)+btn('useReset','↺ Do it again')],
+    lost:[`You moved ${btc(w.lost)} without a test first, and something was wrong: a mistyped address, a bad backup, or a wallet that wasn’t set up the way you thought.`,btn('useReset','Try again with 1 BTC',1)],
+    failed:[`Only the test was lost: ${btc(TEST)}. The rest is still in your old setup.`,btn('go','🔧 Fix it in Build',1,2)+btn('useReset','↺ Start again')],
+  }[w.stage];
+  return `<h2 class="sr">Use your new setup</h2>
+  <div class="mapcard use">${SetupMap.svg(st)}
+    <div class="usehud"><span class="usebal" id="use-old"><small>Old setup</small><b>${btc(w.old)}</b></span><i aria-hidden="true">→</i><span class="usebal new" id="use-new"><small>${cust?ACCT[st.type]:'New setup'}</small><b>${btc(w.vault)}</b></span></div>
+    <div class="usecap" role="status">${w.note?`<b class="usenote${w.bad?' bad':''}">${w.note}</b>`:''}<span class="usetext">${text}</span><div class="mrbtns">${buttons}</div></div></div>`;
 }
-// The last screen is only about passing the game on. Disasters and scores live on the map screens.
+/* One errand at a time. While it runs the card shows only what is happening; "live" tells the job whether the map it
+   started on is still the one on screen. Returns whether the errand is still the current one, i.e. whether its result
+   should be kept: leaving the screen (go) starts a new count and drops it. If the map was zoomed in, as it starts on a
+   phone, it follows you about and then goes back to where it was. */
+let useRun=0,useAt=null;
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+async function useBusy(job){
+  const card=document.querySelector('.mapcard.use');if(!card||card.classList.contains('usebusy'))return false;
+  const id=++useRun,view={...MV},live=()=>id===useRun&&card.isConnected;
+  useAt=SetupMap.here();card.classList.add('usebusy');
+  await job(card,live);
+  if(id!==useRun)return false;
+  if(view.k>1.05){setMapView(view.k,view.x,view.y,view.home);setTimeout(()=>{if(id===useRun)document.body.classList.remove('mapglide')},900)}
+  return true;
+}
+const useSay=(card,html)=>{const e=card.querySelector('.usetext');if(e)e.innerHTML=html};
+// An emoji popping up over a thing. Things you carry are drawn inside you, so theirs goes there and walks with you.
+function usePop(card,x,y,emoji,you){
+  const g=card.querySelector(you?'.mapyou':'svg.map');if(!g)return;
+  const e=document.createElementNS('http://www.w3.org/2000/svg','text');
+  e.setAttribute('x',x);e.setAttribute('y',y);e.setAttribute('text-anchor','middle');e.setAttribute('font-size',28);e.setAttribute('class','usepop');e.textContent=emoji;g.appendChild(e);
+}
+const usePopOn=(card,t,emoji)=>usePop(card,t.x,t.y-56,emoji,t.loc==='carry');
+const useFate=(card,t,gone)=>{const e=card.querySelector(`.maptap[data-i="${t.i}"] .mapfate`);if(e)e.classList.toggle('usegone',gone)};
+// You walk by sliding everything that is you. Reduced motion: no slide and no camera move, you are simply there.
+async function useWalk(card,x,y){
+  const g=card.querySelector('.mapyou'),me=SetupMap.here();if(!g)return;
+  const ms=calm?0:Math.max(450,Math.min(1400,Math.hypot(x-useAt.x,y-useAt.y)*4));
+  g.style.transition=calm?'none':`transform ${ms}ms ease-in-out`;g.style.transform=`translate(${x-me.x}px,${y-me.y}px)`;g.classList.add('walking');
+  if(MV.k>1.05){ // zoomed in: keep you in the middle
+    const m=card.querySelector('.map').getBoundingClientRect(),u=Math.min(m.width/MV.k/800,m.height/MV.k/560);
+    document.body.classList.add('mapglide');setMapView(MV.k,(400-x)*u*MV.k,(280-(y-50))*u*MV.k);
+  }
+  useAt={x,y};await wait(calm?350:ms);g.classList.remove('walking');
+}
+// What is on the map, and how to talk about it. A thing kept at a place is walked to; one you carry, one in the cloud
+// and one a company holds are not.
+function useCtx(){
+  const st=S.mine,T=SetupMap.things(),keys=allKeys(st),one=st.n===1&&!TL(st);
+  const kk=i=>TL(st)&&i===keys.length-1?'R':i,name=k=>k==='R'?'The recovery key':one?'Your key':'Key '+LETTERS[k];
+  const far=t=>!!t&&PLACES[t.loc]&&t.loc!=='carry';
+  // where to stand: beside the row of things kept at that place, on the side nearer the middle of the island
+  const stand=t=>{const xs=T.filter(x=>x.loc===t.loc).map(x=>x.x),a=Math.min(...xs),b=Math.max(...xs);return{x:(a+b)/2<350?b+44:a-44,y:t.y+6}};
+  return{st,T,keys,kk,name,far,stand,find:(role,k)=>T.find(t=>t.role===role&&t.k===k)};
+}
+// Do the stops in order: the ones that need no walk first, then the rest, nearest first. Returns the places walked to.
+async function useStops(card,live,c,stops){
+  const near=stops.filter(s=>!c.far(s.t)),walk=stops.filter(s=>c.far(s.t)),places=[];
+  let at=SetupMap.here();
+  while(walk.length){const d=s=>Math.hypot(s.t.x-at.x,s.t.y-at.y);walk.sort((a,b)=>d(a)-d(b));const s=walk.shift();near.push(s);at=s.t}
+  for(const s of near){
+    if(!live())return places;
+    if(c.far(s.t)){
+      if(!places.includes(s.t.loc)){places.push(s.t.loc);useSay(card,`🚶 ${s.t.loc==='home'?'Going home':'Off to '+PLAIN[s.t.loc]}…`)}
+      const p=c.stand(s.t);await useWalk(card,p.x,p.y);if(!live())return places;
+    }
+    useSay(card,s.text);
+    if(s.t)usePopOn(card,s.t,s.mark);else{const me=SetupMap.here();usePop(card,me.x+30,me.y-150,s.mark,true)}
+    if(s.back){useFate(card,s.back,false);usePopOn(card,s.back,'✅')}
+    await wait(1300);
+  }
+  if(live()&&places.length){useSay(card,'🚶 And back again…');const me=SetupMap.here();await useWalk(card,me.x,me.y)}
+  return places;
+}
+const useList=a=>a.length>1?a.slice(0,-1).join(', ')+' and '+a[a.length-1]:a[0]||'';
+const usePlaces=p=>p.length?`${p.length} ${p.length===1?'stop':'stops'}: ${useList(p.map(l=>PLAIN[l]))}`:'';
+// Coins hop from one pill to the other, or (sink) fall off the bottom of the map.
+async function useCoins(card,from,to,n,sink){
+  const A=$(from),B=$(to);if(!A||!B||calm)return wait(450);
+  const c=card.getBoundingClientRect(),a=A.getBoundingClientRect(),b=B.getBoundingClientRect();
+  const x0=a.left+a.width/2-c.left,y0=a.top+a.height/2-c.top,x1=sink?c.width/2:b.left+b.width/2-c.left,y1=sink?c.height+40:b.top+b.height/2-c.top;
+  await Promise.all(Array.from({length:n},(_,i)=>{
+    const e=document.createElement('i');e.className='usecoin';e.textContent='₿';card.appendChild(e);
+    return e.animate([{transform:`translate(${x0}px,${y0}px) scale(.6)`,opacity:0},{opacity:1,offset:.15},
+      {transform:`translate(${(x0+x1)/2}px,${sink?y0+70:Math.max(y0,y1)+44}px) scale(1.2)`,opacity:1,offset:sink?.3:.5},
+      {transform:`translate(${x1}px,${y1}px) scale(.7)`,opacity:sink?0:1}],{duration:sink?1500:800,delay:i*140,easing:'ease-in-out',fill:'both'}).finished.then(()=>e.remove(),()=>{});
+  }));
+}
+async function useTest(){
+  const w=S.w;
+  if(!await useBusy(async card=>{useSay(card,'🧪 Sending a small test…');await useCoins(card,'use-old','use-new',1)}))return;
+  w.old-=TEST;w.vault+=TEST;w.note='';w.bad=false;w.stage=custodial(S.mine)?'back':'recover';render();
+}
+async function useAll(){
+  const w=S.w;
+  if(!await useBusy(async(card,live)=>{
+    useSay(card,'<span class="die" aria-hidden="true">🎲</span> Rolling the dice… You’re moving everything without a test first.');await wait(1500);
+    if(!live())return;
+    useSay(card,'💸 Something was wrong.');await useCoins(card,'use-old','use-new',3,true);
+  }))return;
+  w.lost=w.old;w.old=0;w.note='💸 You lost it all.';w.bad=true;w.stage='lost';render();
+}
+async function useRecover(){
+  const w=S.w,c=useCtx(),st=c.st,stops=[],lost=[];
+  c.keys.forEach((k,i)=>{
+    if(isProv(k))return;
+    const id=c.kk(i),N=c.name(id),dev=c.find('device',id),bak=c.find('backup',id),note=c.find('pass',id),mem=k.pass==='memory'?' The passphrase came from memory too.':'';
+    if(k.backup==='none'){if(id!=='R')lost.push({N,dev});return}
+    if(bak)stops.push({t:bak,back:dev,mark:'✅',text:`${N}: restored from the ${bak.loc==='cloud'?'seed kept in the cloud':`${bak.t==='steel'?'metal':'paper'} backup ${AT[bak.loc]}`}.${mem}`});
+    else stops.push({t:null,back:dev,mark:'🧠',text:`${N}: you typed the seed in from memory.${mem}`});
+    if(note)stops.push({t:note,mark:'✅',text:`${N}: and its passphrase, from the note ${AT[note.loc]}.`});
+  });
+  const file=st.config==='one'&&c.T.find(t=>t.role==='file');
+  if(file)stops.push({t:file,mark:'✅',text:`The wallet file, picked up ${AT[file.loc]}.`});
+  let places=[];
+  if(!await useBusy(async(card,live)=>{
+    const devs=c.T.filter(t=>t.role==='device');
+    devs.forEach(t=>{useFate(card,t,true);usePopOn(card,t,'💥')});
+    useSay(card,devs.length?'💥 Every device is wiped.':'There is no device to wipe. Restoring from the backups anyway.');await wait(1400);
+    places=await useStops(card,live,c,stops);
+    for(const x of lost){if(!live())return;useSay(card,`${x.N} has no backup. Nothing brings it back.`);if(x.dev)usePopOn(card,x.dev,'❌');await wait(1500)}
+  }))return;
+  // Too few keys left to spend, or keys missing with no wallet file to find the coins with the others: it failed.
+  const names=lost.map(x=>x.N),who=useList(names),has=names.length>1?'have':'has';
+  const nofile=(st.m<st.n||TL(st))&&st.config==='none'&&!st.keys.some(isProv),short=st.n-lost.length<st.m;
+  if(lost.length&&(short||nofile)){
+    w.vault=0;w.bad=true;w.stage='failed';
+    w.note=`❌ Recovery failed. ${who} ${has} no backup${st.n===1?', so wiping the device destroyed it':short?`, so you can’t reach the ${st.m} keys needed to spend`:', and without a backup of the wallet file the keys you have left can’t find the coins'}.`;
+  }else{
+    st.tested=true;w.bad=false;w.stage='back';
+    w.note=`✅ Recovery worked${places.length?', after '+usePlaces(places):', without leaving the spot'}.`+
+      (lost.length?` In a real wipe ${who} would be gone for good: no backup.`:nofile?' It only worked because every key came back: the wallet file has no backup.':'');
+  }
+  render();
+}
+async function useBack(){
+  const w=S.w,c=useCtx(),st=c.st;
+  if(custodial(st)){
+    const login=c.T.find(t=>t.role==='login'),who=HOLDER[st.type];
+    if(!await useBusy(async card=>{
+      useSay(card,`🔑 You log in and ask ${who} to send it.`);if(login)usePopOn(card,login,'🔑');await wait(1300);
+      await useCoins(card,'use-new','use-old',1);
+    }))return;
+    w.vault-=TEST;w.old+=TEST;w.bad=false;w.stage='rest';
+    w.note=`↩️ The test came back. ${who[0].toUpperCase()+who.slice(1)} signed for you: no keys needed, and no say if it ever refuses.`;
+    return render();
+  }
+  // the keys that sign: the easiest ones to get to, as many as the setup needs. A key the recovery couldn't have
+  // brought back (no backup) is only used if nothing else is as near.
+  const DEV={signer:'hardware signer',phone:'phone',laptop:'laptop'},me=SetupMap.here(),dist=t=>c.far(t)?1+Math.hypot(t.x-me.x,t.y-me.y)/100:0;
+  const can=st.keys.map((k,i)=>{
+    const N=c.name(i),dev=c.find('device',i),bak=c.find('backup',i);
+    if(isProv(k))return{cost:.5,t:c.find('provkey',i),mark:'✍️',text:`${N}: the provider co-signs online.`};
+    if(dev)return{cost:dist(dev)+(k.backup==='none'?.3:0),t:dev,mark:'✍️',text:`${N}: signed on the ${DEV[dev.t]} ${dev.loc==='carry'?'in your pocket':AT[dev.loc]}.`};
+    if(k.backup==='none')return null;
+    return{cost:4+dist(bak),t:bak||null,mark:'✍️',text:`${N}: it has no device, so you restored it from ${bak?'its backup':'memory'} to sign.`};
+  }).filter(Boolean).sort((a,b)=>a.cost-b.cost).slice(0,st.m);
+  let places=[];
+  if(!await useBusy(async(card,live)=>{
+    places=await useStops(card,live,c,can);
+    if(live()&&can.length>=st.m)await useCoins(card,'use-new','use-old',1);
+  }))return;
+  if(can.length<st.m){w.vault=0;w.bad=true;w.stage='failed';w.note=`❌ You can’t spend. This setup needs ${st.m} keys to sign and only ${can.length} can.`;return render()}
+  w.vault-=TEST;w.old+=TEST;w.bad=false;w.stage='rest';
+  w.note=`↩️ The test came back. That took ${st.m} ${st.m===1?'signature':'signatures'} and ${places.length?usePlaces(places):'no trip at all'}.`;
+  render();
+}
+async function useRest(){
+  const w=S.w;
+  if(!await useBusy(async card=>{useSay(card,'🚚 Moving the rest…');await useCoins(card,'use-old','use-new',3)}))return;
+  w.vault+=w.old;w.old=0;w.note='🎉 Done.';w.bad=false;w.stage='done';render();
+}
+// The last screen is only about passing the game on, with a party on the island under it (SetupMap.party). Like the map
+// screens it has the sea for a background and no scoreboard. Disasters and scores live on the map screens.
 function screenShare(){
-  return `<div class="finish"><h2>That’s the game.</h2>
+  return `<div class="party"><div class="finish"><h2>That’s the game.</h2>
   <p class="lede">If you found it fun or useful, share it with someone who might too.</p>
   <div class="card share"><button class="btn cta" data-act="share">${S.shared?'✓ Link copied':'📣 Share the simulator'}</button>
     <a href="${SHARE_URL}">${SHARE_URL.replace('https://','')}</a>
     <p class="hint">This shares a link to the simulator and nothing else.</p></div>
-  <div class="rowb"><button class="btn ghost small" data-act="go" data-to="2">Back to your setup</button><button class="btn ghost small" data-act="reset">Start over</button></div></div>`;
+  <div class="rowb"><button class="btn ghost small" data-act="go" data-to="2">Back to your setup</button><button class="btn ghost small" data-act="reset">Start over</button></div></div>${SetupMap.party()}</div>`;
 }
 function feedbackText(){
   const c=S.conf;
@@ -2206,7 +2383,7 @@ function render(){
       ${S.scoresMore?`<div class="scoremore">${howHTML()}</div>`:''}</div>`;
     if(!sb.open)sb.showModal();
   }else if(sb.open)sb.close();
-  document.body.classList.toggle('mapscreen',onMap);
+  document.body.classList.toggle('mapscreen',onMap||S.step===4||(S.step===3&&S.mine.type!=='etf')); // “Use it” is played on the map too, except for an ETF; Share has the island
   if(S.step===1&&S.mapIntro==='run')paintMapIntro(false); // the map was just redrawn mid-introduction: put it back as it was
   if(act&&$(act))$(act).focus();
 }
@@ -2216,13 +2393,15 @@ function go(to){
   // is starting again, so everything that happens the first time happens again, the fixed first disaster included.
   const firstMap=to===1&&(S.step===0||!mapIntroSeen);
   if(firstMap){mapIntroSeen=true;S.mapIntro='run';mapBeat=-1;S.thrown=false}
-  if(to===1&&S.step===0)SetupMap.fresh(); // and the first seed you open is the Rickroll again
+  if(to===1&&S.step===0){SetupMap.fresh();S.w=newUse(null)} // and the first seed you open is the Rickroll again, and “Use it” starts over
+  useRun++;document.body.classList.remove('mapglide'); // an errand on the “Use it” map is dropped when you leave it
+  if(to===3&&(!S.w.for||!sameSetup(S.w.for,S.mine))){S.w=newUse(S.mine);S.mine.tested=false} // a different setup: its errands start again
   if(to===0&&S.step!==0)startIntro(); // coming back to the first screen replays the car's entrance
   if(to!==1&&S.mapIntro==='run')S.mapIntro='done'; // leaving the map (by "Improve it", say) ends its introduction
-  const wasMap=S.step===1||S.step===2; // the map keeps its zoom between Today and Build, and starts afresh when you come to it from anywhere else
+  const wasMap=S.step>=1&&S.step<=3; // the map keeps its zoom between Today and Build, and starts afresh when you come to it from anywhere else
   S.suggest=false;S.change=null; // arriving on a map screen: no suggestions panel open, and no "what changed" card left over
-  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.mapDis=S.run=null;S.w.receipt=null;S.w.tx=null;render();window.scrollTo({top:0});
-  if((to===1||to===2)&&!wasMap)homeMapView();
+  S.step=to;S.simBase=false;S.editBase=false;S.scoresOpen=false;S.mapDis=S.run=null;render();window.scrollTo({top:0});
+  if(to>=1&&to<=3&&!wasMap)homeMapView();
   if(firstMap)runMapIntro();
 }
 /* ---------- map: zoom and drag ---------- */
@@ -2250,7 +2429,7 @@ function homeMapView(){
   const r=m.getBoundingClientRect(),u=Math.min(r.width/MV.k/800,r.height/MV.k/560); // how big one unit of the drawing is on screen, unzoomed
   setMapView(NEAR.k,(400-NEAR.x)*u*NEAR.k,(280-NEAR.y)*u*NEAR.k,true);
 }
-addEventListener('resize',()=>{if(MV.home&&(S.step===1||S.step===2))homeMapView()});
+addEventListener('resize',()=>{if(MV.home&&S.step>=1&&S.step<=3)homeMapView()});
 // Zoom to k keeping the point (px,py) of the window where it is. The map scales about its own middle.
 function zoomMapAt(px,py,k){
   const m=document.querySelector('.map');if(!m)return;
@@ -2260,7 +2439,7 @@ function zoomMapAt(px,py,k){
 }
 {
   const pts=new Map();let moved=false,pinch=0;
-  const onMap=ev=>{const t=ev.target;return t.closest&&t.closest('.mapcard')&&!t.closest('button,.mapcards,.mapresult,.mapscore,.mapcap')};
+  const onMap=ev=>{const t=ev.target;return t.closest&&t.closest('.mapcard')&&!t.closest('button,.mapcards,.mapresult,.mapcap,.usecap,.usehud')};
   document.addEventListener('wheel',ev=>{
     if(!onMap(ev))return;ev.preventDefault();
     zoomMapAt(ev.clientX,ev.clientY,MV.k*Math.exp(-ev.deltaY*(ev.ctrlKey?.01:.0015)));
@@ -2372,40 +2551,7 @@ function prevMapBeat(){
 function resize(st,n){
   n=Math.max(1,Math.min(5,n));
   while(st.keys.length<n)st.keys.push(newKey());
-  st.keys.length=n;st.n=n;st.m=Math.max(1,Math.min(st.m,n));st.tested=false;if(st===S.mine)S.w.report=null;
-}
-function log(t){S.w.log.unshift(t)}
-function finishTx(){
-  const w=S.w,tx=w.tx,st=S.mine;
-  w.vault-=tx.amt;if(tx.back){w.old+=tx.amt;w.done.back=true}else w.done.bought=true;
-  if(custodial(st)){
-    const who=HOLDER[st.type];
-    w.receipt=`${tx.past}. ${who[0].toUpperCase()+who.slice(1)} signed for you. No keys needed, and no say if it ever refuses.`;
-    log(`${tx.label}: ${btc(tx.amt)}, approved by ${who}`);
-  }else{
-    const places=[...new Set(tx.sigs.map(i=>{const k=st.keys[i];return isProv(k)?(k.device==='prov2'?'the second provider':'the provider'):k.device==='none'?(k.backup==='paper'||k.backup==='metal'?PLAIN[k.bloc]:'memory or the cloud'):PLAIN[k.dloc]}))];
-    w.receipt=`${tx.past}. You needed ${tx.sigs.length} ${tx.sigs.length===1?'key':'keys'} from ${places.length} ${places.length===1?'place':'places'}: ${places.join(', ')}.`;
-    log(`${tx.label}: ${btc(tx.amt)}, signed with ${tx.sigs.map(i=>'Key '+LETTERS[i]).join(' + ')}`);
-  }
-  w.tx=null;
-}
-function rehearse(){
-  const st=S.mine,r=[],prov=st.keys.some(isProv);
-  st.keys.forEach((k,i)=>{const n='Key '+LETTERS[i];
-    if(isProv(k)){r.push(['🤝',`${n} stays with the provider. Nothing to restore.`]);return}
-    if(k.backup==='none')r.push(['⚠️',k.device==='none'?`${n} exists nowhere, so it can never sign.`:prov?`${n} has no backup. If its device dies, you lean on your other key and the provider.`:`${n} has no backup. If its device dies, the key is gone.`]);
-    else if(k.backup==='memory')r.push(['🧠',`${n} came back from memory today. Ten years from now is harder.`]);
-    else r.push(['✅',`${n} restored from its ${BACKUPS[k.backup].toLowerCase()} backup.`]);
-    if(k.pass==='memory')r.push(['🧠',`${n} also needs a passphrase that only lives in your head.`]);
-  });
-  if(st.m<st.n){
-    if(prov)r.push(['✅','The provider handed back your wallet file.']);
-    else if(st.config==='none')r.push(['⚠️','The wallet file only lives in the app. It worked today because every key was here. With one key missing you would be stuck.']);
-    else r.push(['✅','Wallet rebuilt from the backed-up wallet file.']);
-  }
-  if(TL(st))r.push(['⏳','The recovery key restores too. It can only spend after the coins sit unmoved for a year.']);
-  r.push(['🎉','Your balance showed up again. Tested backups lower your loss risk.']);
-  st.tested=true;S.w.report=r;log('Practiced a full wipe and recovery');
+  st.keys.length=n;st.n=n;st.m=Math.max(1,Math.min(st.m,n));st.tested=false;
 }
 function setWhere(st,v){
   if(v==='exchange'||v==='fintech'||v==='bank'||v==='etf'){st.type=v;return}
@@ -2433,7 +2579,7 @@ document.addEventListener('click',ev=>{
   if(a==='how'||a==='howWhich'){S.how=a==='how'?(S.mine&&S.step!==1?'mine':'base'):b.dataset.v;const dl=$('how');dl.innerHTML=howHTML();if(!dl.open)dl.showModal();return}
   if(a==='perfect'){const dl=$('how');dl.innerHTML=perfectHTML();if(!dl.open)dl.showModal();dl.scrollTop=0;return}
   if(a==='rec'){const dl=$('how');dl.innerHTML=recHTML();if(!dl.open)dl.showModal();dl.scrollTop=0;return}
-  if(a==='applyRec'){const t=bestChanges(S.mine,true)[b.dataset.k];if(t){S.mine=clone(t.setup);S.picked.mine=true;S.w.report=null;changed('mine')}render();const dl=$('how');dl.innerHTML=recHTML(!!t);dl.scrollTop=0;return}
+  if(a==='applyRec'){const t=bestChanges(S.mine,true)[b.dataset.k];if(t){S.mine=clone(t.setup);S.picked.mine=true;changed('mine')}render();const dl=$('how');dl.innerHTML=recHTML(!!t);dl.scrollTop=0;return}
   if(a==='howClose'){$('how').close();return}
   if(a==='editKey'){S.open[b.dataset.id]=!S.open[b.dataset.id]}
   if(a==='pick'){const s=b.dataset.s,v=b.dataset.v,st=S[s];
@@ -2441,7 +2587,7 @@ document.addEventListener('click',ev=>{
     else{S.custom[s]=false;
       if(v==='phone'||v==='laptop'||v==='hw'){const n=presetSetup(v==='phone'?'hot':v==='laptop'?'laptop':'typical');st.keys=n.keys;st.n=1;st.m=1}
       else{const mn=v.split('-').map(Number);setShape(st,mn[0],mn[1])}
-      st.tested=false;if(s==='mine')S.w.report=null}}
+      st.tested=false}}
   if(a==='go'){if(b.classList.contains('cta')&&driveOff(()=>go(+b.dataset.to)))return;return go(+b.dataset.to)}
   if(a==='reset'){reset();mapIntroSeen=false;startIntro();return go(0)} // "Start over" replays the car's entrance, and the map's onboarding when you next reach it
   if(a==='editBase'){ // editing the setup ends any run of disasters. On the Build screen the form starts from the setup as it stands.
@@ -2469,11 +2615,11 @@ document.addEventListener('click',ev=>{
   if(a==='mapWhy'){const c=b.closest('.mapresult').classList;c.toggle('why');c.add('seen');return} // turn the result card over; no redraw, so the disaster doesn't replay, and once turned the stamp doesn't thump down again
   if(a==='mapStop'){ // "Do it" on the turned-over card, on the Build map: make the change that would have stopped this disaster
     const t=S.mapDis&&stoppers(S.mine,S.mapDis.ev,S.mapDis.kind,true)[+b.dataset.i];
-    if(t){noteChange(t.do,()=>{S.mine=clone(t.setup)});S.picked.mine=true;S.w.report=null;changed('mine');S.mapDis=S.run=null}
+    if(t){noteChange(t.do,()=>{S.mine=clone(t.setup)});S.picked.mine=true;changed('mine');S.mapDis=S.run=null}
   }
   if(a==='mapApply'){ // a suggestion on the Build map: apply it, and any run of disasters starts afresh
     const t=bestChanges(S.mine,true)[b.dataset.k];
-    if(t){noteChange(t.do,()=>{S.mine=clone(t.setup)});S.picked.mine=true;S.w.report=null;changed('mine');S.mapDis=S.run=null}
+    if(t){noteChange(t.do,()=>{S.mine=clone(t.setup)});S.picked.mine=true;changed('mine');S.mapDis=S.run=null}
   }
   if(a==='share'){ // the phone's own share sheet where there is one; otherwise copy the link, which is also there to copy by hand
     const copy=()=>{try{navigator.clipboard.writeText(SHARE_URL).then(()=>{S.shared=true;render()},()=>{})}catch(e){}};
@@ -2485,35 +2631,18 @@ document.addEventListener('click',ev=>{
   if(a==='conf'){S.conf[b.dataset.which]=+b.dataset.n}
   if(a==='preset'&&b.dataset.w==='base')S.base=presetSetup(b.dataset.p);
   else if(a==='preset'){const p=b.dataset.p;
-    if(p){S.mine=presetSetup(p);S.w.report=null}
+    if(p)S.mine=presetSetup(p);
     else{const m=+b.dataset.m,n=+b.dataset.n;S.mine.type='keys';S.mine.keys=S.mine.keys.map(k=>isProv(k)?newKey():k);resize(S.mine,n);S.mine.m=m}}
   if(a==='n+'||a==='n-'){const st=S[b.dataset.s];resize(st,st.n+(a==='n+'?1:-1))}
   if(a==='m+'||a==='m-'){const st=S[b.dataset.s];st.m=Math.max(1,Math.min(st.n,st.m+(a==='m+'?1:-1)))}
-  if(a==='testIn'){w.old-=1e6;w.vault+=1e6;w.receipt='Test received in the new wallet.';w.done.test=true;log('Test received: 0.01 BTC')}
-  if(a==='moveRest'&&!w.done.test){
-    const show=q=>{const el=document.querySelector(q);if(el)el.scrollIntoView({block:'center',behavior:'smooth'})};
-    w.rolling=true;w.receipt=null;render();show('.dice');
-    setTimeout(()=>{const amt=w.old;w.rolling=false;w.old=0;
-      if(Math.random()<.5){w.lost=amt;log('Moved '+btc(amt)+' without a test, and lost it')}
-      else{w.vault+=amt;w.done.moved=true;w.receipt='You were lucky this time. You moved all your funds to a new wallet without testing it.';log('Moved '+btc(amt)+' without a test')}
-      render();show('.lostbox,.receipt')},1300);
-    return}
-  if(a==='moveRest'){log('Moved '+btc(w.old)+' to the new wallet');w.vault+=w.old;w.old=0;w.receipt='Everything is in the new wallet now.';w.done.moved=true}
-  if(a==='resetUse'){S.w={old:SATS,vault:0,log:[],tx:null,receipt:null,report:null,done:{}};if(S.mine.tested){S.mine.tested=false;changed('mine')}}
-  if(a==='retry'){S.w={old:SATS,vault:0,log:[],tx:null,receipt:null,report:null,done:{}}}
-  if(a==='testOut'){w.tx={label:'Send back',past:'Sent 0.005 BTC back',amt:5e5,back:true,sigs:[]};w.receipt=null}
-  if(a==='buy'){w.tx={label:'Buy '+b.dataset.l.toLowerCase(),past:'Bought a '+b.dataset.l.toLowerCase(),amt:+b.dataset.a,sigs:[]};w.receipt=null}
-  if((a==='testOut'||a==='buy')&&custodial(S.mine))finishTx();
-  if(a==='cancelTx')w.tx=null;
-  if(a==='sig'&&w.tx){const i=+b.dataset.i,at=w.tx.sigs.indexOf(i);if(at>=0)w.tx.sigs.splice(at,1);else w.tx.sigs.push(i);if(w.tx.sigs.length>=S.mine.m)finishTx()}
-  if(a==='rehearse')rehearse();
+  if(a==='useReset'){S.w=newUse(S.mine);S.mine.tested=false}
+  if(a==='useTest'||a==='useAll'||a==='useRecover'||a==='useBack'||a==='useRest'){({useTest,useAll,useRecover,useBack,useRest})[a]();return}
   if(a==='disaster')disaster(b.dataset.w,b.dataset.id||null);
   if(a==='preset')changed(b.dataset.w||'mine');
   if(b.dataset.s)changed(b.dataset.s);
   if(a==='copy'){if(!S.note.trim()){$('copied').textContent='Write a note first';return}const t=feedbackText();const done=()=>{$('copied').textContent='Copied'};
     try{navigator.clipboard.writeText(t).then(done,()=>{$('note').select()})}catch(e){$('note').select()}return}
   render();
-  if((a==='buy'||a==='testOut')&&$('sign'))$('sign').scrollIntoView({block:'nearest'});
 });
 function changed(which){if(which==='base')S.dis=null}
 /* ---------- disaster taglines ---------- */
@@ -2583,7 +2712,7 @@ document.addEventListener('change',ev=>{
   changed(el.dataset.s);
   if(k<0){if(f==='type'){setWhere(st,el.value);S.custom[el.dataset.s]=false;S.picked[el.dataset.s]=true}else st[f]=el.value}else{const key=el.dataset.k==='r'?st.rkey:st.keys[k];key[f]=el.value;
     if(f==='device'){if(el.value==='phone')key.dloc='carry';if(el.value==='laptop')key.dloc='home';if(el.value==='prov'||el.value==='prov2'){key.backup='none';key.pass='none';if(key.brand==='D')key.brand='A'}}}
-  if(f!=='pin'){st.tested=false;if(st===S.mine)S.w.report=null}
+  if(f!=='pin')st.tested=false;
   render();
 });
 $('how').addEventListener('click',ev=>{if(ev.target===ev.currentTarget)ev.currentTarget.close()});

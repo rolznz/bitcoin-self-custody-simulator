@@ -283,7 +283,7 @@ const SetupMap=(()=>{
       <defs><linearGradient id="map-grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C6F06A"/><stop offset="1" stop-color="#5FCF8A"/></linearGradient></defs>
       <path d="M40 60h30M720 300h36M700 480h44M30 470h28M610 30h24M22 250h20M560 520h30M330 36h30" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".55"/>
       <ellipse cx="350" cy="320" rx="322" ry="204" fill="#1B8E77"/><ellipse cx="350" cy="306" rx="322" ry="204" fill="#E9DDB0"/><ellipse cx="350" cy="302" rx="308" ry="192" fill="url(#map-grass)"/>
-      ${far}<g class="mapstep" data-step="end">${paths}</g>${B.map(b=>b[1]).join('')}${T.join('')}${you}${cloud}${FX&&FX.ev?effects(target(spots)):''}
+      ${far}<g class="mapstep" data-step="end">${paths}</g>${B.map(b=>b[1]).join('')}${T.join('')}<g class="mapyou"><g class="mapbob">${you}</g></g>${cloud}${FX&&FX.ev?effects(target(spots)):''}
     </svg>`;
   }
 
@@ -378,7 +378,10 @@ const SetupMap=(()=>{
     if(tap){show(REG[+tap.dataset.i]);dl.showModal()}
   });
   // beats() and things() describe the map drawn by the latest svg() call. things() lists what is on it and what became of each.
-  const things=()=>REG.filter(t=>t.t).map(t=>({id:t.id,role:t.role,k:t.k,fate:t.fate,fresh:t.fresh}));
+  // i is the thing's data-i on the map, x and y where it stands, loc the place it is kept ("carry" is on you).
+  const things=()=>REG.map((t,i)=>({id:t.id,role:t.role,k:t.k,fate:t.fate,fresh:t.fresh,t:t.t,i,x:t.x,y:t.y,loc:t.loc})).filter(t=>t.t);
+  // "Use it" walks you about the island (see ui.js): you are everything inside .mapyou, standing at here().
+  const here=()=>({x:YOU.x,y:YOU.y});
   // A different character, picked at random, but nobody twice until everybody has had a turn.
   let turns=[];
   const another=()=>{
@@ -386,5 +389,22 @@ const SetupMap=(()=>{
     if(!turns.length)turns=Object.keys(CHARS).filter(id=>id!==WHO);
     WHO=turns.splice(Math.floor(Math.random()*turns.length),1)[0];
   };
-  return {svg,beats,things,driver,landmark,fresh,another};
+  /* The last screen: the island with nothing kept on it, and everybody you can play as dancing along its front edge,
+     whoever you are playing in the middle. Three dance moves and a few floating notes; the movement is all in the CSS
+     (.dancer, .partynote). The view is shifted so the island, not the drawing, is in the middle. */
+  function party(){
+    const B=Object.values(SPOTS).map(p=>[p.y,building(p.x,p.y,p.b).svg]).sort((a,b)=>a[0]-b[0]).map(b=>b[1]).join('');
+    const ids=Object.keys(CHARS).filter(id=>id!==WHO);ids.splice(ids.length>>1,0,WHO);
+    const at=i=>{const x=350+(i-(ids.length-1)/2)*56;return[x,302+192*Math.sqrt(1-((x-350)/308)**2)-42]};
+    const dancers=ids.map((id,i)=>[i,...at(i),id]).sort((a,b)=>a[2]-b[2]).map(([i,x,y,id])=>
+      `<g transform="translate(${x} ${y.toFixed(1)})"><ellipse cy="2" rx="24" ry="8" fill="#000" opacity=".18"/><g class="dancer d${i%3}" style="--t:${(-i*.17).toFixed(2)}s"><title>${CHARS[id].name}</title>${figure(id,0)}</g></g>`).join('');
+    const notes=[[150,250,'♪'],[250,300,'♫'],[352,286,'♪'],[452,300,'♫'],[556,252,'♪'],[306,340,'🎉'],[404,344,'🎉']].map(([x,y,n],i)=>
+      `<text class="partynote" style="--t:${(-i*.37).toFixed(2)}s" x="${x}" y="${y}" text-anchor="middle" font-size="${n==='🎉'?30:34}" font-weight="800" fill="#fff" stroke="#1B1840" stroke-width="1.5">${n}</text>`).join('');
+    return `<svg class="partymap" viewBox="-50 0 800 560" role="img" aria-label="Everybody dancing on the island">
+      <defs><linearGradient id="map-grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C6F06A"/><stop offset="1" stop-color="#5FCF8A"/></linearGradient></defs>
+      <path d="M40 60h30M700 480h44M30 470h28M22 250h20M560 520h30M330 36h30" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".55"/>
+      <ellipse cx="350" cy="320" rx="322" ry="204" fill="#1B8E77"/><ellipse cx="350" cy="306" rx="322" ry="204" fill="#E9DDB0"/><ellipse cx="350" cy="302" rx="308" ry="192" fill="url(#map-grass)"/>
+      ${islet(COMPANY.x,COMPANY.y)}${building(COMPANY.x,COMPANY.y,COMPANY.b).svg}${B}${notes}${dancers}</svg>`;
+  }
+  return {svg,beats,things,here,party,driver,landmark,fresh,another};
 })();

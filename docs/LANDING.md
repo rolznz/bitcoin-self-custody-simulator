@@ -29,7 +29,7 @@ The whole entrance takes under two seconds. An earlier version had the car drive
 - Dark mode is the same scene at night: moon, stars, headlights on, the buildings dimmed.
 - Bouncy motion. Everything overshoots and settles.
 - The car faces the player. It is modelled on the orange SeedSigner case: a pill-shaped body with a dark screen and three stacked buttons, headlights at each end, wheels underneath. No logo or name. The driver sits behind it holding the steering wheel, with dust puffs at the wheels.
-- The driver is the map's character (`SetupMap.driver()` in `src/map.js`): the same sticker head on the same clothes, Satoshi to begin with. Pick someone else on the map and they are driving when you come back.
+- The driver is the map's character (`SetupMap.driver()` in `src/map.js`): the same sticker head on the same clothes, Satoshi to begin with. The labels are shown once, ending with what the driver said. After that only the driver changes: a different character, picked at random, takes the wheel (`SetupMap.another()`), says their line, and makes way for the next. The buildings are not introduced again until you come back to this screen. Whoever is driving when you press "Get started" is who you are on the map. Pick someone else on the map and they are driving when you come back.
 - Simple and cartoony beats detailed. Where the reference is painterly, a cleaner shape is fine.
 - The "Get started" button has a thick dark border and a hard drop shadow, and presses down when clicked.
 
@@ -39,6 +39,7 @@ The whole entrance takes under two seconds. An earlier version had the car drive
 - The scenery is a painted drawing. Only the car is 3D: it is built from flat panels by `buildCar()` in `src/ui.js`, so it can turn with the road. Its jump is set by hand in the `sc-move`, `sc-pitch` and `sc-yaw` keyframes in `src/styles.css`.
 - Reduced motion: the car is already parked and the text is already there.
 - The player never has to wait. A click or tap skips to the end of the entrance. Keys don't.
+- After the entrance, a click or tap anywhere except the car, a button or a link skips ahead: to the next label, and once the labels are done, straight to the next driver and their line. So you can click through all the characters.
 - It must work on a phone held upright.
 
 ## Checklist
@@ -62,4 +63,4 @@ Once the car has landed, short notes appear over the scene one at a time, in tur
 
 - Pen arrows name what is there: "You", "Your home", "The bank", "A friend's place", "The exchange". They are the same orange stroke as the underline and draw themselves in. The list, with each one's position, is `NOTES` in `src/ui.js`. The map's introduction points at things with the same arrow: both are drawn by `penArrow()` and share one style rule.
 - Then a speech bubble from the driver. It shows that character's `quote`, so it is always something the person really said. Never write a line for the bubble yourself.
-- A narrow window (a phone held upright) shows only the middle of the drawing. There the scene is drawn smaller, so that at least 780 of its 1200 width is in view, and home, the bank and the friend's place move in to the roadside (`#scene.narrow` in `src/styles.css`). Their pen arrows are placed for the wide layout, so on a narrow window only "You" and the speech bubble are shown.
+- A narrow window (a phone held upright) shows only the middle of the drawing. There the scene is drawn smaller, so that at least 780 of its 1200 width is in view, and home, the bank and the friend's place move in to the roadside (`#scene.narrow` in `src/styles.css`). Because the buildings stand somewhere else there, each of their pen arrows is listed twice in `NOTES`, once for the wide layout and once for the narrow one.

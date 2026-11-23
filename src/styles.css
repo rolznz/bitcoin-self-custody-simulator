@@ -331,6 +331,7 @@ body.mapscreen::before{background:#7EC8FF}
 .mapstep{transform-box:fill-box;transform-origin:50% 100%}
 .mapintro .map>*{pointer-events:none} /* the things on the map can't be used until they arrive; the map itself still takes drags and pinches */
 .mapintro .maptap:has(.in),.mapintro .maptap.in{pointer-events:auto} /* a thing can be opened as soon as it has arrived */
+.mapintro .mapplace{pointer-events:auto} /* the places are there from the start, so they open their cards from the start. A click on one must not fall through to the map and continue the introduction */
 .mapintro .mapstep,.mapintro .maptool{opacity:0}
 .mapintro .maptool.in{opacity:1}
 .mapintro .maptools{pointer-events:none} /* buttons not yet introduced must not catch the click that continues the introduction */
@@ -393,7 +394,8 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
 .mapsecret.shown{letter-spacing:0;background:#FFF4C2;color:#1B1840}
 .mapsheet{background:#FFFDF2;color:#1B1840;border-radius:4px;padding:12px 14px;columns:2;transform:rotate(-2deg);box-shadow:3px 4px 0 rgb(0 0 0/.12)}
 .mapseed{position:relative;padding-right:58px}
-.maprick{position:absolute;right:-8px;top:10px;width:68px;height:68px;background:url(img/rick.png) center/cover;border:4px solid #fff;border-radius:4px;box-shadow:2px 3px 0 rgb(0 0 0/.18);transform:rotate(7deg)}
+.mapseed.plain{padding-right:0}
+.maprick{position:absolute;right:-8px;top:10px;width:68px;height:68px;background:url(img/rick.webp) center/cover;border:4px solid #fff;border-radius:4px;box-shadow:2px 3px 0 rgb(0 0 0/.18);transform:rotate(7deg)}
 .mapsheet small{color:#8E8AB8;font-family:var(--body);font-size:.7rem}
 .mapplate{background:#B8C2D4;border-radius:4px;padding:12px 14px;columns:2;font-family:ui-monospace,monospace;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4A566E;box-shadow:inset 0 -6px 0 #8E9AB0}
 /* ---------- a disaster playing on the map (prototype) ----------
@@ -447,7 +449,7 @@ button.mapcardtip:active{transform:translateY(3px);box-shadow:0 1px 0 #1B1840}
 .mapresult{position:absolute;right:14px;bottom:80px;width:min(380px,calc(100% - 28px));background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:22px;box-shadow:0 6px 0 #1B1840;padding:16px 16px 14px;animation:fxbar .45s 2.1s cubic-bezier(.3,1.5,.5,1) both}
 .mrbadge{position:absolute;left:-16px;top:-22px;width:58px;height:58px;border-radius:50%;border:3px solid #1B1840;box-shadow:0 4px 0 #1B1840;display:grid;place-items:center;font-size:1.9rem;line-height:1;transform:rotate(-8deg)}
 .mapresult.bad .mrbadge{background:#FFB3A7}.mapresult.ok .mrbadge{background:#A9EBC0}
-.mrx{position:absolute;right:10px;top:10px;width:34px;height:34px;border-radius:50%;border:2.5px solid #1B1840;background:#fff;color:#1B1840;box-shadow:0 3px 0 #1B1840;font:700 1.3rem/1 var(--body);display:grid;place-items:center;padding:0 0 2px;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.mrx{z-index:1;position:absolute;right:10px;top:10px;width:34px;height:34px;border-radius:50%;border:2.5px solid #1B1840;background:#fff;color:#1B1840;box-shadow:0 3px 0 #1B1840;font:700 1.3rem/1 var(--body);display:grid;place-items:center;padding:0 0 2px;cursor:pointer;transition:transform .12s,box-shadow .12s}
 .mrx:hover{transform:translateY(-1px);box-shadow:0 4px 0 #1B1840}.mrx:active{transform:translateY(3px);box-shadow:0 0 0 #1B1840}
 .mrface>b,.mrface>.tagline,.mrfix>b{padding-right:36px} /* clear of the × */
 .mrface,.mrfix{display:grid;gap:8px}
@@ -554,7 +556,7 @@ body.landing{overflow-x:clip;background:linear-gradient(var(--sky),var(--sky2) 6
 /* the speech bubble grows up and to the right from beside the driver's head */
 #sc-say{position:absolute;z-index:4;left:calc(50% + var(--s,1)*46px);bottom:calc(var(--s,1)*404px);max-width:min(250px,calc(50vw - var(--s,1)*46px - 10px));padding:9px 13px;background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:18px;box-shadow:3px 4px 0 #1B1840;font:700 .9rem/1.25 var(--body);transform-origin:0 100%}
 #scene.narrow #sc-say{bottom:calc(var(--s,1)*364px);font-size:.8rem} /* on a phone it sits lower, clear of the text above */
-#sc-say::after{content:"";position:absolute;left:14px;bottom:-10px;width:14px;height:14px;background:#fff;border:solid #1B1840;border-width:0 3px 3px 0;transform:skewX(28deg) rotate(45deg)}
+#sc-say::after{content:"";position:absolute;left:14px;bottom:-10px;width:14px;height:14px;background:#fff;border:solid #1B1840;border-width:0 3px 3px 0;transform:skewX(-28deg) rotate(45deg)} /* the tail leans down and to the left, towards the driver */
 /* ---------- landing: text ---------- */
 .scribble{position:relative;white-space:nowrap}
 .scribble svg{position:absolute;left:-2%;top:88%;width:104%;overflow:visible;pointer-events:none}

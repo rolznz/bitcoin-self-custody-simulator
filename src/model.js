@@ -557,7 +557,7 @@ function cands(s,build){
       const K=one?'the key':`Key ${LETTERS[i]}`,Ks=one?'the':`Key ${LETTERS[i]}’s`;
       if(k.device==='none')L(`Put ${K} on a hardware signer kept at home.`,'You can sign without restoring from the backup every time.',t=>{Object.assign(t.keys[i],{device:'hw',dloc:'home'})},i+':device');
       if(soft(k))L(one?`Move your wallet from the ${k.device} to a hardware signer.`:`Move ${K} to a hardware signer.`,'Malware on a phone or computer can no longer reach the key.',t=>{Object.assign(t.keys[i],{device:'hw',dloc:'home'})},i+':device');
-      if(hot(k))L(`Keep ${Ks} ${k.device} always offline.`,'Malware can’t reach a device that never connects.',t=>{t.keys[i].net='offline'},i+':net');
+      if(hot(k))L(one?`Use an old ${k.device} as an always-offline signer.`:`Use an old ${k.device} as an always-offline signer for ${K}.`,'Malware can’t reach a device that never connects.',t=>{t.keys[i].net='offline'},i+':net');
       if(soft(k)&&k.dloc==='carry')L(`Keep ${Ks} ${k.device} at home.`,'It can’t be stolen, lost or unlocked by force while you’re out.',t=>{t.keys[i].dloc='home'},i+':dloc');
       if(k.device==='hw')PL.forEach(pl=>{if(k.dloc!==pl)L(`Keep ${Ks} signer ${AT[pl]}.`,'It’s away from your other keys and backups, so one break-in or fire takes less.',t=>{t.keys[i].dloc=pl},i+':dloc')});
       if(k.backup==='none')L(one?'Write your seed down on paper as a backup.':`Write down a paper backup for ${K}.`,'If the device dies, the backup brings the key back.',t=>{Object.assign(t.keys[i],{backup:'paper',bloc:'home'})},i+':backup');
@@ -627,7 +627,7 @@ function stoppers(s,e,kind,build){
     :[step('low','own')];
   else if(e.hot)a=[
     keys('low',ks=>one?`Move your wallet from the ${ks[0].device} to a hardware signer.`:'Move every key on a phone or laptop to a hardware signer.','Malware on a phone or computer can no longer reach the key.',hot,k=>{k.device='hw';k.dloc='home'}),
-    keys('alt',ks=>ks.length===1?`Keep the ${ks[0].device} always offline.`:'Keep those phones and laptops always offline.','Malware can’t reach a device that never connects.',hot,k=>{k.net='offline'})];
+    keys('alt',ks=>ks.length===1?`Use an old ${ks[0].device} as an always-offline signer.`:'Use old phones or laptops as always-offline signers.','Malware can’t reach a device that never connects.',hot,k=>{k.net='offline'})];
   else if(e.phish)a=[multi()];
   else if(e.app||e.guess||(e.brand&&!e.supply&&!e.bugloss))a=[
     keys('low',one?'Make the seed yourself, with dice rolls or coin flips.':'Make those seeds yourself, with dice rolls or coin flips.',e.guess?'Words people pick get guessed. Dice and coins can’t be.':'The seed no longer depends on how good the app’s or device’s random numbers are.',

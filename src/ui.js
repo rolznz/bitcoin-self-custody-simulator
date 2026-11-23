@@ -204,7 +204,7 @@ function screenMap(which){
   const tip=(k,title,x)=>x?`<button class="mapcardtip" data-act="mapApply" data-k="${k}"><small>${title}</small><b>${x.do}</b><span>Theft ${x.from.theft} → ${x.to.theft} · Loss ${x.from.loss} → ${x.to.loss}</span></button>`:'';
   const cards=tips?`<div class="mapcards">${tip('small','💡 A small step',tips.small)}${tip('big','🏗️ A big step',tips.big)}${!tips.small&&!tips.big?'<div class="mapcardtip done"><b>Nothing more to suggest.</b><span>From here, every change trades one risk for another.</span></div>':''}</div>`:'';
   return `<h2 class="sr">${build?'Build your new setup':'Your setup today'}</h2>
-  <div class="mapcard${intro?' mapintro':''}${result||cards?' lift':''}">${SetupMap.svg(S[which],fx)}<span class="maplabel">${build?'Your new setup':'Your current setup'}</span><button type="button" class="mapreset">Reset view</button>${result}${cards}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
+  <div class="mapcard${intro?' mapintro':''}${result||cards?' lift':''}">${SetupMap.svg(S[which],fx)}${build?'<span class="maplabel">Your new setup</span>':''}<button type="button" class="mapreset">Reset view</button>${result}${cards}${intro?'<svg class="mapline" aria-hidden="true"></svg><div class="mapcap" role="status"></div>':''}
     <button class="mapscore${build?' rows':''}${moving?' changing':''}" data-act="scores" aria-label="${build?`Before: theft risk ${was.theft}, loss risk ${was.loss}. Now: theft risk ${sc.theft}, loss risk ${sc.loss}`:`Theft risk ${word[level(sc.theft)]}, loss risk ${word[level(sc.loss)]}`}. Open the scoreboard">${chip}</button>
     <div class="maptools">${tool('data-act="help"',S.helpOpen,'❓','Help','Help')}${tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster')}${tool('data-act="editBase"',S.editBase,'✏️',build?'Edit new setup':'Edit current setup',build?'Edit new setup':'Edit current setup')}<button class="maptool next" data-act="go" data-to="${build?3:2}"><span aria-hidden="true">${build?'🧪':'🚀'}</span>${build?'Try using it →':'Improve it →'}</button></div></div>`;
 }
@@ -415,6 +415,7 @@ function go(to){
   // is starting again, so everything that happens the first time happens again, the fixed first disaster included.
   const firstMap=to===1&&!calm&&(S.step===0||!mapIntroSeen);
   if(firstMap){mapIntroSeen=true;S.mapIntro='run';mapBeat=-1;S.thrown=false}
+  if(to===1&&S.step===0)SetupMap.fresh(); // and the first seed you open is the Rickroll again
   if(to===0&&S.step!==0)startIntro(); // coming back to the first screen replays the car's entrance
   if(to!==1&&S.mapIntro==='run')S.mapIntro='done'; // leaving the map (by "Improve it", say) ends its introduction
   const wasMap=S.step===1||S.step===2; // the map keeps its zoom between Today and Build, and starts afresh when you come to it from anywhere else
@@ -514,16 +515,14 @@ function paintMapIntro(arriving){
   cap.classList.toggle('up',!!b.point); // a caption about a button sits above the buttons, so its line can slant down to one
   cap.classList.remove('in');void cap.offsetWidth;cap.classList.add('in');
   aimMapArrow(b.point||!arriving?80:520); // drawn once the thing it points at has landed
-  // A click continues, unless it is on something that has already arrived: a thing opens its card, a button does its job.
+  // Only two things continue: a click on the caption, or on an empty part of the map. Anything that can be clicked does
+  // its own job and nothing more: a thing or a place opens its card, a button does what it says. Using them, and
+  // closing what they opened, leaves the caption where it is, even when the caption is about that very thing.
   // The arrow on the left of the caption goes back one step.
   if(!card.dataset.intro){card.dataset.intro=1;card.addEventListener('click',ev=>{
     if(ev.target.closest('.mapback'))return prevMapBeat();
     if(S.mapIntro!=='run')return; // the introduction is over, but this card has not been redrawn since
-    const used=ev.target.closest('.maptap,.maptool,.mapscore');
-    if(used){ // remember whether this is what the caption on screen is about; see mapBeatUsed
-      const x=SetupMap.beats()[mapBeat],own=[...x.steps.map(s=>`[data-step="${s}"]`),x.point].filter(Boolean).join(',');
-      mapBeatUsed=used.matches(own)||used.querySelector(own)?mapBeat:-1;
-    }else if(!ev.target.closest('.mapresult'))nextMapBeat();
+    if(ev.target.closest('.mapcap')||!ev.target.closest('.maptap,.maptool,.mapscore,.mapresult,.mapcards,button,a,[role="button"]'))nextMapBeat();
   })}
 }
 // The pen arrow from the caption to what it is talking about. Drawn afresh for each caption, and again whenever the map
@@ -555,13 +554,6 @@ function prevMapBeat(){
   if(S.mapIntro!=='run'||mapBeat<1)return;
   mapBeat--;render(); // redrawing clears whatever the later step had brought in; render() then repaints up to this step
 }
-// Things and buttons can be used as soon as their caption has introduced them. One rule for all of them: being done
-// with the thing the caption is about (closing its dialog, resetting its disaster) moves the introduction on, the same
-// as a click on the map would. Going back to something introduced earlier does not: changing who you are for fun while
-// a later caption is showing leaves that caption where it is. mapBeatUsed is the step whose own thing was last used.
-let mapBeatUsed=-1;
-const usedMapBeat=()=>{if(S.mapIntro==='run'&&S.step===1&&mapBeatUsed===mapBeat)nextMapBeat()};
-for(const id of ['sim','edit','mapitem','scores'])$(id).addEventListener('close',usedMapBeat);
 function resize(st,n){
   n=Math.max(1,Math.min(5,n));
   while(st.keys.length<n)st.keys.push(newKey());
@@ -645,7 +637,7 @@ document.addEventListener('click',ev=>{
   if(a==='simBase'||a==='mapAnother')throwDisaster(null);
   if(a==='simPick'){S.simBase=true;S.simList=true}
   if(a==='simClose')S.simBase=false;
-  if(a==='mapDisDone'){S.mapDis=S.run=null;render();usedMapBeat();return} // Reset: the map as it was. During the onboarding it also moves on, if the caption was about disasters.
+  if(a==='mapDisDone'){S.mapDis=S.run=null;render();return} // Reset: the map as it was
   if(a==='help'){S.helpOpen=!S.helpOpen;S.helpMore=false}
   if(a==='helpMore')S.helpMore=!S.helpMore;
   if(a==='scores'){S.scoresOpen=!S.scoresOpen;S.scoresMore=false}
@@ -890,14 +882,20 @@ $('car3d').addEventListener('click',()=>{
 });
 /* ---------- landing notes ---------- */
 // Pen arrows that name what is in the scene, and a speech bubble with something the driver really said. One shows at a
-// time, in turn, once the car has landed. [text, x, y, tilt, arrow from, bend, to, needs a wide window]
+// time, in turn, once the car has landed. [text, x, y, tilt, arrow from, bend, to, which layout it is for]
+// A narrow window (a phone) has the buildings closer to the road (see #scene.narrow in the CSS), so the notes about
+// them are listed twice: once placed for the wide layout, once for the narrow one.
 // "You" stands to the right of the driver: the headline and the lines under it are on the left, and on a short window
 // the driver's head comes up level with them.
 const NOTES=[['You',748,226,6,[714,214],[684,202],[660,226]],
-  ['Your home',214,446,-4,[196,458],[176,476],[150,484],1],
-  ['The bank',352,424,3,[332,434],[312,440],[292,456],1],
-  ['A friend’s place',1010,462,-3,[1052,474],[1078,478],[1098,498],1],
-  ['The exchange',952,356,4,[914,368],[890,366],[872,384],1]];
+  ['Your home',214,446,-4,[196,458],[176,476],[150,484],'wide'],
+  ['The bank',352,424,3,[332,434],[312,440],[292,456],'wide'],
+  ['A friend’s place',1010,462,-3,[1052,474],[1078,478],[1098,498],'wide'],
+  ['The exchange',952,356,4,[914,368],[890,366],[872,384],'wide'],
+  ['Your home',310,402,-4,[296,414],[276,426],[270,450],'narrow'],
+  ['The bank',330,396,3,[344,408],[360,420],[372,438],'narrow'],
+  ['A friend’s place',868,560,-3,[900,540],[914,530],[922,514],'narrow'],
+  ['The exchange',872,350,4,[864,362],[856,370],[854,384],'narrow']];
 // penArrow() is the one arrow used for pointing at things, here and in the map's introduction: a curve from a to c that
 // bends toward b, with an open head at c. A very short arrow gets a smaller head.
 function penArrow(a,b,c){
@@ -908,18 +906,39 @@ function penArrow(a,b,c){
   const end=`${n(c[0])} ${n(c[1])}`;
   return `<path class="pen" pathLength="1" d="M${n(a[0])} ${n(a[1])}Q${n(b[0])} ${n(b[1])} ${end}"/><path class="pen head" pathLength="1" d="M${end}L${tip(.5)}M${end}L${tip(-.5)}"/>`;
 }
-$('sc-notes').innerHTML=NOTES.map(([t,x,y,r,a,b,c,wide])=>{
-  return `<g class="sc-note"${wide?' data-wide="1"':''}>${penArrow(a,b,c)}<text x="${x}" y="${y}" text-anchor="middle" transform="rotate(${r} ${x} ${y})">${t}</text></g>`}).join('');
-let noteTimer=0,noteI=-1;
+$('sc-notes').innerHTML=NOTES.map(([t,x,y,r,a,b,c,fit])=>{
+  return `<g class="sc-note"${fit?` data-fit="${fit}"`:''}>${penArrow(a,b,c)}<text x="${x}" y="${y}" text-anchor="middle" transform="rotate(${r} ${x} ${y})">${t}</text></g>`}).join('');
+/* The notes are shown once, in order: the labels, then what the driver said. After that the tour is over, and only the
+   driver changes: someone else takes the wheel, says their line, and makes way for the next. The buildings are not
+   introduced again. Whoever is driving when you set off is you on the map. noteSolo: 0 during the tour, then 1 while a
+   line is showing or due, 2 once it has faded and the driver is to be swapped. */
+let noteTimer=0,noteI=-1,noteSolo=0;
 function nextNote(){
-  const c=document.body.classList,all=[...document.querySelectorAll('#scene .sc-note')];
+  const c=document.body.classList,all=[...document.querySelectorAll('#scene .sc-note')],say=$('sc-say'),said=say.classList.contains('on');
   all.forEach(n=>n.classList.remove('on'));
-  if(!c.contains('landing')||c.contains('intro')||c.contains('leaving')){noteI=-1;noteTimer=setTimeout(nextNote,800);return}
-  const fit=all.filter(n=>!(n.dataset.wide&&$('scene').classList.contains('narrow')));
-  noteI=(noteI+1)%fit.length;fit[noteI].classList.add('on');
+  if(!c.contains('landing')||c.contains('intro')||c.contains('leaving')){noteI=-1;noteSolo=0;noteTimer=setTimeout(nextNote,800);return}
+  if(noteSolo){
+    if(said){noteSolo=2;noteTimer=setTimeout(nextNote,350)}                                  // let the bubble fade first
+    else if(noteSolo===2){SetupMap.another();seatDriver();noteSolo=1;noteTimer=setTimeout(nextNote,500)} // the new driver, alone for a moment
+    else{say.classList.add('on');noteTimer=setTimeout(nextNote,+say.dataset.ms)}
+    return;
+  }
+  const layout=$('scene').classList.contains('narrow')?'narrow':'wide',fit=all.filter(n=>!n.dataset.fit||n.dataset.fit===layout);
+  noteI++;fit[noteI].classList.add('on');
+  if(noteI===fit.length-1)noteSolo=1;
   noteTimer=setTimeout(nextNote,+fit[noteI].dataset.ms||3200);
 }
-function runNotes(){clearTimeout(noteTimer);noteI=-1;noteTimer=setTimeout(nextNote,700)}
+function runNotes(){clearTimeout(noteTimer);noteI=-1;noteSolo=0;noteTimer=setTimeout(nextNote,700)}
+// A click anywhere on the first screen, other than on the car or a button, skips ahead: to the next label during the
+// tour, and after it straight to the next driver and their line. So you can click through everyone quickly.
+document.addEventListener('click',ev=>{
+  const c=document.body.classList;
+  if(!c.contains('landing')||c.contains('intro')||c.contains('leaving')||ev.target.closest('#car3d,button,a,dialog'))return;
+  clearTimeout(noteTimer);
+  if(!noteSolo)return nextNote();
+  document.querySelectorAll('#scene .sc-note').forEach(n=>n.classList.remove('on'));
+  SetupMap.another();seatDriver();noteSolo=1;noteTimer=setTimeout(nextNote,120); // a short gap, so the bubble pops in again
+});
 runNotes();
 // "Get started": the car drives off toward you, then the next screen opens. Returns false if there is nothing to play.
 function driveOff(then){

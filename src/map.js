@@ -151,7 +151,7 @@ const SetupMap=(()=>{
     satoshi:{name:'Satoshi Nakamoto',by:'Satoshi Nakamoto, 2010',head:['img/head-satoshi.webp',145],skin:'#D9A07A',sleeve:'#8C8577',
       quote:'If you don’t believe me or don’t get it, I don’t have time to try to convince you, sorry.',
       jokes:['Nobody knows who you are. Some days that includes you.','Last seen online in 2011. Nobody has dared to change the password.']},
-    hal:{name:'Hal Finney',by:'Hal Finney, 2009',head:['img/head-hal.webp',140],skin:'#E0A98A',
+    hal:{name:'Hal Finney',by:'Hal Finney, 2009',head:['img/head-hal.webp',122],skin:'#E0A98A',
       quote:'Running bitcoin',
       jokes:['Running bitcoin. Also just running.','Received the very first bitcoin transaction. Never bragged about it.']},
     adam:{name:'Adam Back',by:'Adam Back, on his Twitter profile',head:['img/head-adam.webp',133],skin:'#E2B79E',
@@ -172,6 +172,9 @@ const SetupMap=(()=>{
     saifedean:{name:'Saifedean Ammous',by:'Saifedean Ammous, The Bitcoin Standard',head:['img/head-saifedean.webp',126],skin:'#C99A78',sleeve:'#27406B',
       quote:'Bitcoin is the hardest money ever invented.',
       jokes:['On a strict diet of steak and hard money.','Low time preference. Will wait as long as it takes for you to read the book.']},
+    todd:{name:'Peter Todd',by:'Peter Todd, 2024',head:['img/head-todd.webp',145],skin:'#E0AE94',sleeve:'#687644',
+      quote:'I’m not Satoshi.',
+      jokes:['Says he is not Satoshi. On this island, that is easy to check.','Find him at bitcoin++. Or at any other bitcoin conference, anywhere.','Would replace this joke with one that pays a higher fee.']},
   };
   let WHO='satoshi';
   /* The figure, feet at (0,0), about 103 tall. Every body is the same few parts in different clothes.
@@ -193,10 +196,13 @@ const SetupMap=(()=>{
       adam:()=>legs('#3B4A6B','#2B2B33')+arms('#23232B',1)+torso('#23232B')+`<text x="0" y="-30" text-anchor="middle" font-size="7" font-weight="700" font-family="monospace" fill="#7CFFB2">0000</text>`,
       jack:()=>`<defs><radialGradient id="map-tiedye" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#FFE14D"/><stop offset=".3" stop-color="#FF7A59"/><stop offset=".55" stop-color="#E85D9A"/><stop offset=".8" stop-color="#7C66FF"/><stop offset="1" stop-color="#3DC8E8"/></radialGradient></defs>`+legs('#23232B','#B98A55')+arms('#7C66FF',1)+torso('url(#map-tiedye)'),
       andreas:()=>`<defs><pattern id="map-plaid" width="7" height="7" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="#CFE2F3"/><path d="M0 2H7M2 0V7" stroke="#4F7FB5" stroke-width="1.6"/><path d="M0 5.5H7M5.5 0V7" stroke="#fff" stroke-width=".8"/></pattern></defs>`+legs('#8B7B5A','#5B4632')+arms('#9DBFE0')+torso('url(#map-plaid)')+`<path d="M-4 -46L0 -40L4 -46Z" fill="${k}"/><path d="M0 -40V-18" stroke="#4F7FB5" stroke-width="1"/>`,
-      // no shirt: wide shoulders, big arms, and a six-pack drawn the way a child would
-      breedlove:()=>legs('#23232B','#2B2B33',1)+arms('',1,10)+`<circle cx="-21" cy="-37" r="6.5" fill="${k}"/><circle cx="${carry?22:21}" cy="-37" r="6.5" fill="${k}"/><path d="M-21 -46Q-24 -46 -23 -40L-12 -20H12L23 -40Q24 -46 21 -46Z" fill="${k}"/><g fill="none" stroke="#9A6B45" stroke-width="1.3" stroke-linecap="round"><path d="M-14 -40Q-7 -33 -1 -39M1 -39Q7 -33 14 -40"/><path d="M-22 -40Q-25 -37 -23 -33M22 -40Q25 -37 23 -33" opacity=".7"/></g><g fill="#fff" fill-opacity=".28" stroke="#9A6B45" stroke-width="1"><rect x="-6.5" y="-33.5" width="6" height="4" rx="1.6"/><rect x=".5" y="-33.5" width="6" height="4" rx="1.6"/><rect x="-6.5" y="-29" width="6" height="4" rx="1.6"/><rect x=".5" y="-29" width="6" height="4" rx="1.6"/><rect x="-6" y="-24.5" width="5.5" height="4" rx="1.6"/><rect x=".5" y="-24.5" width="5.5" height="4" rx="1.6"/></g><path d="M-8 -46Q0 -37 8 -46" fill="none" stroke="#D8DBE6" stroke-width="1.1"/>`,
+      // no shirt: wide shoulders, big arms, and a six-pack drawn the way a child would. One arm flexes: out from the
+      // shoulder, fist up beside the head, and a bump for the bicep. The other hangs, or holds what he carries.
+      breedlove:()=>legs('#23232B','#2B2B33',1)+(bust?'':arm(carry?['M21 -38Q29 -35 34 -24',34,-22]:['M21 -38Q26 -32 24 -23',24,-21],'',1,10)+`<path d="M-21 -38L-34 -37L-32 -53" fill="none" stroke="${k}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><circle cx="-27.5" cy="-41.5" r="6" fill="${k}"/><circle cx="-32" cy="-56" r="5.2" fill="${k}"/><path d="M-32 -45Q-27 -50 -22.5 -45" fill="none" stroke="#9A6B45" stroke-width="1.2" stroke-linecap="round"/>`)+`<circle cx="-21" cy="-37" r="6.5" fill="${k}"/><circle cx="${carry?22:21}" cy="-37" r="6.5" fill="${k}"/><path d="M-21 -46Q-24 -46 -23 -40L-12 -20H12L23 -40Q24 -46 21 -46Z" fill="${k}"/><g fill="none" stroke="#9A6B45" stroke-width="1.3" stroke-linecap="round"><path d="M-14 -40Q-7 -33 -1 -39M1 -39Q7 -33 14 -40"/><path d="M-22 -40Q-25 -37 -23 -33M22 -40Q25 -37 23 -33" opacity=".7"/></g><g fill="#fff" fill-opacity=".28" stroke="#9A6B45" stroke-width="1"><rect x="-6.5" y="-33.5" width="6" height="4" rx="1.6"/><rect x=".5" y="-33.5" width="6" height="4" rx="1.6"/><rect x="-6.5" y="-29" width="6" height="4" rx="1.6"/><rect x=".5" y="-29" width="6" height="4" rx="1.6"/><rect x="-6" y="-24.5" width="5.5" height="4" rx="1.6"/><rect x=".5" y="-24.5" width="5.5" height="4" rx="1.6"/></g><path d="M-8 -46Q0 -37 8 -46" fill="none" stroke="#D8DBE6" stroke-width="1.1"/>`,
       // navy suit, white shirt, no tie, and a steak in his other hand
       saifedean:()=>legs('#27406B','#2B2B33')+arms('#27406B')+torso('#27406B')+`<path d="M-6 -46L0 -34L6 -46Z" fill="#fff"/><path d="M-2.5 -46L0 -40L2.5 -46Z" fill="${k}"/><path d="M-6 -46L0 -34L6 -46M0 -34V-18" fill="none" stroke="#000" stroke-opacity=".22" stroke-width="1.2"/><g transform="translate(-23 -18) rotate(-20)"><path d="M-7 0Q-8 -6 -1 -6Q7 -7 7 -1Q7 5 1 5Q-6 6 -7 0Z" fill="#F1DCCB"/><path d="M-5.4 0Q-6 -4.6 -1 -4.6Q5.4 -5.4 5.4 -1Q5.4 3.6 1 3.6Q-4.8 4.4 -5.4 0Z" fill="#B5413A"/><circle cx="-1.6" cy="-.6" r="1.5" fill="#F1DCCB"/></g>`,
+      // olive fatigues, boots, and a plate carrier with two pouches. The helmet is part of the head picture.
+      todd:()=>legs('#687644','#3A3324')+arms('#687644')+torso('#687644')+`<path d="M-11 -46L-12.5 -22H12.5L11 -46H6.5Q0 -40 -6.5 -46Z" fill="#4A5630"/><g fill="#3E4928"><rect x="-10" y="-31" width="8.5" height="8" rx="1.5"/><rect x="1.5" y="-31" width="8.5" height="8" rx="1.5"/></g><path d="M-9 -36H9" stroke="#3E4928" stroke-width="1.6"/>`,
     }[id]();
     // the head: big, and overlapping the collar. Jack's is longer, so the beard runs down his shirt.
     const hh=id==='jack'?70:60,hw=w168*hh/168,top=-103,x=-hw/2,s=hh/168;
@@ -309,7 +315,11 @@ const SetupMap=(()=>{
   }
 
   /* the card that opens when you click a thing. It says what the thing is, never what could go wrong with it. */
-  const WORDS=['never','gonna','give','you','up','never','gonna','let','you','down','never','gonna'];
+  /* Two seed phrases, never picked at random: the first time a seed is opened it is always the Rickroll, the second
+     time it is every wallet developer's test seed, and after that they take turns. fresh() starts the count again. */
+  const SEEDS=[['never','gonna','give','you','up','never','gonna','let','you','down','never','gonna'],[...Array(11).fill('abandon'),'about']];
+  let seedOpens=0;
+  const fresh=()=>{seedOpens=0};
   const kb=k=>k==null?'':`<b class="mapkb" style="background:${keyColor(k)}" title="Key ${keyName(k)}">${keyName(k)}</b>`;
   function card(o){
     const joke=text=>text?`<p class="mapjoke">${text}</p>`:'';
@@ -323,9 +333,10 @@ const SetupMap=(()=>{
     // Everything memorized is hidden behind dots. Clicking the dots shows that one; clicking again hides it.
     if(o.head)return `<h3>Memorized</h3>`+o.head.map(l=>`<div class="maprow"><span>${kb(l.k)}${l.label}</span><button type="button" class="mapsecret" data-secret="${l.secret}" data-mask="${'•'.repeat(l.dots)}" aria-label="Show or hide">${'•'.repeat(l.dots)}</button></div>`).join('')+joke('Also currently thinking about: '+any(THOUGHTS));
     const head=`<h3>${NAMES[o.t]} ${kb(o.k)}</h3>${o.place?`<p>${o.place}</p>`:''}`;
-    const list=(cls,num)=>`<div class="${cls}">${WORDS.map((w,i)=>`<div>${num?`<small>${i+1}. </small>`:''}${w}</div>`).join('')}</div>`;
+    const rick=o.t==='paper'||o.t==='steel'?seedOpens++%2===0:0,words=SEEDS[rick?0:1];
+    const list=(cls,num)=>`<div class="${cls}">${words.map((w,i)=>`<div>${num?`<small>${i+1}. </small>`:''}${w}</div>`).join('')}</div>`;
     const jokes=joke(JOKES[o.t]&&any(JOKES[o.t]))+joke(PLACE_JOKES[o.loc]);
-    if(o.t==='paper')return head+`<div class="mapseed">${list('mapsheet',1)}<i class="maprick" role="img" aria-label="A photo of Rick Astley, taped to the paper"></i></div>`+jokes;
+    if(o.t==='paper')return head+`<div class="mapseed${rick?'':' plain'}">${list('mapsheet',1)}${rick?'<i class="maprick" role="img" aria-label="A photo of Rick Astley, taped to the paper"></i>':''}</div>`+jokes;
     if(o.t==='steel')return head+list('mapplate',0)+jokes;
     return head+jokes;
   }
@@ -368,5 +379,12 @@ const SetupMap=(()=>{
   });
   // beats() and things() describe the map drawn by the latest svg() call. things() lists what is on it and what became of each.
   const things=()=>REG.filter(t=>t.t).map(t=>({id:t.id,role:t.role,k:t.k,fate:t.fate,fresh:t.fresh}));
-  return {svg,beats,things,driver,landmark};
+  // A different character, picked at random, but nobody twice until everybody has had a turn.
+  let turns=[];
+  const another=()=>{
+    turns=turns.filter(id=>id!==WHO);
+    if(!turns.length)turns=Object.keys(CHARS).filter(id=>id!==WHO);
+    WHO=turns.splice(Math.floor(Math.random()*turns.length),1)[0];
+  };
+  return {svg,beats,things,driver,landmark,fresh,another};
 })();

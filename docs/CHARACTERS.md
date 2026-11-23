@@ -16,6 +16,8 @@ Everything lives in `src/map.js`: `CHARS` lists the characters and `figure()` dr
 
    This writes `src/img/head-<id>.webp`: an oval 168 pixels tall with a white edge, on a transparent background, about 5 KB. It also prints the width, which the next step needs. Look at the result and adjust the numbers until the oval sits well. It needs Pillow (`pip install pillow`).
 
+   A seventh number draws an army helmet over the top of the head, covering a hat or the hair. It is how far down the photo the helmet comes, in pixels: usually just above the eyebrows. Leave more room above the head than usual (a smaller `cy`, a larger `ry`) so the helmet has height. Peter Todd was cut with `120 136 112 162 101`.
+
    The oval is on purpose. It hides the background without having to trace around hair, and it looks like a sticker. Proper background removal can replace it later without changing anything else, as long as the picture stays 168 tall.
 
 3. **Add the character to `CHARS`.**
@@ -50,5 +52,6 @@ Everything lives in `src/map.js`: `CHARS` lists the characters and `figure()` dr
 | Andreas M. Antonopoulos | "Not your keys, not your coins." | He has said he coined it. No transcript of the first use was found. |
 | Adam Back | "Bitcoin is Hashcash extended with inflation control." | His Twitter profile, seen only as quoted by others. |
 | Robert Breedlove | "Bitcoin is the most superior monetary technology that has ever existed." | Not confirmed word for word. A summary of his Lex Fridman Podcast appearance (#176) has him calling bitcoin "the most superior monetary technology ever created". |
+| Peter Todd | "I'm not Satoshi." | His reply on X in October 2024, before HBO's Money Electric named him; reported by Bloomberg, which he also emailed "Cullen is wrong. I'm not Satoshi." |
 
-The last three are the weakest and are the first to replace if better-sourced quotes turn up.
+The three before Peter Todd are the weakest and are the first to replace if better-sourced quotes turn up.

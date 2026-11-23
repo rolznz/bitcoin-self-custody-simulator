@@ -13,7 +13,7 @@ const read = (file) => fs.readFileSync(path.join(src, file), 'utf8');
 const mime = { woff2: 'font/woff2', png: 'image/png', webp: 'image/webp' };
 const data = (asset, ext) => `data:${mime[ext]};base64,${fs.readFileSync(path.join(src, asset)).toString('base64')}`;
 const css = (file) =>
-  read(file).replace(/url\(((?:fonts|img)\/[\w-]+\.(woff2|png))\)/g, (_, asset, ext) => `url(${data(asset, ext)})`);
+  read(file).replace(/url\(((?:fonts|img)\/[\w-]+\.(woff2|png|webp))\)/g, (_, asset, ext) => `url(${data(asset, ext)})`);
 // Scripts name their pictures as quoted paths, such as 'img/head-hal.webp'.
 const js = (file) =>
   read(file).replace(/'(img\/[\w-]+\.(png|webp))'/g, (_, asset, ext) => `'${data(asset, ext)}'`);

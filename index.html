@@ -1293,6 +1293,11 @@ function summarize(s){
   const top=a=>a.sort((a,b)=>b.w-a.w).slice(0,3).map(x=>x.t);
   return{pros:top(pros),cons:top(cons),tips:bestChanges(s)};
 }
+/* A seed that can spend on its own (one signature is enough, and there is no passphrase) is never recommended into
+   somebody else's hands: a bank box, a relative, a friend, the office. Whoever can open it can read the words and take
+   the coins, so that would be trading a burglar for a third party you have to trust. It is fine once a seed alone is
+   not enough: with a passphrase, or when more than one key has to sign. */
+const seedAlone=(s,k)=>s.m===1&&k.pass==='none';
 const AT={home:'at home',office:'at the office',relative:'at a relative’s place',friend:'at a friend’s place',bank:'in the bank box',carry:'on you'};
 const _cc=new Map(),_bc=new Map(),_pc=new Map();
 function cands(s,build){
@@ -1319,7 +1324,7 @@ function cands(s,build){
       if(k.backup==='none')L(one?'Write your seed down on paper as a backup.':`Write down a paper backup for ${K}.`,'If the device dies, the backup brings the key back.',t=>{Object.assign(t.keys[i],{backup:'paper',bloc:'home'})},i+':backup');
       if(k.backup==='memory'||k.backup==='cloud')L(`Write ${Ks} seed on paper instead.`,k.backup==='memory'?'Paper doesn’t forget.':'A hacked or locked account can no longer take it or lose it.',t=>{Object.assign(t.keys[i],{backup:'paper',bloc:'home'})},i+':backup');
       if(k.backup==='paper'||k.backup==='metal'){
-        PL.forEach(pl=>{if(k.bloc!==pl)L(`Keep ${Ks} seed backup ${AT[pl]}.`,'It’s away from your other keys and backups, so one break-in or fire takes less.',t=>{t.keys[i].bloc=pl},i+':bloc')});
+        PL.forEach(pl=>{if(k.bloc!==pl&&(pl==='home'||!seedAlone(s,k)))L(`Keep ${Ks} seed backup ${AT[pl]}.`,'It’s away from your other keys and backups, so one break-in or fire takes less.',t=>{t.keys[i].bloc=pl},i+':bloc')});
         if(k.backup==='paper')L(`Switch ${Ks} seed backup to a metal plate.`,'Metal survives fire and water far better than paper.',t=>{t.keys[i].backup='metal'},i+':backup');
       }
       if(real(k)&&k.pin!=='strong')L(`Set a strong PIN on ${Ks} device.`,'A thief who gets the device is very unlikely to guess it.',t=>{t.keys[i].pin='strong'},i+':pin');
@@ -1401,7 +1406,7 @@ function stoppers(s,e,kind,build){
     multi()];
   else if(e.fire)a=[
     keys('low',one?'Switch your seed backup to a metal plate.':'Switch the paper backups kept there to metal plates.','Metal survives fire and water far better than paper.',k=>k.backup==='paper'&&at(k.bloc),k=>{k.backup='metal'}),
-    keys('big',one?'Keep the seed backup somewhere else than the device, like a bank box.':'Keep those seed backups somewhere else than their devices, like a bank box.','One fire can no longer take the device and its backup together.',k=>written(k)&&at(k.bloc)&&real(k)&&k.dloc===k.bloc,k=>{k.bloc='bank'})];
+    keys('big',one?'Keep the seed backup somewhere else than the device, like a bank box.':'Keep those seed backups somewhere else than their devices, like a bank box.','One fire can no longer take the device and its backup together.',k=>written(k)&&at(k.bloc)&&real(k)&&k.dloc===k.bloc&&!seedAlone(s,k),k=>{k.bloc='bank'})];
   else if(e.dev)a=[
     keys('low',one?'Write your seed down on paper as a backup.':'Write down a paper backup for every key.','If the device dies, the backup brings the key back.',k=>k.backup==='none',k=>{k.backup='paper';k.bloc='home'}),
     (s.m<s.n||TL(s))&&s.config==='none'?whole('low','Back up the wallet file with every seed backup.','If a key goes missing, you need that file to use the rest.',t=>{t.config='all'}):null,

@@ -1293,18 +1293,32 @@ function summarize(s){
   const top=a=>a.sort((a,b)=>b.w-a.w).slice(0,3).map(x=>x.t);
   return{pros:top(pros),cons:top(cons),tips:bestChanges(s)};
 }
-/* A seed that can spend on its own (one signature is enough, and there is no passphrase) is never recommended into
-   somebody else's hands: a bank box, a relative, a friend, the office. Whoever can open it can read the words and take
-   the coins, so that would be trading a burglar for a third party you have to trust. It is fine once a seed alone is
-   not enough: with a passphrase, or when more than one key has to sign. */
-const seedAlone=(s,k)=>s.m===1&&k.pass==='none';
+/* Two rules about what we recommend putting in somebody else's hands. They hold however good it looks in the scores.
+   1. When one signature is enough to spend, a seed backup is never recommended anywhere but home: not a bank box, not a
+      relative, a friend or the office. The seed is the one thing that has the coins, and handing it over is handing over
+      custody. A passphrase does not change this: we still don't suggest it.
+   2. Two keys are never recommended into the same place: one key in the bank box, never two, and the same for home,
+      the office, a relative's, a friend's and your pocket. A key is "in a place" when its signer or its seed backup is
+      there; both of the same key count once. Signer 1 next to seed 2 counts as two keys: whoever gets in there has
+      one key outright and is a PIN away from the other.
+   What somebody already chose is theirs; these only limit what we suggest. placeOk() is the net: cands() and stoppers()
+   drop any change that leaves a place with more keys than it had (and more than one). spotFor() finds a key a place of
+   its own, so that the suggestions have somewhere allowed to point. */
+const oneSig=s=>s.m===1;
+const SPOTS=['home','office','relative','friend','bank','carry'];
+const keyAt=(k,p)=>!isProv(k)&&((real(k)&&k.dloc===p)||((k.backup==='paper'||k.backup==='metal')&&k.bloc===p));
+const keysAt=(s,p)=>allKeys(s).filter(k=>keyAt(k,p)).length;
+const placeOk=(from,to)=>custodial(to)||SPOTS.every(p=>keysAt(to,p)<=Math.max(1,keysAt(from,p)));
+const spotFree=(s,k,p)=>!allKeys(s).some(x=>x!==k&&keyAt(x,p));
+const spotFor=(s,k)=>['home',k.dloc,k.bloc,'office','relative','friend','bank'].find(p=>p!=='carry'&&spotFree(s,k,p))||'home';
 const AT={home:'at home',office:'at the office',relative:'at a relative’s place',friend:'at a friend’s place',bank:'in the bank box',carry:'on you'};
 const _cc=new Map(),_bc=new Map(),_pc=new Map();
 function cands(s,build){
   const ck=(build?'b':'a')+JSON.stringify(s);if(_cc.has(ck))return _cc.get(ck);
   const cur=scoreOf(s),low=[],high=[];
   const ev=(act,why,mod,tag)=>{const t=clone(s);mod(t);const a=scoreOf(t);return{do:act,why,mod,tag,to:a,setup:t,gain:(cur.theft-a.theft)+(cur.loss-a.loss),worse:Math.max(a.theft-cur.theft,a.loss-cur.loss),eff:(a.setup+a.spend)-(cur.setup+cur.spend)}};
-  const L=(act,why,mod,tag)=>low.push(ev(act,why,mod,tag)),H=(act,why,mod,tag)=>{high.push(ev(act,why,mod,tag));return high[high.length-1]};
+  // a change that would put two keys in the same place is never offered (placeOk), whatever it scores
+  const L=(act,why,mod,tag)=>{const x=ev(act,why,mod,tag);if(placeOk(s,x.setup))low.push(x)},H=(act,why,mod,tag)=>{const x=ev(act,why,mod,tag);if(placeOk(s,x.setup))high.push(x);return x};
   if(custodial(s)){
     if((s.login||'sms')!=='app')L('Protect your login with an authenticator, passkey or security key.','A stolen password or a SIM swap is no longer enough to get in.',t=>{t.login='app'},'login');
     if(s.wd!=='on')L('Turn on an address allowlist or a waiting period for withdrawals.','A thief inside your account can’t send the coins somewhere new straight away.',t=>{t.wd='on'},'wd');
@@ -1316,15 +1330,16 @@ function cands(s,build){
     s.keys.forEach((k,i)=>{
       if(isProv(k)){const hwB=allKeys(s).filter(x=>x.device==='hw').map(x=>x.brand),other=['A','B','C'].find(b=>!hwB.includes(b));if(hwB.includes(k.brand)&&other)L('Use a provider from a different company than your hardware signer.','One company’s hack or shutdown can no longer hit both.',t=>{t.keys[i].brand=other},i+':brand');return}
       const K=one?'the key':`Key ${LETTERS[i]}`,Ks=one?'the':`Key ${LETTERS[i]}’s`;
-      if(k.device==='none')L(`Put ${K} on a hardware signer kept at home.`,'You can sign without restoring from the backup every time.',t=>{Object.assign(t.keys[i],{device:'hw',dloc:'home'})},i+':device');
-      if(soft(k))L(one?`Move your wallet from the ${k.device} to a hardware signer.`:`Move ${K} to a hardware signer.`,'Malware on a phone or computer can no longer reach the key.',t=>{Object.assign(t.keys[i],{device:'hw',dloc:'home'})},i+':device');
+      const sp=spotFor(s,k),bsp=oneSig(s)?'home':sp; // where a new signer, and a new written backup, of this key would go
+      if(k.device==='none')L(`Put ${K} on a hardware signer kept ${AT[sp]}.`,'You can sign without restoring from the backup every time.',t=>{Object.assign(t.keys[i],{device:'hw',dloc:sp})},i+':device');
+      if(soft(k))L(one?`Move your wallet from the ${k.device} to a hardware signer.`:`Move ${K} to a hardware signer.`,'Malware on a phone or computer can no longer reach the key.',t=>{Object.assign(t.keys[i],{device:'hw',dloc:sp})},i+':device');
       if(hot(k))L(one?`Use an old ${k.device} as an always-offline signer.`:`Use an old ${k.device} as an always-offline signer for ${K}.`,'Malware can’t reach a device that never connects.',t=>{t.keys[i].net='offline'},i+':net');
-      if(soft(k)&&k.dloc==='carry')L(`Keep ${Ks} ${k.device} at home.`,'It can’t be stolen, lost or unlocked by force while you’re out.',t=>{t.keys[i].dloc='home'},i+':dloc');
+      if(soft(k)&&k.dloc==='carry')L(`Keep ${Ks} ${k.device} ${AT[sp]}.`,'It can’t be stolen, lost or unlocked by force while you’re out.',t=>{t.keys[i].dloc=sp},i+':dloc');
       if(k.device==='hw')PL.forEach(pl=>{if(k.dloc!==pl)L(`Keep ${Ks} signer ${AT[pl]}.`,'It’s away from your other keys and backups, so one break-in or fire takes less.',t=>{t.keys[i].dloc=pl},i+':dloc')});
-      if(k.backup==='none')L(one?'Write your seed down on paper as a backup.':`Write down a paper backup for ${K}.`,'If the device dies, the backup brings the key back.',t=>{Object.assign(t.keys[i],{backup:'paper',bloc:'home'})},i+':backup');
-      if(k.backup==='memory'||k.backup==='cloud')L(`Write ${Ks} seed on paper instead.`,k.backup==='memory'?'Paper doesn’t forget.':'A hacked or locked account can no longer take it or lose it.',t=>{Object.assign(t.keys[i],{backup:'paper',bloc:'home'})},i+':backup');
+      if(k.backup==='none')L(one?'Write your seed down on paper as a backup.':`Write down a paper backup for ${K}.`,'If the device dies, the backup brings the key back.',t=>{Object.assign(t.keys[i],{backup:'paper',bloc:bsp})},i+':backup');
+      if(k.backup==='memory'||k.backup==='cloud')L(`Write ${Ks} seed on paper instead.`,k.backup==='memory'?'Paper doesn’t forget.':'A hacked or locked account can no longer take it or lose it.',t=>{Object.assign(t.keys[i],{backup:'paper',bloc:bsp})},i+':backup');
       if(k.backup==='paper'||k.backup==='metal'){
-        PL.forEach(pl=>{if(k.bloc!==pl&&(pl==='home'||!seedAlone(s,k)))L(`Keep ${Ks} seed backup ${AT[pl]}.`,'It’s away from your other keys and backups, so one break-in or fire takes less.',t=>{t.keys[i].bloc=pl},i+':bloc')});
+        PL.forEach(pl=>{if(k.bloc!==pl&&(pl==='home'||!oneSig(s)))L(`Keep ${Ks} seed backup ${AT[pl]}.`,'It’s away from your other keys and backups, so one break-in or fire takes less.',t=>{t.keys[i].bloc=pl},i+':bloc')});
         if(k.backup==='paper')L(`Switch ${Ks} seed backup to a metal plate.`,'Metal survives fire and water far better than paper.',t=>{t.keys[i].backup='metal'},i+':backup');
       }
       if(real(k)&&k.pin!=='strong')L(`Set a strong PIN on ${Ks} device.`,'A thief who gets the device is very unlikely to guess it.',t=>{t.keys[i].pin='strong'},i+':pin');
@@ -1339,17 +1354,23 @@ function cands(s,build){
     if((s.m<s.n||TL(s))&&s.config==='none')L('Back up the wallet file with every seed backup.','If a key goes missing, you need that file to use the rest.',t=>{t.config='all'},'config');
     if(!s.tested&&!build)L('Practice a recovery.','It proves your backups work before you need them.',t=>{t.tested=true},'tested');
     if(one&&!isProv(s.keys[0]))H('Go to 2-of-3, with the keys and backups in three different places.','No single break-in, fire, bad device or phishing page is enough.',t=>{
-      const B=newKey(),C=newKey();Object.assign(B,{dloc:'office',bloc:'bank',brand:'B'});Object.assign(C,{dloc:'relative',bloc:'relative',brand:'C'});
+      const B=newKey(),C=newKey(),free=['office','bank','relative','friend','home'].filter(p=>!keyAt(t.keys[0],p)); // the new keys go where the first one isn't
+      Object.assign(B,{dloc:free[0],bloc:free[1],brand:'B'});Object.assign(C,{dloc:free[2],bloc:free[2],brand:'C'});
       t.keys=[t.keys[0],B,C];t.n=3;t.m=2;t.config='all'},'multi');
     if(s.n>1){
-      const own=s.keys.map((k,i)=>i).filter(i=>!isProv(s.keys[i])),P=['home','office','relative','bank','friend'],off=s.m===s.n?1:0;
-      const spread=t=>own.forEach((i,j)=>{const k=t.keys[i];if(real(k)&&k.dloc!=='carry')k.dloc=P[j%5];if(k.backup==='paper'||k.backup==='metal')k.bloc=P[(j+off)%Math.min(5,Math.max(own.length,2))]});
+      // Every key gets a place of its own, signer and backup together. When every key must sign (off), losing one key
+      // loses the coins, so the places left over go to backups, to get them away from their signers: still one key per
+      // place. There are five places, so two keys get that with 2-of-2, one with 3-of-3 or 4-of-4, none with 5-of-5.
+      const own=s.keys.map((k,i)=>i).filter(i=>!isProv(s.keys[i])),P=['home','office','relative','bank','friend'].filter(p=>!(TL(s)&&keyAt(s.rkey,p))),off=s.m===s.n,spare=P.slice(own.length);
+      const spread=t=>own.forEach((i,j)=>{const k=t.keys[i],p=P[j%P.length];if(real(k)&&k.dloc!=='carry')k.dloc=p;if(k.backup==='paper'||k.backup==='metal')k.bloc=off&&spare[j]||p});
       const brands=t=>{let c=0;own.forEach(i=>{const k=t.keys[i];if(k.device==='hw'&&k.brand!=='D')k.brand=['A','B','C'][c++%3]})};
       const file=t=>{if(t.m<t.n||TL(t))t.config='all'};
-      H('Spread the keys out, so each key and its backup sit somewhere different.','No single break-in or fire can take two keys.',spread,'spread');
+      if(!oneSig(s)){ // with one signature enough, spreading would hand a seed that spends alone to somebody else
+        H('Spread the keys out, so that no two keys share a place.','No single break-in or fire can take two keys.',spread,'spread');
+        H('Spread the keys out, mix brands and back up the wallet file.','No single break-in, fire or bad device is enough.',t=>{spread(t);brands(t);file(t)});
+      }
       H('Use a different brand for each hardware signer.','One brand’s bug or tampered batch can only hit one key.',brands,'brands');
-      H('Spread the keys out, mix brands and back up the wallet file.','No single break-in, fire or bad device is enough.',t=>{spread(t);brands(t);file(t)});
-      if(s.m===s.n&&s.n<5)H(`Add a key, so you need ${s.m} of ${s.n+1}.`,'You can then lose a key and still spend.',t=>{t.keys.push(newKey());t.n++});
+      if(s.m===s.n&&s.n<5)H(`Add a key, so you need ${s.m} of ${s.n+1}.`,'You can then lose a key and still spend.',t=>{const k=newKey();k.dloc=k.bloc=spotFor(t,k);t.keys.push(k);t.n++});
     }
   }
   const lowOk=x=>x.gain>=1&&x.worse<=Math.max(2,x.gain-1)&&x.to.spend-cur.spend<=1&&x.to.setup-cur.setup<=1;
@@ -1358,7 +1379,7 @@ function cands(s,build){
     for(let i=0;i<low.length;i++)for(let j=i+1;j<low.length;j++){
       if(low[i].tag===low[j].tag)continue;
       const t=clone(s);low[i].mod(t);low[j].mod(t);const a=scoreOf(t),gain=(cur.theft-a.theft)+(cur.loss-a.loss),worse=Math.max(a.theft-cur.theft,a.loss-cur.loss);
-      if(gain>=2&&worse<=2&&(!lo||gain>lo.gain))lo={do:`${low[i].do.slice(0,-1)}, and ${low[j].do[0].toLowerCase()+low[j].do.slice(1)}`,why:'Neither helps much alone. Together, one break-in or fire takes less.',to:a,setup:t,gain};
+      if(gain>=2&&worse<=2&&placeOk(s,t)&&(!lo||gain>lo.gain))lo={do:`${low[i].do.slice(0,-1)}, and ${low[j].do[0].toLowerCase()+low[j].do.slice(1)}`,why:'Neither helps much alone. Together, one break-in or fire takes less.',to:a,setup:t,gain};
     }
   }
   const hi=high.find(x=>x.always)||high.filter(x=>x.gain>=3&&x.worse<=3).sort((a,b)=>b.gain-a.gain||a.eff-b.eff)[0];
@@ -1377,24 +1398,34 @@ function stoppers(s,e,kind,build){
   const mine=t=>t.keys.filter(k=>!isProv(k)),at=p=>(e.places||[]).includes(p),written=k=>k.backup==='paper'||k.backup==='metal';
   const dev=k=>k.device==='hw'?'signer':k.device;
   // keys(): an answer about some of the keys. "pick" says which, "change" what happens to each; with none to change there is no answer.
-  const keys=(how,text,why,pick,change)=>{const was=mine(s).filter(pick);if(!was.length)return null;const t=clone(s);mine(t).filter(pick).forEach(change);return{how,do:typeof text==='function'?text(was):text,why,setup:t}};
+  const keys=(how,text,why,pick,change)=>{const was=mine(s).filter(pick);if(!was.length)return null;const t=clone(s);mine(t).filter(pick).forEach(k=>change(k,t));return{how,do:typeof text==='function'?text(was):text,why,setup:t}};
   // whole(): an answer about the setup as a whole. step(): one of the big steps the recommendations already know.
   const whole=(how,text,why,change,later)=>{const t=clone(s);change(t);return{how,do:text,why,setup:t,later:!!later}};
   const step=(how,tag)=>{const x=cands(s,build).all.find(c=>c.tag===tag);return x?{how,do:x.do,why:x.why,setup:x.setup}:null};
   const multi=()=>step('big',one?'multi':'spread');
-  const home=(how,why)=>keys(how,one?'Keep your key on a signing device at home.':'Keep those keys on signing devices at home.',why,k=>real(k)&&k.dloc==='carry',k=>{if(soft(k))k.device='hw';k.dloc='home'});
+  const home=(how,why)=>keys(how,ks=>ks.length===1&&spotFor(s,ks[0])==='home'?(one?'Keep your key on a signing device at home.':'Keep that key on a signing device at home.'):ks.length===1?'Stop carrying that key: keep it on a signing device in a place of its own.':'Stop carrying those keys: keep each on a signing device in a place of its own.',why,k=>real(k)&&k.dloc==='carry',(k,t)=>{if(soft(k))k.device='hw';k.dloc=spotFor(t,k)});
+  const bspot=(t,k)=>oneSig(t)?'home':spotFor(t,k); // where a new written backup goes
+  // apart(): after a fire, get each backup away from its device. Only when more than one key has to sign; with one
+  // signature the seed stays home and the answer is the bigger step. Each backup goes to a place that holds no other
+  // key; a backup with no such place left stays where it is.
+  const apart=()=>{
+    if(oneSig(s))return multi();
+    const t=clone(s),ks=mine(t).filter(k=>written(k)&&at(k.bloc)&&real(k)&&k.dloc===k.bloc);if(!ks.length)return null;
+    ks.forEach(k=>{k.bloc=['bank','office','relative','friend','home'].find(p=>!at(p)&&spotFree(t,k,p))||k.bloc});
+    return{how:'big',do:ks.length===1?'Keep that seed backup somewhere else than its device, like a bank box.':'Keep those seed backups somewhere else than their devices, each in a different place.',why:'One fire can no longer take the device and its backup together.',setup:t};
+  };
   let a=[];
   if(cust)a=e.login?[whole('low','Protect your login with an authenticator or passkey, and turn on a withdrawal allowlist.','A stolen password or a SIM swap is no longer enough to get in, and a thief who does get in can’t send the coins somewhere new.',t=>{t.login='app';t.wd='on'}),step('big','own')]
     :[step('low','own')];
   else if(e.hot)a=[
-    keys('low',ks=>one?`Move your wallet from the ${ks[0].device} to a hardware signer.`:'Move every key on a phone or laptop to a hardware signer.','Malware on a phone or computer can no longer reach the key.',hot,k=>{k.device='hw';k.dloc='home'}),
+    keys('low',ks=>one?`Move your wallet from the ${ks[0].device} to a hardware signer.`:'Move every key on a phone or laptop to a hardware signer.','Malware on a phone or computer can no longer reach the key.',hot,(k,t)=>{k.device='hw';k.dloc=spotFor(t,k)}),
     keys('alt',ks=>ks.length===1?`Use an old ${ks[0].device} as an always-offline signer.`:'Use old phones or laptops as always-offline signers.','Malware can’t reach a device that never connects.',hot,k=>{k.net='offline'})];
   else if(e.phish)a=[multi()];
   else if(e.app||e.guess||(e.brand&&!e.supply&&!e.bugloss))a=[
     keys('low',one?'Make the seed yourself, with dice rolls or coin flips.':'Make those seeds yourself, with dice rolls or coin flips.',e.guess?'Words people pick get guessed. Dice and coins can’t be.':'The seed no longer depends on how good the app’s or device’s random numbers are.',
       k=>k.ent!=='diceonly'&&(e.app?soft(k):e.guess?k.ent==='words':k.device==='hw'&&k.brand===e.brand),k=>{k.ent='diceonly'}),
     step('big',one?'multi':'brands')];
-  else if(e.cloud)a=[keys('low',one?'Keep your seed on paper, not in the cloud.':'Keep those seeds on paper, not in the cloud.',kind==='t'?'A hacked account can no longer hand over the seed.':'A locked account can no longer take the backup with it.',k=>k.backup==='cloud',k=>{k.backup='paper';k.bloc='home'})];
+  else if(e.cloud)a=[keys('low',one?'Keep your seed on paper, not in the cloud.':'Keep those seeds on paper, not in the cloud.',kind==='t'?'A hacked account can no longer hand over the seed.':'A locked account can no longer take the backup with it.',k=>k.backup==='cloud',(k,t)=>{k.backup='paper';k.bloc=bspot(t,k)})];
   else if(e.border)a=[home('low','You can’t be made to unlock what you don’t have with you.')];
   else if(e.id==='t_carry')a=[
     keys('low',ks=>ks.length===1?`Set a strong PIN on your ${dev(ks[0])}.`:'Set a strong PIN on every device you carry.','A thief who gets the device is very unlikely to guess it.',k=>real(k)&&k.dloc==='carry'&&k.pin!=='strong',k=>{k.pin='strong'}),
@@ -1406,13 +1437,13 @@ function stoppers(s,e,kind,build){
     multi()];
   else if(e.fire)a=[
     keys('low',one?'Switch your seed backup to a metal plate.':'Switch the paper backups kept there to metal plates.','Metal survives fire and water far better than paper.',k=>k.backup==='paper'&&at(k.bloc),k=>{k.backup='metal'}),
-    keys('big',one?'Keep the seed backup somewhere else than the device, like a bank box.':'Keep those seed backups somewhere else than their devices, like a bank box.','One fire can no longer take the device and its backup together.',k=>written(k)&&at(k.bloc)&&real(k)&&k.dloc===k.bloc&&!seedAlone(s,k),k=>{k.bloc='bank'})];
+    apart()];
   else if(e.dev)a=[
-    keys('low',one?'Write your seed down on paper as a backup.':'Write down a paper backup for every key.','If the device dies, the backup brings the key back.',k=>k.backup==='none',k=>{k.backup='paper';k.bloc='home'}),
+    keys('low',one?'Write your seed down on paper as a backup.':'Write down a paper backup for every key.','If the device dies, the backup brings the key back.',k=>k.backup==='none',(k,t)=>{k.backup='paper';k.bloc=bspot(t,k)}),
     (s.m<s.n||TL(s))&&s.config==='none'?whole('low','Back up the wallet file with every seed backup.','If a key goes missing, you need that file to use the rest.',t=>{t.config='all'}):null,
     s.tested?null:whole('low','Practise recovering from your backup.','It proves the backup works before you need it.',t=>{t.tested=true},build),
     multi()];
-  const ok=a.filter(Boolean).filter(x=>P(x.setup)<now),first=ok.find(x=>x.how==='low')||ok[0];
+  const ok=a.filter(Boolean).filter(x=>P(x.setup)<now&&placeOk(s,x.setup)),first=ok.find(x=>x.how==='low')||ok[0];
   return first?[first,ok.find(x=>x!==first&&x.how!=='low')].filter(Boolean):[];
 }
 function potential(s,full){

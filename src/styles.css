@@ -12,6 +12,9 @@
   --sab:env(safe-area-inset-bottom,0px);
   padding-bottom:var(--sab);
 }
+/* phones: 64px more at the bottom, always. In-app browsers float their own buttons over the bottom of the page
+   (X: close, address, reload) and the page can't tell, so nothing of ours goes there. */
+@media (max-width:760px){:root{--sab:calc(env(safe-area-inset-bottom,0px) + 64px)}}
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
@@ -553,7 +556,7 @@ body.landing{overflow-x:clip;background:linear-gradient(var(--sky),var(--sky2) 6
 #scene.narrow #sc-home{transform:translate(262px,512px) scale(.6)}
 #scene.narrow #sc-friend{transform:translate(930px,505px) scale(.55)}
 .landing footer{position:relative;isolation:isolate;margin:0;padding:14px 0 16px;color:#F1EFFF}
-.landing footer::before{content:"";position:absolute;z-index:-1;top:-1px;bottom:0;left:calc(50% - 50vw);width:100vw;background:var(--road2)}
+.landing footer::before{content:"";position:absolute;z-index:-1;top:-1px;bottom:calc(0px - var(--sab));left:calc(50% - 50vw);width:100vw;background:var(--road2)} /* down through the page's bottom padding */
 .sc-night{opacity:var(--night)}.sc-day{opacity:calc(1 - var(--night))}
 .sc-far{filter:brightness(calc(1 - var(--night)*.6))} /* the map's buildings keep their own colours, so they are dimmed at night instead */
 /* ---------- landing car: flat panels in 3D, see buildCar() in ui.js ---------- */

@@ -323,6 +323,11 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
 .usebal{display:grid;gap:1px;min-width:118px;background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:16px;box-shadow:0 4px 0 #1B1840;padding:6px 14px}
 .usebal small{font-weight:700;font-size:.78rem;color:#5A5688}.usebal b{font-family:var(--display);font-size:1.15rem;line-height:1.15;font-variant-numeric:tabular-nums}
 .usebal.new{background:#1B1840;color:#fff}.usebal.new small{color:#C9C6EE}
+/* what each setup signs with, in its pill (SetupMap.signers), on a pale strip so the dark devices show in the dark pill too */
+.usehud{align-items:stretch}.usehud>i{align-self:center}
+.usesig{display:block;height:40px;width:auto;max-width:100%;justify-self:start;margin:0 0 3px -6px;padding:2px 4px;box-sizing:content-box;border-radius:9px;background:#E9ECFF}
+.usesig text{font-family:var(--body);fill:#1B1840}
+@media (min-width:761px){.usebal:has(.usesig){grid-template-columns:auto 1fr;column-gap:10px}.usesig{grid-row:1/3;align-self:center;margin:0 0 0 -6px}.usebal small{align-self:end}} /* wide: beside the amount, so the pills stay clear of the cloud */
 .usehud>i{font-style:normal;font-weight:800;font-size:1.2rem;color:#1B1840}
 .usecap{position:absolute;right:14px;bottom:16px;width:min(400px,calc(100% - 28px));display:grid;gap:8px;background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:22px;box-shadow:0 6px 0 #1B1840;padding:14px 16px}
 .usenote{font-family:var(--display);font-size:1.05rem;line-height:1.3}.usenote.bad{color:#B3261E}
@@ -338,8 +343,9 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
 .usepop{pointer-events:none;transform-box:fill-box;transform-origin:50% 100%;animation:fxpop .45s both}
 .mapglide .map{transition:transform .8s ease-in-out} /* the zoomed-in map following you */
 @media (max-width:760px){
-  .mapcard.use .map{inset:64px 0 176px;height:calc(100% - 240px)}
+  .mapcard.use .map{inset:98px 0 176px;height:calc(100% - 274px)}
   .usehud{left:10px;top:8px;gap:6px}.usebal{min-width:0;padding:5px 12px}
+  .usesig{height:30px}
   .usecap{left:10px;right:10px;bottom:14px;width:auto}
 }
 @media (prefers-reduced-motion:reduce){.walking .mapbob,.usepop{animation:none!important}.mapglide .map,.mapfate{transition:none}}
@@ -500,6 +506,7 @@ button.mapcardtip:active{transform:translateY(3px);box-shadow:0 1px 0 #1B1840}
 .mrdo .mrbtn{margin-top:4px}
 .mapresult.change{animation-delay:.1s}.mapresult.change .mrbadge{font-size:1.6rem}
 .mapresult.change .mrface>b{font-size:1.1rem;padding-right:44px}
+.mapresult.change .mrface>.mrnote{font:700 .95rem/1.35 var(--body);padding-right:0} /* a second line under the title: something to know about this change */
 .mrrisks{display:grid;gap:3px;font-size:.95rem}
 .mrrisks span{display:flex;align-items:center;gap:6px;white-space:nowrap}.mrrisks i{flex:none;width:12px;height:12px;border-radius:50%}.mrrisks small{color:#5A5688}
 .mapresult .mrrisks b{font:700 .95rem/1.3 var(--body);padding:0}

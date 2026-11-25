@@ -418,6 +418,19 @@ const SetupMap=(()=>{
     if(!turns.length)turns=Object.keys(CHARS).filter(id=>id!==WHO);
     WHO=turns.splice(Math.floor(Math.random()*turns.length),1)[0];
   };
+  /* What a setup signs with, in a row and nothing else: its devices, the keys a company holds, or the login when a
+     company holds the coins. A key that is only a written seed is shown as that seed. Drawn like the map's own things,
+     with the key's number, but with no map around them: "Use it" puts this in the old and the new setup's pills.
+     It doesn't touch the map that was drawn last. */
+  function signers(s){
+    const d=describe(s),all=[...d.you,...Object.values(d.places).flat(),...d.cloud,...(d.company?d.company.items:[])];
+    const ord=t=>t.k==='R'?99:t.k==null?-1:t.k;
+    const items=all.filter(t=>['device','provkey','login'].includes(t.role)||t.role==='backup'&&t.key.device==='none').sort((a,b)=>ord(a)-ord(b));
+    if(!items.length)return '';
+    const gap=Math.min(58,items.length>1?170/(items.length-1):58),w=62+gap*(items.length-1);
+    const one=(t,i)=>`<g transform="translate(${(31+i*gap).toFixed(1)} 60)">${TOK[t.look||t.t]}${t.k==null?'':`<circle cx="17" cy="-46" r="10" fill="${keyColor(t.k)}" stroke="#fff" stroke-width="2"/><text x="17" y="-42" text-anchor="middle" font-size="11" font-weight="800">${keyName(t.k)}</text>`}</g>`;
+    return `<svg class="usesig" viewBox="0 0 ${w.toFixed(0)} 64" role="img" aria-label="${items.map(t=>NAMES[t.t]).join(', ')}">${items.map(one).join('')}</svg>`;
+  }
   /* The last screen: the island with nothing kept on it, and everybody you can play as dancing along its front edge,
      whoever you are playing in the middle. Three dance moves and a few floating notes; the movement is all in the CSS
      (.dancer, .partynote). The view is shifted so the island, not the drawing, is in the middle. */
@@ -435,5 +448,5 @@ const SetupMap=(()=>{
       <ellipse cx="350" cy="320" rx="322" ry="204" fill="#1B8E77"/><ellipse cx="350" cy="306" rx="322" ry="204" fill="#E9DDB0"/><ellipse cx="350" cy="302" rx="308" ry="192" fill="url(#map-grass)"/>
       ${islet(COMPANY.x,COMPANY.y)}${building(COMPANY.x,COMPANY.y,COMPANY.b).svg}${B}${notes}${dancers}</svg>`;
   }
-  return {svg,beats,things,here,party,driver,landmark,fresh,another};
+  return {svg,beats,things,here,party,signers,driver,landmark,fresh,another};
 })();

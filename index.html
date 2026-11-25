@@ -330,6 +330,11 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
 .usebal{display:grid;gap:1px;min-width:118px;background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:16px;box-shadow:0 4px 0 #1B1840;padding:6px 14px}
 .usebal small{font-weight:700;font-size:.78rem;color:#5A5688}.usebal b{font-family:var(--display);font-size:1.15rem;line-height:1.15;font-variant-numeric:tabular-nums}
 .usebal.new{background:#1B1840;color:#fff}.usebal.new small{color:#C9C6EE}
+/* what each setup signs with, in its pill (SetupMap.signers), on a pale strip so the dark devices show in the dark pill too */
+.usehud{align-items:stretch}.usehud>i{align-self:center}
+.usesig{display:block;height:40px;width:auto;max-width:100%;justify-self:start;margin:0 0 3px -6px;padding:2px 4px;box-sizing:content-box;border-radius:9px;background:#E9ECFF}
+.usesig text{font-family:var(--body);fill:#1B1840}
+@media (min-width:761px){.usebal:has(.usesig){grid-template-columns:auto 1fr;column-gap:10px}.usesig{grid-row:1/3;align-self:center;margin:0 0 0 -6px}.usebal small{align-self:end}} /* wide: beside the amount, so the pills stay clear of the cloud */
 .usehud>i{font-style:normal;font-weight:800;font-size:1.2rem;color:#1B1840}
 .usecap{position:absolute;right:14px;bottom:16px;width:min(400px,calc(100% - 28px));display:grid;gap:8px;background:#fff;color:#1B1840;border:3px solid #1B1840;border-radius:22px;box-shadow:0 6px 0 #1B1840;padding:14px 16px}
 .usenote{font-family:var(--display);font-size:1.05rem;line-height:1.3}.usenote.bad{color:#B3261E}
@@ -345,8 +350,9 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
 .usepop{pointer-events:none;transform-box:fill-box;transform-origin:50% 100%;animation:fxpop .45s both}
 .mapglide .map{transition:transform .8s ease-in-out} /* the zoomed-in map following you */
 @media (max-width:760px){
-  .mapcard.use .map{inset:64px 0 176px;height:calc(100% - 240px)}
+  .mapcard.use .map{inset:98px 0 176px;height:calc(100% - 274px)}
   .usehud{left:10px;top:8px;gap:6px}.usebal{min-width:0;padding:5px 12px}
+  .usesig{height:30px}
   .usecap{left:10px;right:10px;bottom:14px;width:auto}
 }
 @media (prefers-reduced-motion:reduce){.walking .mapbob,.usepop{animation:none!important}.mapglide .map,.mapfate{transition:none}}
@@ -507,6 +513,7 @@ button.mapcardtip:active{transform:translateY(3px);box-shadow:0 1px 0 #1B1840}
 .mrdo .mrbtn{margin-top:4px}
 .mapresult.change{animation-delay:.1s}.mapresult.change .mrbadge{font-size:1.6rem}
 .mapresult.change .mrface>b{font-size:1.1rem;padding-right:44px}
+.mapresult.change .mrface>.mrnote{font:700 .95rem/1.35 var(--body);padding-right:0} /* a second line under the title: something to know about this change */
 .mrrisks{display:grid;gap:3px;font-size:.95rem}
 .mrrisks span{display:flex;align-items:center;gap:6px;white-space:nowrap}.mrrisks i{flex:none;width:12px;height:12px;border-radius:50%}.mrrisks small{color:#5A5688}
 .mapresult .mrrisks b{font:700 .95rem/1.3 var(--body);padding:0}
@@ -1888,6 +1895,19 @@ const SetupMap=(()=>{
     if(!turns.length)turns=Object.keys(CHARS).filter(id=>id!==WHO);
     WHO=turns.splice(Math.floor(Math.random()*turns.length),1)[0];
   };
+  /* What a setup signs with, in a row and nothing else: its devices, the keys a company holds, or the login when a
+     company holds the coins. A key that is only a written seed is shown as that seed. Drawn like the map's own things,
+     with the key's number, but with no map around them: "Use it" puts this in the old and the new setup's pills.
+     It doesn't touch the map that was drawn last. */
+  function signers(s){
+    const d=describe(s),all=[...d.you,...Object.values(d.places).flat(),...d.cloud,...(d.company?d.company.items:[])];
+    const ord=t=>t.k==='R'?99:t.k==null?-1:t.k;
+    const items=all.filter(t=>['device','provkey','login'].includes(t.role)||t.role==='backup'&&t.key.device==='none').sort((a,b)=>ord(a)-ord(b));
+    if(!items.length)return '';
+    const gap=Math.min(58,items.length>1?170/(items.length-1):58),w=62+gap*(items.length-1);
+    const one=(t,i)=>`<g transform="translate(${(31+i*gap).toFixed(1)} 60)">${TOK[t.look||t.t]}${t.k==null?'':`<circle cx="17" cy="-46" r="10" fill="${keyColor(t.k)}" stroke="#fff" stroke-width="2"/><text x="17" y="-42" text-anchor="middle" font-size="11" font-weight="800">${keyName(t.k)}</text>`}</g>`;
+    return `<svg class="usesig" viewBox="0 0 ${w.toFixed(0)} 64" role="img" aria-label="${items.map(t=>NAMES[t.t]).join(', ')}">${items.map(one).join('')}</svg>`;
+  }
   /* The last screen: the island with nothing kept on it, and everybody you can play as dancing along its front edge,
      whoever you are playing in the middle. Three dance moves and a few floating notes; the movement is all in the CSS
      (.dancer, .partynote). The view is shifted so the island, not the drawing, is in the middle. */
@@ -1905,7 +1925,7 @@ const SetupMap=(()=>{
       <ellipse cx="350" cy="320" rx="322" ry="204" fill="#1B8E77"/><ellipse cx="350" cy="306" rx="322" ry="204" fill="#E9DDB0"/><ellipse cx="350" cy="302" rx="308" ry="192" fill="url(#map-grass)"/>
       ${islet(COMPANY.x,COMPANY.y)}${building(COMPANY.x,COMPANY.y,COMPANY.b).svg}${B}${notes}${dancers}</svg>`;
   }
-  return {svg,beats,things,here,party,driver,landmark,fresh,another};
+  return {svg,beats,things,here,party,signers,driver,landmark,fresh,another};
 })();
 //--UI--
 /* ---------- state ---------- */
@@ -2110,7 +2130,7 @@ function screenMap(which){
   const c=build&&!fx&&!cards?S.change:null;
   const moved=(name,a,z)=>`<span><i style="background:${riskColor(z)}"></i>${name} <b>${a===z?`${word[level(z)]} ${z}`:`${word[level(a)]} ${a} → ${word[level(z)]} ${z}`}</b>${a===z?' <small>no change</small>':''}</span>`;
   const change=c?`<div class="mapresult ok change" role="status"><span class="mrbadge" aria-hidden="true">✅</span><button type="button" class="mrx" data-act="changeDone" aria-label="Close" title="Close">×</button>
-      <div class="mrface"><b>${c.what||'You edited your setup.'}</b>
+      <div class="mrface"><b>${c.what||'You edited your setup.'}</b>${c.note?`<b class="mrnote">${c.note}</b>`:''}
         <div class="mrrisks">${moved('Theft risk',c.from.theft,c.to.theft)}${moved('Loss risk',c.from.loss,c.to.loss)}</div>
         <div class="mrbtns">${btn('changeTest','🔥 Test it with a disaster','main')+btn('scores','📊 Compare with today')}</div></div></div>`:'';
   const banner=build&&!built&&!fx&&!cards&&!change?`<div class="mapbanner" role="status"><b>Now build your new setup.</b><span>${none?'There is nothing to suggest for this one. You can still edit it yourself.':'Get a suggestion, or edit it yourself if you already know the setup you want.'}</span></div>`:'';
@@ -2131,8 +2151,16 @@ function noteChange(what,make){
   make();
   if(sameSetup(before,S.mine))return false;
   const to=scoreOf(S.mine);
-  S.change={what,from:{theft:from.theft,loss:from.loss},to:{theft:to.theft,loss:to.loss}};S.suggest=false;
+  S.change={what,note:seedNote(before,S.mine),from:{theft:from.theft,loss:from.loss},to:{theft:to.theft,loss:to.loss}};S.suggest=false;
   return true;
+}
+/* A key that leaves an online phone or laptop should not bring its seed along: malware may have copied it while it was
+   online. Nothing in the model tracks that, because "Use it" already moves the coins from the old setup to the new one,
+   and a new setup means new seeds. So the "what changed" card only says so, once, when such a key moves. */
+function seedNote(a,b){
+  if(custodial(a)||custodial(b))return '';
+  const k=a.keys.find((k,i)=>hot(k)&&b.keys[i]&&!hot(b.keys[i])&&!isProv(b.keys[i]));
+  return k?`Make a new seed for it: the old one was on an online ${k.device}. Your coins move over in “Use it”.`:'';
 }
 function screenToday(){return screenMap('base')}
 function screenBuild(){return screenMap('mine')}
@@ -2167,9 +2195,10 @@ function screenUse(){
     lost:[`You moved ${btc(w.lost)} without a test first, and something was wrong: a mistyped address, a bad backup, or a wallet that wasn’t set up the way you thought.`,btn('useReset','Try again with 1 BTC',1)],
     failed:[`Only the test was lost: ${btc(TEST)}. The rest is still in your old setup.`,btn('go','🔧 Fix it in Build',1,2)+btn('useReset','↺ Start again')],
   }[w.stage];
+  // Each pill shows what its setup signs with, so the coins are seen leaving one set of signers for the other.
   return `<h2 class="sr">Use your new setup</h2>
   <div class="mapcard use${useArrive?' arrive'+(useArrive==='short'?' short':''):''}">${SetupMap.svg(st)}${useArrive==='full'?'<div class="bpwipe gold" aria-hidden="true"></div>':''}
-    <div class="usehud"><span class="usebal" id="use-old"><small>Old setup</small><b>${btc(w.old)}</b></span><i aria-hidden="true">→</i><span class="usebal new" id="use-new"><small>${cust?ACCT[st.type]:'New setup'}</small><b>${btc(w.vault)}</b></span></div>
+    <div class="usehud"><span class="usebal" id="use-old">${S.base?SetupMap.signers(S.base):''}<small>Old setup</small><b>${btc(w.old)}</b></span><i aria-hidden="true">→</i><span class="usebal new" id="use-new">${SetupMap.signers(st)}<small>${cust?ACCT[st.type]:'New setup'}</small><b>${btc(w.vault)}</b></span></div>
     <div class="usecap" role="status">${w.note?`<b class="usenote${w.bad?' bad':''}">${w.note}</b>`:''}<span class="usetext">${text}</span><div class="mrbtns">${buttons}</div></div></div>`;
 }
 /* One errand at a time. While it runs the card shows only what is happening; "live" tells the job whether the map it
@@ -2839,7 +2868,7 @@ function editDone(){
   S.editBase=false;
   if(S.step===2&&editFrom&&S.mine&&!sameSetup(editFrom.setup,S.mine)){
     const to=scoreOf(S.mine);
-    S.change={what:null,from:{theft:editFrom.sc.theft,loss:editFrom.sc.loss},to:{theft:to.theft,loss:to.loss}};
+    S.change={what:null,note:seedNote(editFrom.setup,S.mine),from:{theft:editFrom.sc.theft,loss:editFrom.sc.loss},to:{theft:to.theft,loss:to.loss}};
   }
   editFrom=null;
 }

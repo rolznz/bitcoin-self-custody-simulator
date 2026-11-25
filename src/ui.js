@@ -203,7 +203,7 @@ function screenMap(which){
   const change=c?`<div class="mapresult ok change" role="status"><span class="mrbadge" aria-hidden="true">✅</span><button type="button" class="mrx" data-act="changeDone" aria-label="Close" title="Close">×</button>
       <div class="mrface"><b>${c.what||'You edited your setup.'}</b>${c.note?`<b class="mrnote">${c.note}</b>`:''}
         <div class="mrrisks">${moved('Theft risk',c.from.theft,c.to.theft)}${moved('Loss risk',c.from.loss,c.to.loss)}</div>
-        <div class="mrbtns">${btn('changeTest','🔥 Test it with a disaster','main')+btn('scores','📊 Compare with today')}</div></div></div>`:'';
+        <div class="mrbtns">${btn('changeTest','🔥 Test it<span class="long"> with a disaster</span>','main')+btn('scores','📊 Compare<span class="long"> with today</span>')}</div></div></div>`:'';
   const banner=build&&!built&&!fx&&!cards&&!change?`<div class="mapbanner" role="status"><b>Now build your new setup.</b><span>${none?'There is nothing to suggest for this one. You can still edit it yourself.':'Get a suggestion, or edit it yourself if you already know the setup you want.'}</span></div>`:'';
   const tools=build
     ?(built?tool('data-act="simBase"',!!S.mapDis,'🔥','Simulate a disaster','Try a disaster'):'')+tool('data-act="suggest"',!!S.suggest,'💡','Suggest a step','Suggest a step')+tool('data-act="editBase"',S.editBase,'✏️','Edit it myself','Edit it myself')

@@ -201,7 +201,7 @@ function screenMap(which){
   const c=build&&!fx&&!cards?S.change:null;
   const moved=(name,a,z)=>`<span><i style="background:${riskColor(z)}"></i>${name} <b>${a===z?`${word[level(z)]} ${z}`:`${word[level(a)]} ${a} → ${word[level(z)]} ${z}`}</b>${a===z?' <small>no change</small>':''}</span>`;
   const change=c?`<div class="mapresult ok change" role="status"><span class="mrbadge" aria-hidden="true">✅</span><button type="button" class="mrx" data-act="changeDone" aria-label="Close" title="Close">×</button>
-      <div class="mrface"><b>${c.what||'You edited your setup.'}</b>
+      <div class="mrface"><b>${c.what||'You edited your setup.'}</b>${c.note?`<b class="mrnote">${c.note}</b>`:''}
         <div class="mrrisks">${moved('Theft risk',c.from.theft,c.to.theft)}${moved('Loss risk',c.from.loss,c.to.loss)}</div>
         <div class="mrbtns">${btn('changeTest','🔥 Test it with a disaster','main')+btn('scores','📊 Compare with today')}</div></div></div>`:'';
   const banner=build&&!built&&!fx&&!cards&&!change?`<div class="mapbanner" role="status"><b>Now build your new setup.</b><span>${none?'There is nothing to suggest for this one. You can still edit it yourself.':'Get a suggestion, or edit it yourself if you already know the setup you want.'}</span></div>`:'';
@@ -222,8 +222,16 @@ function noteChange(what,make){
   make();
   if(sameSetup(before,S.mine))return false;
   const to=scoreOf(S.mine);
-  S.change={what,from:{theft:from.theft,loss:from.loss},to:{theft:to.theft,loss:to.loss}};S.suggest=false;
+  S.change={what,note:seedNote(before,S.mine),from:{theft:from.theft,loss:from.loss},to:{theft:to.theft,loss:to.loss}};S.suggest=false;
   return true;
+}
+/* A key that leaves an online phone or laptop should not bring its seed along: malware may have copied it while it was
+   online. Nothing in the model tracks that, because "Use it" already moves the coins from the old setup to the new one,
+   and a new setup means new seeds. So the "what changed" card only says so, once, when such a key moves. */
+function seedNote(a,b){
+  if(custodial(a)||custodial(b))return '';
+  const k=a.keys.find((k,i)=>hot(k)&&b.keys[i]&&!hot(b.keys[i])&&!isProv(b.keys[i]));
+  return k?`Make a new seed for it: the old one was on an online ${k.device}. Your coins move over in “Use it”.`:'';
 }
 function screenToday(){return screenMap('base')}
 function screenBuild(){return screenMap('mine')}
@@ -258,9 +266,10 @@ function screenUse(){
     lost:[`You moved ${btc(w.lost)} without a test first, and something was wrong: a mistyped address, a bad backup, or a wallet that wasn’t set up the way you thought.`,btn('useReset','Try again with 1 BTC',1)],
     failed:[`Only the test was lost: ${btc(TEST)}. The rest is still in your old setup.`,btn('go','🔧 Fix it in Build',1,2)+btn('useReset','↺ Start again')],
   }[w.stage];
+  // Each pill shows what its setup signs with, so the coins are seen leaving one set of signers for the other.
   return `<h2 class="sr">Use your new setup</h2>
   <div class="mapcard use${useArrive?' arrive'+(useArrive==='short'?' short':''):''}">${SetupMap.svg(st)}${useArrive==='full'?'<div class="bpwipe gold" aria-hidden="true"></div>':''}
-    <div class="usehud"><span class="usebal" id="use-old"><small>Old setup</small><b>${btc(w.old)}</b></span><i aria-hidden="true">→</i><span class="usebal new" id="use-new"><small>${cust?ACCT[st.type]:'New setup'}</small><b>${btc(w.vault)}</b></span></div>
+    <div class="usehud"><span class="usebal" id="use-old">${S.base?SetupMap.signers(S.base):''}<small>Old setup</small><b>${btc(w.old)}</b></span><i aria-hidden="true">→</i><span class="usebal new" id="use-new">${SetupMap.signers(st)}<small>${cust?ACCT[st.type]:'New setup'}</small><b>${btc(w.vault)}</b></span></div>
     <div class="usecap" role="status">${w.note?`<b class="usenote${w.bad?' bad':''}">${w.note}</b>`:''}<span class="usetext">${text}</span><div class="mrbtns">${buttons}</div></div></div>`;
 }
 /* One errand at a time. While it runs the card shows only what is happening; "live" tells the job whether the map it
@@ -930,7 +939,7 @@ function editDone(){
   S.editBase=false;
   if(S.step===2&&editFrom&&S.mine&&!sameSetup(editFrom.setup,S.mine)){
     const to=scoreOf(S.mine);
-    S.change={what:null,from:{theft:editFrom.sc.theft,loss:editFrom.sc.loss},to:{theft:to.theft,loss:to.loss}};
+    S.change={what:null,note:seedNote(editFrom.setup,S.mine),from:{theft:editFrom.sc.theft,loss:editFrom.sc.loss},to:{theft:to.theft,loss:to.loss}};
   }
   editFrom=null;
 }

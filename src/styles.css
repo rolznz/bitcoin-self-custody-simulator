@@ -242,7 +242,7 @@ body.mapscreen::before{background:#7EC8FF}
 .riskline span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .riskline i{width:12px;height:12px;border-radius:50%}
 @media (max-width:760px){
-  .mapcard{min-height:520px}
+  .mapcard{min-height:320px} /* low, so on a short screen (an in-app browser, say) the buttons at the bottom stay on screen */
   .map{inset:4px 0 132px;height:calc(100% - 136px)}
 }
 /* the full scoreboard inside its dialog: undo the sticky side panel and the narrow-screen summary */
@@ -302,7 +302,7 @@ body:has(dialog[open]) .mapcap,body:has(dialog[open]) .mapline,.mapcard:has(.map
   .maptool[data-act="simBase"]{left:10px}.maptool.next{right:10px}
   .maptool[data-act="editBase"]{right:10px;top:10px;width:48px;padding:0;gap:0;font-size:0} /* the icon alone; the name is still its label */
   .map{inset:4px 0 76px;height:calc(100% - 80px)}
-  .mapcard{min-height:520px}
+  .mapcard{min-height:320px} /* low, so on a short screen (an in-app browser, say) the buttons at the bottom stay on screen */
   .mapcap{bottom:14px;font-size:1rem;width:calc(100% - 24px)}
   .mapcap.up{bottom:102px}
   /* phones, Build: the two ways to build are the bottom row, labelled. Once there is a way forward (.fwd) it takes the
